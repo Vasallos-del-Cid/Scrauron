@@ -64,6 +64,7 @@ npm install @syncfusion/ej2-angular-grids --save
       npm install
       npm run prebuild
       ```
+
       Existe un script en ~frontend/scripts que guarda la variable en un fichero de environment que no se incluye en git
 
       Este script se lanza tras ejecutar npm install o npm run prebuild (ver scripts del package.json --> postinstall)
@@ -78,3 +79,19 @@ npm install @syncfusion/ej2-angular-grids --save
 
       registerLicense(syncfusionLicense);
       ```
+
+## Inclusion de componentes de syncfusion
+
+instalar la dependencia
+
+```bash
+ng add @syncfusion/ej2-angular-grids
+```
+
+Con el comando, se deben haber incluido las dependencias necesarias para el componente en:
+
+- Styles.css (import de la dependencia de node modules)
+  - Styles del angular.json (idem)
+- app-coomponent (componente declarado en el imports)
+
+Con eso ya estaria el componente listo para usarse

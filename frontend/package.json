@@ -21,7 +21,8 @@
     "@syncfusion/ej2-angular-grids": "^29.1.38",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.0"
+    "zone.js": "~0.15.0",
+    "@syncfusion/ej2-material-theme": "~29.1.38"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.2.8",
