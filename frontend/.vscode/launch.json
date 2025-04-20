@@ -3,18 +3,80 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "ng serve",
-      "type": "chrome",
+      "name": "Frontend_Ng-Launch Edge with DevTools",
+      "type": "msedge",
       "request": "launch",
-      "preLaunchTask": "npm: start",
-      "url": "http://localhost:4200/"
+      "runtimeArgs": [
+        "--remote-debugging-port=9222"
+      ],
+      "url": "http://localhost:4200/",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      //"preLaunchTask": "ng-ng serve",
+      "presentation": {
+        "hidden": true
+      }
     },
     {
-      "name": "ng test",
-      "type": "chrome",
+      "name": "Frontend_Ng-Open Edge DevTools debug in VsCode",
+      "type": "vscode-edge-devtools.debug",
+      "request": "attach",
+      "port": 9222,
+      "pathMapping": {
+        "/": "${workspaceFolder}"
+      },
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "url": "http://localhost:4200/",
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "Ng-Launch Edge with DevTools",
+      "type": "msedge",
       "request": "launch",
-      "preLaunchTask": "npm: test",
-      "url": "http://localhost:9876/debug.html"
+      "runtimeArgs": [
+        "--remote-debugging-port=9222"
+      ],
+      "url": "http://localhost:4200/",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      //"preLaunchTask": "ng-ng serve",
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "Ng-Open Edge DevTools debug in VsCode",
+      "type": "vscode-edge-devtools.debug",
+      "request": "attach",
+      "port": 9222,
+      "pathMapping": {
+        "/": "${workspaceFolder}/frontend"
+      },
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "url": "http://localhost:4200/",
+      "presentation": {
+        "hidden": true
+      }
+    },
+  ],
+  "compounds": [
+    {
+      "name": "Angular_ng serve-->Launch Edge with DevTools in VsCode with Breakpoints",
+      "configurations": [
+        "Ng-Launch Edge with DevTools",
+        "Ng-Open Edge DevTools debug in VsCode"
+      ]
+    },
+    {
+      "name": "Frontend_Angular_ng serve-->Launch Edge with DevTools in VsCode with Breakpoints",
+      "configurations": [
+        "Frontend_Ng-Launch Edge with DevTools",
+        "Frontend_Ng-Open Edge DevTools debug in VsCode"
+      ]
     }
   ]
 }

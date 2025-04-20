@@ -1,4 +1,10 @@
 {
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=827846
-  "recommendations": ["angular.ng-template"]
+  "recommendations": [
+    "ms-edgedevtools.vscode-edge-devtools",
+    "angular.ng-template",
+    "gurunathan.ej2-ng-packages",
+    "syncfusioninc.web-vscode-extensions",
+    "syncfusioninc.document-viewer-vscode-extensions",
+    "gurunathan.ej2-packages"
+  ]
 }

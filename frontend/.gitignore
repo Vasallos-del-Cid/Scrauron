@@ -41,6 +41,7 @@ testem.log
 .DS_Store
 Thumbs.db
 
+.vscode/settings.json
 
 # clave de Syncfusion (se genera automáticamente)
 src/environments/syncfusion-license.ts
