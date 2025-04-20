@@ -1,1 +1,26 @@
-<p>header works!</p>
+<div class="e-section-control">
+  <div class="header">
+    <span
+      id="hamburger"
+      class="e-icons menu default"
+      (click)="hamburgerClick()"
+    ></span>
+    <div class="content">Rodrigo Díaz de Vivar</div>
+  </div>
+  <ejs-sidebar #sidebar id="default-sidebar" width="220px" type="Over">
+    <div class="title-header">
+      <div style="display: inline-block">Menu</div>
+      <span id="close" class="e-icons" (click)="close()"></span>
+    </div>
+    <div class="content-area">
+       <ejs-accordion
+        #accordion
+        [items]="data"
+        (expanding)="expand($event)"
+        (clicked)="clicked($event)"
+      ></ejs-accordion>
+    </div>
+  </ejs-sidebar>
+  <!-- main content declaration -->
+  
+</div>
