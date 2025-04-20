@@ -60,14 +60,15 @@ npm install @syncfusion/ej2-angular-grids --save
       # almacenar la clave en variable de la terminal 
       $Env:SYNCFUSION_LICENSE="XXX_tu_clave_generada_en_el_paso_anteror_XXX"
 
-      # ejecutar uno de los dos
-      npm install
-      npm run prebuild
+      # ejecutar
+      npm run generarLicencia
       ```
 
       Existe un script en ~frontend/scripts que guarda la variable en un fichero de environment que no se incluye en git
 
-      Este script se lanza tras ejecutar npm install o npm run prebuild (ver scripts del package.json --> postinstall)
+      Este script se lanza tras ejecutar npm run generarLicencia (ver scripts del package.json --> generarLicencia).
+
+      Si el archivo ya estaba creado, no hace nada
 3. Incluir la licencia en el proyecto
 
    1. En el main.ts incluir este bloque
