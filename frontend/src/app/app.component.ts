@@ -79,7 +79,7 @@ import { RouterOutlet, RouterModule } from '@angular/router';
     HeaderComponent,
     BodyComponent,
     FooterComponent,
-    RouterOutlet,
+    //RouterOutlet,
     RouterModule,
     
   ],

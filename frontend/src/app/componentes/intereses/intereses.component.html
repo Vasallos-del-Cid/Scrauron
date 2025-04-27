@@ -1,1 +1,26 @@
-<p>intereses works!</p>
+<div class="contenedor-grid">
+  <ejs-grid #grid
+    [dataSource]="intereses"
+    [allowPaging]="true"
+    [pageSettings]="pageSettings"
+    [allowSorting]="true"
+    [allowFiltering]="true"
+    [editSettings]="editSettings"
+    [toolbar]="toolbar"
+    (toolbarClick)="toolbarClick($event)"
+    (dataBound)="dataBound()"
+    height="100%"
+    allowSelection="true"
+    selectionSettings="{ type: 'Single' }"
+    gridLines="Both">
+    
+    <e-columns>
+      <e-column field="nombre" headerText="Término de Interés" width="180" textAlign="Left" isPrimaryKey="true"></e-column>
+      <e-column field="num_menciones" headerText="Menciones" width="120" textAlign="Right"></e-column>
+      <e-column field="usuario_creador" headerText="Creador" width="150" textAlign="Left"></e-column>
+      <e-column field="num_usuarios" headerText="Seguidores" width="120" textAlign="Right"></e-column>
+      <e-column field="fecha_creacion" headerText="Fecha de Creación" width="150" format="yMd" textAlign="Center"></e-column>
+      <e-column field="estado" headerText="Estado" width="100" textAlign="Center"></e-column>
+    </e-columns>
+  </ejs-grid>
+</div>

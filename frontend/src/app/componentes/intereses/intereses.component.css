@@ -1,0 +1,22 @@
+.contenedor-grid {
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.e-grid {
+  flex-grow: 1;
+  height: 100%;
+}
+
+.e-grid .e-gridheader, .e-grid .e-gridcontent {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.e-gridcontent {
+  height: 100%;
+}
