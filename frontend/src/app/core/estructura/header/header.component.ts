@@ -15,46 +15,45 @@ import { from } from 'rxjs';
 
 @Component({
   selector: 'app-header',
-  imports: [SidebarModule, AccordionModule, RouterModule],
   templateUrl: './header.component.html',
+  styleUrls: ['./header.component.css'],
   encapsulation: ViewEncapsulation.None,
-  styleUrl: './header.component.css',
+  imports: [SidebarModule, AccordionModule, RouterModule],
 })
 export class HeaderComponent {
   constructor(private _router: Router) {
-
-     // Vincular el método al contexto de la clase para que este método pueda acceder a las propiedades de la clase
     this.clicked = this.clicked.bind(this);
   }
 
-  @ViewChild('sidebar')
-  public sidebarObj?: SidebarComponent;
-  @ViewChild('accordion')
-  public accordionObj?: AccordionComponent;
+  @ViewChild('sidebar') public sidebarObj?: SidebarComponent;
+  @ViewChild('accordion') public accordionObj?: AccordionComponent;
 
   public data: { [key: string]: Object }[] = [
     {
-      header: 'Grid',
-      content: '<div id="Appliances_Items"></div>',
+      header: '<i class="e-icons e-home"></i> Inicio',
+      content: '<div id="home_Items"></div>',
+      subItems: [{ header: '<i class="e-icons e-home"></i> Home' }],
+    },
+    {
+      header: '<i class="e-icons e-bookmark"></i> Gestión',
+      content: '<div id="gestion_Items"></div>',
       subItems: [
-        {
-          header: 'Kitchen',
-          content: '<div id="Appliances_Kitchen_Items"></div>',
-          subItems: [
-            {
-              header: 'home',
-            },
-            {
-              header: 'Grid',
-            },
-            { header: 'Blenders' },
-          ],
-        },
+        { header: '<i class="e-icons e-bookmark"></i> Intereses' },
+        { header: '<i class="e-icons e-eye"></i> Fuentes' },
       ],
+    },
+    {
+      header: '<i class="e-icons e-warning"></i> Alertas',
+      content: '<div id="alertas_Items"></div>',
+      subItems: [{ header: '<i class="e-icons e-warning"></i> Ver alertas' }],
+    },
+    {
+      header: '<i class="e-icons e-user"></i> Perfil',
+      content: '<div id="perfil_Items"></div>',
+      subItems: [{ header: '<i class="e-icons e-user"></i> Mi perfil' }],
     },
   ];
 
-  //Expanding Event function for Accordion component.
   public expand(e: ExpandEventArgs): void {
     if (e.isExpanded) {
       if (
@@ -64,7 +63,6 @@ export class HeaderComponent {
       ) {
         return;
       }
-      //Initialize Nested Accordion component
       let nestAcrdn: Accordion = new Accordion({
         items: (<{ subItems: object[] }>e.item).subItems,
         expanding: this.expand,
@@ -74,25 +72,41 @@ export class HeaderComponent {
       let elemId: string = (e.element as HTMLElement).getElementsByClassName(
         'e-acrdn-content'
       )[0].children[0].id;
-      //Render initialized Nested Accordion component
       nestAcrdn.appendTo('#' + elemId);
     }
   }
 
   public clicked(e: AccordionClickArgs): void {
-    switch (e.item?.header?.toString()) {
-      case 'home':
+    const cleanHeader = (e.item?.header as string)
+      .replace(/<[^>]*>/g, '')
+      .trim(); // Quita HTML
+    switch (cleanHeader) {
+      case 'Home':
         this._router.navigate(['/']);
+        this.sidebarObj?.hide();
         break;
-      case 'Grid':
-        this._router.navigate(['/grid']);
+      case 'Intereses':
+        this._router.navigate(['/intereses']);
+        this.sidebarObj?.hide();
+        break;
+      case 'Fuentes':
+        this._router.navigate(['/fuentes']);
+        this.sidebarObj?.hide();
+        break;
+      case 'Ver alertas':
+        this._router.navigate(['/alertas']);
+        this.sidebarObj?.hide();
+        break;
+      case 'Mi perfil':
+        this._router.navigate(['/perfil']);
+        this.sidebarObj?.hide();
         break;
     }
   }
 
   public hamburgerClick(): void {
     this.sidebarObj?.show();
-    (this.accordionObj as AccordionComponent).refresh();
+    this.accordionObj?.refresh();
   }
 
   public close(): void {
