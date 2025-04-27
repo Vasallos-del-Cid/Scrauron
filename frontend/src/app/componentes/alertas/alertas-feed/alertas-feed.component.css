@@ -1,0 +1,137 @@
+.barra-filtros {
+  position: sticky;
+  top: 0;
+  background-color: #ffffff;
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);}
+
+.filtro-item {
+  display: flex;
+  flex-direction: column;
+  width: 180px;
+  min-width: 150px;
+}
+
+.boton-reset {
+  background-color: #3953f6;
+  color: white;
+  border: none;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.contenedor-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  overflow-y: auto;
+  height: calc(100vh - 180px);
+  padding: 10px;
+}
+
+.alerta-card {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 15px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+}
+
+.alerta-card.verde {
+  background-color: #e5ffe5;
+}
+
+.alerta-card.rojo {
+  background-color: #ffe5e5;
+}
+
+.card-contenido {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.imagen-alerta {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.card-texto {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.fila-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.titulo {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+  flex: 1;
+  text-align: left;
+}
+
+.fecha-impactos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.ver-detalles {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #555;
+}
+
+.resumen {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #444;
+  text-align: left;
+}
+
+.fila-footer {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tags {
+  display: flex;
+  gap: 5px;
+}
+
+.badge {
+  background: #ccc;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+}
+
+.fuente a, .fuente select {
+  font-size: 0.8rem;
+  color: #3953f6;
+  text-decoration: underline;
+}

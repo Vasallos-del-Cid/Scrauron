@@ -1,3 +1,10 @@
+.barra-filtros {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
 .form-container {
   padding: 20px;
   width: 100%;

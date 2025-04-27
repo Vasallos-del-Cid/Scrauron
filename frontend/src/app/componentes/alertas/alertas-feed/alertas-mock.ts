@@ -1,0 +1,222 @@
+export const ALERTAS_MOCK = [
+  {
+    titulo: 'Crisis energética en Europa',
+    resumen: 'La dependencia del gas ruso impacta en los precios de la energía.',
+    impactos: 120,
+    fuente: 'Prensa',
+    enlaces: [{ url: 'https://elpais.com', titulo: 'El País' }],
+    fecha: new Date('2025-04-20'),
+    intereses: ['Crisis', 'Energía'],
+    valoracion: 'Mala',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Wilkinson lanza línea sostenible',
+    resumen: 'La empresa apuesta por el desarrollo de productos ecológicos.',
+    impactos: 80,
+    fuente: 'Twitter',
+    enlaces: [{ url: 'https://twitter.com/wilkinson', titulo: 'Twitter Wilkinson' }],
+    fecha: new Date('2025-04-19'),
+    intereses: ['Publicidad', 'Sostenibilidad'],
+    valoracion: 'Buena',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Nueva regulación de datos en Europa',
+    resumen: 'El reglamento GDPR se actualiza para 2025 con nuevas normas.',
+    impactos: 65,
+    fuente: 'Prensa',
+    enlaces: [{ url: 'https://bbc.com', titulo: 'BBC News' }],
+    fecha: new Date('2025-04-18'),
+    intereses: ['Regulación', 'Tecnología'],
+    valoracion: 'Regular',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Aumento en ciberataques a empresas',
+    resumen: 'Las amenazas informáticas crecen en 2025, alerta la Interpol.',
+    impactos: 140,
+    fuente: 'Telegram',
+    enlaces: [{ url: 'https://t.me/cybernews', titulo: 'Canal CiberNoticias' }],
+    fecha: new Date('2025-04-17'),
+    intereses: ['Ciberseguridad'],
+    valoracion: 'Mala',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Tesla presenta su nuevo modelo eléctrico',
+    resumen: 'La compañía innova con baterías de mayor duración.',
+    impactos: 200,
+    fuente: 'Twitter',
+    enlaces: [{ url: 'https://twitter.com/tesla', titulo: 'Tesla Twitter' }],
+    fecha: new Date('2025-04-16'),
+    intereses: ['Automoción', 'Innovación'],
+    valoracion: 'Buena',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Problemas reputacionales para Facebook',
+    resumen: 'Nuevo escándalo de privacidad de usuarios.',
+    impactos: 180,
+    fuente: 'Prensa',
+    enlaces: [{ url: 'https://cnn.com', titulo: 'CNN' }],
+    fecha: new Date('2025-04-15'),
+    intereses: ['Reputación', 'Privacidad'],
+    valoracion: 'Mala',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Éxito de la campaña solidaria de Amazon',
+    resumen: 'La iniciativa benéfica recauda millones para ONGs.',
+    impactos: 75,
+    fuente: 'Telegram',
+    enlaces: [{ url: 'https://t.me/amazonnews', titulo: 'Amazon Noticias' }],
+    fecha: new Date('2025-04-14'),
+    intereses: ['Solidaridad', 'Amazon'],
+    valoracion: 'Buena',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Google presenta nuevo motor de IA',
+    resumen: 'Revolución en la capacidad de procesamiento lingüístico.',
+    impactos: 95,
+    fuente: 'Twitter',
+    enlaces: [{ url: 'https://twitter.com/googleai', titulo: 'Google AI' }],
+    fecha: new Date('2025-04-13'),
+    intereses: ['Inteligencia Artificial'],
+    valoracion: 'Buena',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Caída de ventas en el sector turístico',
+    resumen: 'La inflación impacta en los viajes de ocio.',
+    impactos: 150,
+    fuente: 'Prensa',
+    enlaces: [{ url: 'https://reuters.com', titulo: 'Reuters' }],
+    fecha: new Date('2025-04-12'),
+    intereses: ['Turismo', 'Economía'],
+    valoracion: 'Mala',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Microsoft lidera en inversión verde',
+    resumen: 'Más del 80% de sus operaciones serán carbono-neutro para 2030.',
+    impactos: 110,
+    fuente: 'Prensa',
+    enlaces: [{ url: 'https://microsoft.com', titulo: 'Microsoft News' }],
+    fecha: new Date('2025-04-11'),
+    intereses: ['Sostenibilidad', 'Tecnología'],
+    valoracion: 'Buena',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Protestas masivas en Latinoamérica',
+    resumen: 'Reclaman mejoras sociales y económicas.',
+    impactos: 170,
+    fuente: 'Prensa',
+    enlaces: [{ url: 'https://bbc.com/mundo', titulo: 'BBC Mundo' }],
+    fecha: new Date('2025-04-10'),
+    intereses: ['Política', 'Sociedad'],
+    valoracion: 'Regular',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Twitter implementa verificación automática',
+    resumen: 'Nuevo sistema para validar identidades de usuarios.',
+    impactos: 60,
+    fuente: 'Twitter',
+    enlaces: [{ url: 'https://twitter.com/news', titulo: 'Noticias Twitter' }],
+    fecha: new Date('2025-04-09'),
+    intereses: ['Redes Sociales'],
+    valoracion: 'Buena',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Caída de exportaciones en Asia',
+    resumen: 'Tensiones comerciales afectan al crecimiento regional.',
+    impactos: 130,
+    fuente: 'Prensa',
+    enlaces: [{ url: 'https://asiaeconomy.com', titulo: 'Asia Economy' }],
+    fecha: new Date('2025-04-08'),
+    intereses: ['Economía', 'Comercio'],
+    valoracion: 'Mala',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Nuevo récord de ventas para Apple',
+    resumen: 'Lidera el mercado global de smartphones.',
+    impactos: 210,
+    fuente: 'Prensa',
+    enlaces: [{ url: 'https://apple.com/newsroom', titulo: 'Apple Newsroom' }],
+    fecha: new Date('2025-04-07'),
+    intereses: ['Tecnología', 'Empresas'],
+    valoracion: 'Buena',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Brote de enfermedades respiratorias',
+    resumen: 'Preocupación internacional por la propagación rápida.',
+    impactos: 160,
+    fuente: 'Prensa',
+    enlaces: [{ url: 'https://who.int', titulo: 'OMS' }],
+    fecha: new Date('2025-04-06'),
+    intereses: ['Salud', 'Crisis Sanitaria'],
+    valoracion: 'Mala',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Innovaciones en biotecnología médica',
+    resumen: 'Nuevos avances prometen tratamientos revolucionarios.',
+    impactos: 85,
+    fuente: 'Twitter',
+    enlaces: [{ url: 'https://twitter.com/biotech', titulo: 'Biotech News' }],
+    fecha: new Date('2025-04-05'),
+    intereses: ['Biotecnología', 'Salud'],
+    valoracion: 'Buena',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Criptomonedas alcanzan nueva baja histórica',
+    resumen: 'Bitcoin y Ethereum retroceden un 20% en una semana.',
+    impactos: 190,
+    fuente: 'Telegram',
+    enlaces: [{ url: 'https://t.me/cryptoalerts', titulo: 'Cripto Alerts' }],
+    fecha: new Date('2025-04-04'),
+    intereses: ['Criptomonedas', 'Finanzas'],
+    valoracion: 'Mala',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Acuerdo histórico en cambio climático',
+    resumen: 'Firmado en la cumbre de la ONU en Nueva York.',
+    impactos: 145,
+    fuente: 'Prensa',
+    enlaces: [{ url: 'https://un.org/climatechange', titulo: 'ONU Cambio Climático' }],
+    fecha: new Date('2025-04-03'),
+    intereses: ['Medio Ambiente', 'Política Internacional'],
+    valoracion: 'Buena',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Crece el uso de energías renovables',
+    resumen: 'Europa supera el 50% de generación renovable.',
+    impactos: 100,
+    fuente: 'Prensa',
+    enlaces: [{ url: 'https://energypost.eu', titulo: 'Energy Post' }],
+    fecha: new Date('2025-04-02'),
+    intereses: ['Energía', 'Sostenibilidad'],
+    valoracion: 'Buena',
+    imagen: 'https://picsum.photos/200'
+  },
+  {
+    titulo: 'Hackeo masivo en entidades bancarias',
+    resumen: 'Vulnerados millones de registros de clientes.',
+    impactos: 220,
+    fuente: 'Telegram',
+    enlaces: [{ url: 'https://t.me/hacknews', titulo: 'Hack News' }],
+    fecha: new Date('2025-04-01'),
+    intereses: ['Ciberseguridad', 'Banca'],
+    valoracion: 'Mala',
+    imagen: 'https://picsum.photos/200'
+  }
+];
