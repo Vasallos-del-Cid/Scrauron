@@ -1,1 +1,53 @@
-<p>fuentes works!</p>
+<div class="contenedor-grid">
+
+  <ejs-grid #grid
+    [dataSource]="fuentes"
+    [allowPaging]="true"
+    [pageSettings]="pageSettings"
+    [allowSorting]="true"
+    [allowFiltering]="true"
+    [editSettings]="editSettings"
+    [toolbar]="toolbar"
+    (toolbarClick)="toolbarClick($event)"
+    (dataBound)="dataBound()"
+    locale="es-ES"
+    height="100%"
+    allowSelection="true"
+    selectionSettings="{ type: 'Single' }"
+    gridLines="Both">
+
+    <e-columns>
+      <e-column field="nombre" headerText="Nombre de Fuente" width="200" textAlign="Left" isPrimaryKey="true"></e-column>
+      <e-column field="tipo" headerText="Tipo de Fuente" width="150" textAlign="Left"></e-column>
+      <e-column field="activo" headerText="Estado" width="120" textAlign="Center" [template]="switchTemplate"></e-column>
+      <e-column field="fecha_alta" headerText="Fecha de Alta" width="150" format="yMd" textAlign="Center"></e-column>
+    </e-columns>
+
+    <ng-template #switchTemplate let-data>
+      <ejs-switch 
+        [checked]="data.activo" 
+        (change)="switchChange($event, data)"
+        cssClass="custom-switch">
+      </ejs-switch>
+    </ng-template>
+
+  </ejs-grid>
+
+  <ejs-dialog #dialogoFuente
+    [visible]="false"
+    [width]="'500px'"
+    [header]="modoEdicion ? 'Editar Fuente' : 'Crear Nueva Fuente'"
+    [showCloseIcon]="true"
+    [isModal]="true"
+    [allowDragging]="true"
+    (close)="cancelarFuente()">
+    
+    <app-form-crear-fuentes 
+      [fuente]="fuenteSeleccionada"
+      (guardar)="guardarFuente($event)"
+      (cancelar)="cancelarFuente()">
+    </app-form-crear-fuentes>
+
+  </ejs-dialog>
+
+</div>

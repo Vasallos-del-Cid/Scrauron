@@ -23,6 +23,7 @@
     "@syncfusion/ej2-angular-grids": "^29.1.38",
     "@syncfusion/ej2-angular-lists": "^29.1.34",
     "@syncfusion/ej2-angular-navigations": "^29.1.38",
+    "@syncfusion/ej2-angular-popups": "^29.1.37",
     "@syncfusion/ej2-angular-splitbuttons": "^29.1.33",
     "@syncfusion/ej2-icons": "^29.1.33",
     "@syncfusion/ej2-material-theme": "~29.1.38",

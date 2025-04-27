@@ -1,0 +1,23 @@
+<div class="form-container">
+  <form [formGroup]="fuenteForm" (ngSubmit)="submitForm()">
+    <div class="form-group">
+      <label>Nombre de la Fuente:</label>
+      <input type="text" formControlName="nombre" required />
+    </div>
+
+    <div class="form-group">
+      <label>Tipo de Fuente:</label>
+      <input type="text" formControlName="tipo" required />
+    </div>
+
+    <div class="form-group">
+      <label>Estado:</label>
+      <ejs-switch formControlName="activo"></ejs-switch>
+    </div>
+
+    <div class="buttons">
+      <button type="submit" [disabled]="!fuenteForm.valid">Guardar</button>
+      <button type="button" (click)="cancelarForm()">Cancelar</button>
+    </div>
+  </form>
+</div>
