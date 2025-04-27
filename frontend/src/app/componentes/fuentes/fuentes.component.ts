@@ -1,6 +1,14 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { GridComponent, GridModule, PageService, ToolbarService, SortService, FilterService, EditService } from '@syncfusion/ej2-angular-grids';
+import {
+  GridComponent,
+  GridModule,
+  PageService,
+  ToolbarService,
+  SortService,
+  FilterService,
+  EditService,
+} from '@syncfusion/ej2-angular-grids';
 import { DialogComponent, DialogModule } from '@syncfusion/ej2-angular-popups';
 import { SwitchModule } from '@syncfusion/ej2-angular-buttons';
 import { FormCrearFuentesComponent } from './form-crear-fuentes/form-crear-fuentes.component';
@@ -8,13 +16,24 @@ import { FormCrearFuentesComponent } from './form-crear-fuentes/form-crear-fuent
 @Component({
   selector: 'app-fuentes',
   standalone: true,
-  imports: [CommonModule, GridModule, SwitchModule, DialogModule, FormCrearFuentesComponent],
-  providers: [PageService, ToolbarService, SortService, FilterService, EditService],
+  imports: [
+    CommonModule,
+    GridModule,
+    SwitchModule,
+    DialogModule,
+    FormCrearFuentesComponent,
+  ],
+  providers: [
+    PageService,
+    ToolbarService,
+    SortService,
+    FilterService,
+    EditService,
+  ],
   templateUrl: './fuentes.component.html',
-  styleUrls: ['./fuentes.component.css']
+  styleUrls: ['./fuentes.component.css'],
 })
 export class FuentesComponent implements OnInit {
-
   @ViewChild('grid') public grid?: GridComponent;
   @ViewChild('dialogoFuente') public dialogoFuente?: DialogComponent;
 
@@ -24,12 +43,22 @@ export class FuentesComponent implements OnInit {
     { text: 'Crear', id: 'Crear', prefixIcon: 'e-add' },
     { text: 'Editar', id: 'Editar', prefixIcon: 'e-edit' },
     { text: 'Eliminar', id: 'Eliminar', prefixIcon: 'e-delete' },
+    {
+      text: 'Limpiar Filtros',
+      id: 'Reset',
+      prefixIcon: 'e-filter-clear',
+      align: 'Right',
+      disabled: true,
+    },
     'Search',
-    { text: 'Limpiar Filtros', id: 'Reset', prefixIcon: 'e-clear-icon', align: 'Right', disabled: true }
   ];
 
   public pageSettings = { pageSizes: true, pageSize: 10 };
-  public editSettings = { allowEditing: false, allowDeleting: false, allowAdding: false };
+  public editSettings = {
+    allowEditing: false,
+    allowDeleting: false,
+    allowAdding: false,
+  };
   public modoEdicion = false;
   public fuenteSeleccionada: any = null;
 
@@ -42,23 +71,23 @@ export class FuentesComponent implements OnInit {
   cargarFuentesMock(): void {
     this.fuentes = [
       {
-        nombre: "Twitter",
-        tipo: "Red Social",
+        nombre: 'Twitter',
+        tipo: 'Red Social',
         activo: true,
-        fecha_alta: "2024-04-01"
+        fecha_alta: '2024-04-01',
       },
       {
-        nombre: "La Vanguardia",
-        tipo: "Prensa Escrita",
+        nombre: 'La Vanguardia',
+        tipo: 'Prensa Escrita',
         activo: true,
-        fecha_alta: "2024-04-15"
+        fecha_alta: '2024-04-15',
       },
       {
-        nombre: "Canal Noticias Telegram",
-        tipo: "Canal Telegram",
+        nombre: 'Canal Noticias Telegram',
+        tipo: 'Canal Telegram',
         activo: false,
-        fecha_alta: "2024-03-20"
-      }
+        fecha_alta: '2024-03-20',
+      },
     ];
   }
 
@@ -100,7 +129,7 @@ export class FuentesComponent implements OnInit {
     const seleccionados = this.grid?.getSelectedRecords();
     if (seleccionados && seleccionados.length > 0) {
       const nombre = (seleccionados[0] as { nombre: string })['nombre'];
-      this.fuentes = this.fuentes.filter(f => f.nombre !== nombre);
+      this.fuentes = this.fuentes.filter((f) => f.nombre !== nombre);
       this.grid?.refresh();
       console.log(`Fuente ${nombre} eliminada`);
     }
@@ -108,7 +137,9 @@ export class FuentesComponent implements OnInit {
 
   guardarFuente(fuente: any): void {
     if (this.modoEdicion) {
-      const index = this.fuentes.findIndex(f => f.nombre === this.fuenteSeleccionada.nombre);
+      const index = this.fuentes.findIndex(
+        (f) => f.nombre === this.fuenteSeleccionada.nombre
+      );
       if (index !== -1) {
         this.fuentes[index] = fuente;
       }
@@ -123,14 +154,33 @@ export class FuentesComponent implements OnInit {
     this.dialogoFuente?.hide();
   }
 
+  onActionBegin(args: any): void {
+    if (args.requestType === 'filtering' || args.requestType === 'searching') {
+      console.log('➡️ Se ha aplicado un filtro o una búsqueda');
+    }
+  }
+
+  onActionComplete(args: any): void {
+    if (args.requestType === 'filtering' || args.requestType === 'searching') {
+      const filtrosActivos =
+        (this.grid?.filterSettings?.columns?.length ?? 0) > 0 ||
+        (this.grid?.searchSettings?.key?.length ?? 0) > 0;
+      console.log('➡️ ⚠️ ¿Filtros activos?', filtrosActivos);
+      this.activarODesactivarResetFiltros(filtrosActivos);
+    }
+  }
+
   dataBound(): void {
-    const filtrosActivos = (this.grid?.filterSettings?.columns?.length ?? 0) > 0 ||
-                            (this.grid?.searchSettings?.key?.length ?? 0) > 0;
+    const filtrosActivos =
+      (this.grid?.filterSettings?.columns?.length ?? 0) > 0 ||
+      (this.grid?.searchSettings?.key?.length ?? 0) > 0;
     this.activarODesactivarResetFiltros(filtrosActivos);
   }
 
   activarODesactivarResetFiltros(activo: boolean): void {
-    const resetButton = this.grid?.toolbarModule?.toolbar?.items.find((item: any) => item.id?.endsWith('_Reset'));
+    const resetButton = this.grid?.toolbarModule?.toolbar?.items.find(
+      (item: any) => item.id?.endsWith('Reset')
+    );
     if (resetButton) {
       resetButton.disabled = !activo;
       this.grid?.toolbarModule?.toolbar?.refreshOverflow();
