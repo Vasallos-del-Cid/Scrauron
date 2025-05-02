@@ -1,2 +1,11 @@
 .vscode/settings.json
 frontend/.vscode/settings.json
+backend/json/resultados_20minutos.json
+backend/json/resultados_elconfidencial.json
+backend/json/resultados_elmundo.json
+backend/json/resultados_elpais.json
+backend/json/resultados_abc.json
+backend/json/resultados_elespanol.json
+backend/json/resultados_huffingtonpost.json
+backend/json/resultados_lavanguardia.json
+backend/json/resultados_okdiario.json
