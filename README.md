@@ -131,6 +131,13 @@ Versión empleada: Scrapy==2.11.0 (en requirements.txt)
 
 Licencia BSD (modificada, uso libre y sin atribución, solo restingido el uso de nombres de titulares sin su permiso)
 
+#### Pymongo (Cliente de mongoDB para python)
+
+```bash
+python -m pip install "pymongo[srv]"==3.12
+```
+
+
 ### Run project
 
 ```

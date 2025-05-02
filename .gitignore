@@ -9,3 +9,11 @@ backend/json/resultados_elespanol.json
 backend/json/resultados_huffingtonpost.json
 backend/json/resultados_lavanguardia.json
 backend/json/resultados_okdiario.json
+backend/.env
+backend/app/__pycache__/__init__.cpython-312.pyc
+backend/app/__pycache__/routes.cpython-312.pyc
+backend/app/__pycache__/scraper.cpython-312.pyc
+backend/spiders/__pycache__/__init__.cpython-312.pyc
+backend/spiders/__pycache__/spider_telegram.cpython-312.pyc
+backend/spiders/__pycache__/spider.cpython-312.pyc
+backend/__pycache__/db.cpython-312.pyc

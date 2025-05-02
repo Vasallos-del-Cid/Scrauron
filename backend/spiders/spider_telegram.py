@@ -4,6 +4,7 @@ import os
 import argparse
 from scrapy.crawler import CrawlerProcess
 import re
+from db import coleccion
 
 class TelegramSpider(scrapy.Spider):
     name = "telegram"
@@ -17,13 +18,14 @@ class TelegramSpider(scrapy.Spider):
         "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
         "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 30 * 1000,
     }
-
+    url=""
     def __init__(self, start_url=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.start_urls = [start_url] if start_url else ["https://t.me/s/Alviseperez"]
 
     def start_requests(self):
         for url in self.start_urls:
+            self.url = url
             yield scrapy.Request(
                 url,
                 meta={
@@ -52,8 +54,15 @@ class TelegramSpider(scrapy.Spider):
 
             yield {
                 "titulo": titulo,
+                "url": self.url,
                 "contenido": contenido
             }
+            noticia={
+                "titulo": titulo,
+                "url": self.url,
+                "contenido": contenido
+            }
+            resultado = coleccion.insert_one(noticia)
 
 def run_spider(url):
     # Obtener la ruta del directorio actual donde se encuentra el script (noticias_scraper/spiders)

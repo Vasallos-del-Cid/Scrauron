@@ -4,6 +4,7 @@ import os
 import re
 import json
 from flask import Flask, jsonify, request
+from db import coleccion
 
 
 class NoticiasSpider(scrapy.Spider):
@@ -15,8 +16,6 @@ class NoticiasSpider(scrapy.Spider):
     def __init__(self, url=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.start_urls = [url] if url else ["https://www.elespanol.com/"]
-
-    import scrapy
 
     def parse(self, response):
         print(response.text)
@@ -96,6 +95,12 @@ class NoticiasSpider(scrapy.Spider):
             "url": url,
             "contenido": contenido_unido
         }
+        noticia={
+            "titulo": titulo,
+            "url": url,
+            "contenido": contenido_unido
+        }
+        resultado = coleccion.insert_one(noticia)
 
 
 
