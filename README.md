@@ -96,3 +96,43 @@ Con el comando, se deben haber incluido las dependencias necesarias para el comp
 - app-coomponent (componente declarado en el imports)
 
 Con eso ya estaria el componente listo para usarse
+
+
+## Backend
+
+### Instalar dependencias
+
+#### Flask (API REST)
+
+```bash
+pip install flask
+```
+
+Comprobar instalación
+```bash
+python -m flask --version
+```
+Versión empleada: Flask==2.3.2 (en requirements.txt)
+
+Licencia BSD (Similar a MIT)
+
+#### Scrapy (webscraping)
+
+```bash
+pip install scrapy
+```
+
+Comprobar instalación
+```bash
+scrapy version
+```
+
+Versión empleada: Scrapy==2.11.0 (en requirements.txt)
+
+Licencia BSD (modificada, uso libre y sin atribución, solo restingido el uso de nombres de titulares sin su permiso)
+
+### Run project
+
+```
+python run.py
+```

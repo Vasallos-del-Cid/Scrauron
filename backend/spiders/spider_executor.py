@@ -32,6 +32,7 @@ if __name__ == "__main__":
         },
         "LOG_ENABLED": False  # Deshabilitar logs si no los necesitas
     })
+    #Si es una url de Telegram usar TelegramSpider, sino usar NoticiasSpider
     if(url.startswith(("https://t.me/", "http://t.me/"))):
         print("Detectado Telegram")
     process.crawl(TelegramSpider if url.startswith(("https://t.me/", "http://t.me/")) else NoticiasSpider, url=url)

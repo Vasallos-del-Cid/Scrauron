@@ -99,7 +99,7 @@ class NoticiasSpider(scrapy.Spider):
 
 
 
-
+#Obtener el nombre del sitio web. Texto entre www. y .com o .es
 def obtener_nombre_archivo(url):
     match = re.search(r'(?:https?://)?(?:www\.)?([a-zA-Z0-9\-]+)\.(com|es)', url)
     if match:
