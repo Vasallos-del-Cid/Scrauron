@@ -134,9 +134,16 @@ Licencia BSD (modificada, uso libre y sin atribución, solo restingido el uso de
 #### Pymongo (Cliente de mongoDB para python)
 
 ```bash
-python -m pip install "pymongo[srv]"==3.12
+python -m pip install "pymongo[srv]"==3.10
 ```
 
+
+#### Playwright 
+Playwright permite renderizar páginas dinámicas con JavaScript dentro de Scrapy, haciendo posible el scraping de canales de Telegram en formato web público donde los mensajes están ocultos hasta que el contenido se carga completamente mediante scripts.
+```bash
+pip install scrapy-playwright
+playwright install
+```
 
 ### Run project
 
