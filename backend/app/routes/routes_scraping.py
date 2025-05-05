@@ -1,9 +1,13 @@
 from flask import Blueprint, request, jsonify
-from .scraper import ejecutar_scraping
+from ..scraper import ejecutar_scraping
+from ..mongo.mongo_fuentes import get_fuentes, create_fuente, delete_fuente, update_fuente
+from ..models.fuente import Fuente
 
-api = Blueprint('api', __name__)
+api_scraping = Blueprint('api_scraping', __name__)
 
-@api.route('/scraping', methods=['GET'])
+#Endpoints Scraping
+
+@api_scraping.route('/scraping', methods=['GET'])
 def scraping():
     url = request.args.get('url')
     if not url:

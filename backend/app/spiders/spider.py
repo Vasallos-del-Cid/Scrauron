@@ -3,9 +3,9 @@ from scrapy.crawler import CrawlerProcess
 from datetime import datetime
 import re
 from urllib.parse import urlparse
-from app.mongo.mongo_utils import get_mongo_collection
+from app.mongo.mongo_publicaciones import get_mongo_collection
 from pymongo.errors import DuplicateKeyError, WriteError, ConnectionFailure
-from app.models.publicacion import Publicacion  
+from app.models.publicacion import Publicacion
 
 coleccion = get_mongo_collection()
 
@@ -24,6 +24,7 @@ class NoticiasSpider(scrapy.Spider):
     def __init__(self, url=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.start_urls = [url] if url else ["https://www.elespanol.com/"]
+        self.total_guardados = 0
 
     def parse(self, response):
         fuente_nombre, fuente_dominio = extraer_fuente_info(response.url)
@@ -63,31 +64,25 @@ class NoticiasSpider(scrapy.Spider):
             url=url,
             fecha=datetime.now(),
             contenido=contenido_unido,
-            fuente=fuente_dominio  # Usamos el dominio completo como fuente principal
+            fuente=fuente_dominio
         )
-
-        publicacion._id = url
 
         try:
             coleccion.insert_one(publicacion.to_dict())
-            print(f"Artículo guardado: {titulo} | Fuente: {fuente_nombre} ({fuente_dominio})")
+            self.total_guardados += 1
+            print(f"✅ Artículo guardado: {titulo} | Fuente: {fuente_nombre} ({fuente_dominio})")
         except DuplicateKeyError:
-            print("Ya existe un artículo con esa clave.")
+            print("⚠️ Ya existe un artículo con esa clave.")
         except ConnectionFailure:
-            print("No se pudo conectar a MongoDB.")
+            print("❌ No se pudo conectar a MongoDB.")
         except WriteError as e:
-            print(f"Error al escribir en la base de datos: {e}")
+            print(f"❌ Error al escribir en la base de datos: {e}")
         except Exception as e:
-            print(f"Error inesperado: {e}")
+            print(f"❌ Error inesperado: {e}")
 
-        
+    def closed(self, reason):
+        print(f"\n💾 Total guardados: {self.total_guardados}")
 
-        
-
-
-
-
-#Obtener el nombre del sitio web. Texto entre www. y .com o .es
 def obtener_nombre_archivo(url):
     match = re.search(r'(?:https?://)?(?:www\.)?([a-zA-Z0-9\-]+)\.(com|es)', url)
     if match:
@@ -95,4 +90,3 @@ def obtener_nombre_archivo(url):
     else:
         dominio = "sitio"
     return f"resultados_{dominio}.json"
-

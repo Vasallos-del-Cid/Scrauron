@@ -1,6 +1,8 @@
 import subprocess
 
+SCRAPING_FREQ = 60
+
 def ejecutar_scraping(url):
-    subprocess.run(["python", "app/spiders/spider_executor.py", url], check=True)
+    return subprocess.run(["python", "app/spiders/spider_executor.py", url], check=True)
 
    

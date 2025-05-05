@@ -26,7 +26,6 @@ class Publicacion:
 
     def to_dict(self):
         return {
-            "_id": self._id,
             "titulo": self.titulo,
             "url": self.url,
             "fecha": self.fecha,  # datetime, Mongo lo guarda correctamente
@@ -46,5 +45,4 @@ class Publicacion:
             fuente=data["fuente"],
             tono=data.get("tono"),
             conceptos_relacionados=conceptos,
-            _id=data.get("_id")
         )

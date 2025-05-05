@@ -4,7 +4,7 @@ import hashlib
 from datetime import datetime
 import re
 from app.mongo.mongo_utils import get_mongo_collection
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import DuplicateKeyError, ConnectionFailure, WriteError
 from app.models.publicacion import Publicacion
 
 coleccion = get_mongo_collection()
@@ -83,11 +83,15 @@ class TelegramSpider(scrapy.Spider):
 
             try:
                 coleccion.insert_one(publicacion.to_dict())
-                print(f"✅ Guardado: {titulo}")
                 total_guardados += 1
+                print(f"✅ Artículo guardado: {titulo} | Fuente: {publicacion.fuente}")
             except DuplicateKeyError:
-                print("⚠️ Ya existe este mensaje.")
+                print("⚠️ Ya existe un artículo con esa clave.")
+            except ConnectionFailure:
+                print("❌ No se pudo conectar a MongoDB.")
+            except WriteError as e:
+                print(f"❌ Error al escribir en la base de datos: {e}")
             except Exception as e:
-                print(f"❌ Error al guardar: {e}")
+                print(f"❌ Error inesperado: {e}")
 
         print(f"\n💾 Total guardados: {total_guardados}")
