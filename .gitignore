@@ -1,5 +1,6 @@
 .vscode/settings.json
 frontend/.vscode/settings.json
+<<<<<<< HEAD
 backend/json/resultados_20minutos.json
 backend/json/resultados_elconfidencial.json
 backend/json/resultados_elmundo.json
@@ -50,3 +51,5 @@ backend/app/routes/__pycache__/routes_publicaciones.cpython-310.pyc
 backend/app/routes/__pycache__/routes_scraping.cpython-310.pyc
 backend/app/similarity_search/__pycache__/__init__.cpython-310.pyc
 backend/app/similarity_search/__pycache__/similarity_search.cpython-310.pyc
+=======
+>>>>>>> af3d63087dfff132ec7a392268489740c65882bd
