@@ -22,10 +22,10 @@ if __name__ == "__main__":
 
     #Si es una url de Telegram usar TelegramSpider, sino usar NoticiasSpider
     if url.startswith(("https://t.me/", "http://t.me/")):
-        print("✅ Detectado Telegram. Usando TelegramSpider.")
+        print("Detectado Telegram. Usando TelegramSpider.")
         process.crawl(TelegramSpider, url=url)
     else:
-        print("📄 Detectada URL de noticia. Usando NoticiasSpider.")
+        print("Detectada URL de noticia. Usando NoticiasSpider.")
         process.crawl(NoticiasSpider, url=url)
 
     process.start()

@@ -23,14 +23,17 @@ def get_fuentes():
         f["_id"] = str(f["_id"])
     return fuentes
 
-def get_fuente_by_id(fuente_id):
-    if not ObjectId.is_valid(fuente_id):
-        raise ValueError("ID no válido")
 
-    fuente = coleccion.find_one({"_id": ObjectId(fuente_id)})
-    if fuente:
-        fuente["_id"] = str(fuente["_id"])
-    return fuente
+
+def get_fuente_by_id(fuente_id: str):
+    if not ObjectId.is_valid(fuente_id):
+        return None
+    raw = coleccion.find_one({"_id": ObjectId(fuente_id)})
+    if raw:
+        raw["_id"] = str(raw["_id"])  # convertir _id para que from_dict lo maneje como string
+        return Fuente.from_dict(raw)
+    return None
+
 
 def create_fuente(fuente):
     data = fuente.to_dict()

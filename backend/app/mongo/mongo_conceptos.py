@@ -17,13 +17,15 @@ def get_conceptos():
         c["_id"] = str(c["_id"])
     return conceptos
 
-def get_concepto_by_id(concepto_id):
+def get_concepto_by_id(concepto_id: str):
     if not ObjectId.is_valid(concepto_id):
-        raise ValueError("ID no válido")
-    concepto = coleccion.find_one({"_id": ObjectId(concepto_id)})
-    if concepto:
-        concepto["_id"] = str(concepto["_id"])
-    return concepto
+        return None
+    raw = coleccion.find_one({"_id": ObjectId(concepto_id)})
+    if raw:
+        raw["_id"] = str(raw["_id"])
+        return ConceptoInteres.from_dict(raw)  # ✅ no devuelvas raw directamente
+    return None
+
 
 def create_concepto(concepto):
     data = concepto.to_dict()
@@ -38,14 +40,21 @@ def delete_concepto(concepto_id):
     result = coleccion.delete_one({"_id": ObjectId(concepto_id)})
     return result.deleted_count
 
-def update_concepto(concepto_id, data):
-    if not ObjectId.is_valid(concepto_id):
-        raise ValueError("ID no válido")
-    if "_id" in data:
-        del data["_id"]
-    result = coleccion.update_one({"_id": ObjectId(concepto_id)}, {"$set": data})
-    if result.matched_count == 0:
-        return None
-    updated = coleccion.find_one({"_id": ObjectId(concepto_id)})
-    updated["_id"] = str(updated["_id"])
-    return updated
+def update_concepto(concepto: ConceptoInteres):
+    data = concepto.to_dict()
+    concepto_id = data.pop("_id", None)
+
+    if not concepto_id:
+        raise ValueError("El concepto no tiene _id. No se puede actualizar.")
+
+    try:
+        result = coleccion.update_one(
+            {"_id": ObjectId(concepto_id)},
+            {"$set": data}
+        )
+        if result.matched_count == 0:
+            print(f"⚠️ No se encontró el concepto con _id: {concepto_id}")
+        else:
+            print(f"✅ Concepto actualizado correctamente: {concepto.nombre}")
+    except Exception as e:
+        print(f"❌ Error actualizando el concepto: {e}")

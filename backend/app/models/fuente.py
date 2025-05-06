@@ -11,8 +11,9 @@ class Fuente:
             "nombre": self.nombre,
             "url": self.url
         }
-        if self._id is not None:
-            data["_id"] = self._id
+        if self._id:
+            data["_id"] = str(self._id)
+
         return data
 
 

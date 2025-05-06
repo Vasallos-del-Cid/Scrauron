@@ -145,6 +145,15 @@ pip install scrapy-playwright
 playwright install
 ```
 
+pip install faiss-cpu
+
+
+pip install numpy
+
+pip install sentence-transformers
+
+
+
 ### Run project
 
 ```

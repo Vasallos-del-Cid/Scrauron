@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import List, Optional
-from app.models.concepto_interes import ConceptoInteres
 
 class Publicacion:
     def __init__(
@@ -11,38 +10,52 @@ class Publicacion:
         contenido: str,
         fuente: str,
         tono: Optional[int] = None,
-        conceptos_relacionados: Optional[List[ConceptoInteres]] = None
+        _id: Optional[str] = None
     ):
+        self._id = _id
         self.titulo = titulo
         self.url = url
         self.fecha = fecha or datetime.now()
         self.contenido = contenido
         self.fuente = fuente
-        self.tono = tono  # positivo, negativo, neutro (opcional al inicio)
-        self.conceptos_relacionados = conceptos_relacionados or []
-
-    def agregar_concepto(self, concepto: ConceptoInteres):
-        self.conceptos_relacionados.append(concepto)
+        self.tono = tono
 
     def to_dict(self):
-        return {
+        data = {
             "titulo": self.titulo,
             "url": self.url,
-            "fecha": self.fecha,  # datetime, Mongo lo guarda correctamente
+            "fecha": self.fecha,
             "contenido": self.contenido,
             "fuente": self.fuente,
-            "tono": self.tono,
-            "conceptos_relacionados": [c.to_dict() for c in self.conceptos_relacionados]
+            "tono": self.tono
         }
+        if self._id:
+            data["_id"] = str(self._id)
+        return data
+
+
+
     @classmethod
     def from_dict(cls, data):
-        conceptos = [ConceptoInteres.from_dict(c) for c in data.get("conceptos_relacionados", [])]
+        fecha_raw = data.get("fecha", datetime.utcnow())
+        fecha_obj = (
+            fecha_raw if isinstance(fecha_raw, datetime)
+            else datetime.fromisoformat(fecha_raw)
+        )
+
         return cls(
             titulo=data["titulo"],
             url=data["url"],
-            fecha=data.get("fecha", datetime.utcnow()),
+            fecha=fecha_obj,
             contenido=data["contenido"],
             fuente=data["fuente"],
             tono=data.get("tono"),
-            conceptos_relacionados=conceptos,
+            _id=str(data.get("_id")) if data.get("_id") else None
         )
+    
+    def __repr__(self):
+        return (
+            f"Publicacion(_id='{self._id}', titulo='{self.titulo[:30]}', "
+            f"url='{self.url}', fuente='{self.fuente}')"
+        )
+
