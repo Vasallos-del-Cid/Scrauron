@@ -52,8 +52,7 @@ def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=1, umbral_simil
                 continue  # FAISS no encontró resultado
             
             similitud = score  # producto interno ya es cosine similarity
-            print("SIMILITUD: ",similitud)
-            print("UMBRAL:", umbral_similitud)
+            print("SIMILITUD: ",similitud, "UMBRAL:", umbral_similitud)
             if similitud >= umbral_similitud:
                 print(f" Encontrada similitud con '{concepto.nombre}'")
                 concepto = conceptos[i]
