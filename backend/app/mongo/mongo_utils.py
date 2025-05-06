@@ -1,14 +1,15 @@
-import os
+import logging
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from dotenv import load_dotenv
 
-# Cargar variables del entorno desde .env
-load_dotenv()
+
+def init_mongo(uri):
+    global client
+    logging.info("Iniciando conexión a MongoDB...")
+    #logging.info(f"DEBUG: mongo_uri = {uri}")
+    client = MongoClient(uri)
 
 def get_mongo_collection():
-    mongo_uri = os.getenv("MONGO_URI")
-    client = MongoClient(mongo_uri)
     db = client["baseDatosScrauron"]
     coleccion = db["noticias"]
 
@@ -21,3 +22,12 @@ def get_mongo_collection():
         print(f"Error al crear índice: {e}")
 
     return coleccion
+
+def test_mongo_connection():
+    logging.info("Test conexion a MongoDB...")
+    try:
+        client.admin.command('ping')
+        logging.info("Conexión a MongoDB exitosa.")
+    except Exception as e:
+        logging.error(f"Error de conexión a MongoDB:\n{e}")
+        raise e
