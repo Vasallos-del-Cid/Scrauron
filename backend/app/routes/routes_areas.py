@@ -17,7 +17,8 @@ api_areas = Blueprint('api_areas', __name__)
 def get_areas_endpoint():
     try:
         areas = get_areas()
-        return jsonify([a.to_dict() for a in areas]), 200
+        areas_dicts = [area.to_dict() for area in areas]
+        return jsonify(areas_dicts), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

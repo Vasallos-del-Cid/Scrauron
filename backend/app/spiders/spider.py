@@ -128,7 +128,8 @@ class NoticiasSpider(scrapy.Spider):
         except Exception as e:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error inesperado: {e}")
 
-
+        print("---------------------------------------------------------------------------------")
+        
     def closed(self, reason):
         print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 📦 Total guardados: {self.total_guardados}")
         print(f"[{datetime.now().strftime('%H:%M:%S')}] 🚫 Total ignorados (ya existentes): {self.total_ignorados}")

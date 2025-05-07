@@ -10,51 +10,76 @@ from ..mongo.mongo_publicaciones import (
 
 api_publicaciones = Blueprint('api_publicaciones', __name__)
 
+# GET todas las publicaciones
 @api_publicaciones.route('/publicaciones', methods=['GET'])
 def get_publicaciones_endpoint():
     try:
-        return jsonify(get_publicaciones()), 200
+        publicaciones = get_publicaciones()
+        return jsonify(publicaciones), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Error al obtener publicaciones: {str(e)}"}), 500
 
+# GET una publicación por ID
 @api_publicaciones.route('/publicaciones/<pub_id>', methods=['GET'])
 def get_publicacion_endpoint(pub_id):
     try:
-        pub = get_publicacion_by_id(pub_id)
-        if not pub:
+        publicacion = get_publicacion_by_id(pub_id)
+        if not publicacion:
             return jsonify({"error": "Publicación no encontrada"}), 404
-        return jsonify(pub), 200
+        return jsonify(publicacion), 200
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
+# POST crear publicación
 @api_publicaciones.route('/publicaciones', methods=['POST'])
 def create_publicacion_endpoint():
-    data = request.get_json()
     try:
+        data = request.get_json()
         publicacion = Publicacion.from_dict(data)
+
+        # Asegurar que no haya un _id manual que cause conflicto
+        pub_dict = publicacion.to_dict()
+        if "_id" in pub_dict and pub_dict["_id"] is None:
+            del pub_dict["_id"]
+
         insert_result = create_publicacion(publicacion)
+
+        if insert_result is None or not hasattr(insert_result, "inserted_id"):
+            return jsonify({"error": "Error al insertar la publicación en la base de datos"}), 500
+
         publicacion._id = str(insert_result.inserted_id)
         return jsonify(publicacion.to_dict()), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
 
+    except ValueError as ve:
+        return jsonify({"error": f"Datos inválidos: {str(ve)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error al crear publicación: {str(e)}"}), 500
+
+# PATCH actualizar publicación parcial
 @api_publicaciones.route('/publicaciones/<pub_id>', methods=['PATCH'])
 def patch_publicacion_endpoint(pub_id):
-    data = request.get_json()
     try:
+        data = request.get_json()
         updated = update_publicacion(pub_id, data)
         if not updated:
             return jsonify({"error": "Publicación no encontrada"}), 404
         return jsonify(updated), 200
     except ValueError as ve:
-        return jsonify({"error": str(ve)}), 400
+        return jsonify({"error": f"ID inválido: {str(ve)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error al actualizar publicación: {str(e)}"}), 500
 
+# DELETE eliminar publicación
 @api_publicaciones.route('/publicaciones/<pub_id>', methods=['DELETE'])
 def delete_publicacion_endpoint(pub_id):
     try:
-        deleted = delete_publicacion(pub_id)
-        if deleted == 0:
+        deleted_count = delete_publicacion(pub_id)
+        if deleted_count == 0:
             return jsonify({"error": "Publicación no encontrada"}), 404
         return '', 204
     except ValueError as ve:
-        return jsonify({"error": str(ve)}), 400
+        return jsonify({"error": f"ID inválido: {str(ve)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error al eliminar publicación: {str(e)}"}), 500

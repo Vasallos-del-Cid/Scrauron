@@ -36,14 +36,23 @@ def get_fuente_by_id(fuente_id: str):
 
 
 def create_fuente(fuente):
+    print(fuente)
     data = fuente.to_dict()
+    print("DATA: ", data)
+    # Verificar si ya existe una fuente con la misma URL
+    if coleccion.find_one({"url": data["url"]}):
+        return jsonify({"error": "Ya existe una fuente con esa URL"}), 409
+    else:
+        print("En else")
+        insert_result = coleccion.insert_one(data)
+        print(insert_result)
+        return jsonify({
+            "_id": str(insert_result.inserted_id),
+            "nombre": data["nombre"],
+            "url": data["url"]
+        }), 201
 
-    # Eliminar manualmente _id si está presente y es None
-    if "_id" in data and data["_id"] is None:
-        del data["_id"]
 
-    insert_result = coleccion.insert_one(data)
-    return insert_result
 
 
 def delete_fuente(fuente_id):

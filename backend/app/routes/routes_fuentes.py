@@ -23,12 +23,11 @@ def get_fuente_endpoint(fuente_id):
         fuente = get_fuente_by_id(fuente_id)
         if not fuente:
             return jsonify({"error": "Fuente no encontrada"}), 404
-        return jsonify(fuente), 200
+        return jsonify(fuente.to_dict()), 200
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 # POST nueva fuente
 @api_fuentes.route('/fuentes', methods=['POST'])
@@ -36,16 +35,17 @@ def create_fuente_endpoint():
     data = request.get_json()
     try:
         fuente = Fuente.from_dict(data)
-        insert_result = create_fuente(fuente)
-        fuente._id = str(insert_result.inserted_id)
+        response, status_code = create_fuente(fuente)
 
-        response = jsonify(fuente.to_dict())
-        response.status_code = 201
-        return response
+        if status_code == 201:
+            json_data = response.get_json()
+            fuente._id = json_data["_id"]
+            return response
+        else:
+            return response, status_code
+
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-
-
 
 #Eliminar fuente
 @api_fuentes.route('/fuentes/<fuente_id>', methods=['DELETE'])

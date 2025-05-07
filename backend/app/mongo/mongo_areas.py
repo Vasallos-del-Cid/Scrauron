@@ -57,51 +57,78 @@ def update_area(area: AreaDeTrabajo):
         raise ValueError("El área no tiene _id asignado. No se puede actualizar.")
 
     try:
-        result = coleccion.update_one(
-            {"_id": ObjectId(area_id)},
-            {"$set": data}
-        )
-        if result.matched_count == 0:
-            print(f"⚠️ No se encontró el área con _id: {area_id}")
-        else:
-            print(f"✅ Área actualizada correctamente: {area.nombre}")
+        oid = ObjectId(area_id)
     except Exception as e:
-        print(f"❌ Error actualizando el área: {e}")
+        raise ValueError(f"ID de área inválido: {area_id}") from e
 
-# PATCH agregar concepto a un área
+    result = coleccion.update_one(
+        {"_id": oid},
+        {"$set": data}
+    )
+
+    if result.matched_count == 0:
+        print(f"⚠️ No se encontró el área con _id: {area_id}")
+    elif result.modified_count == 0:
+        print(f"ℹ️ Área encontrada pero sin cambios.")
+    else:
+        print(f"✅ Área actualizada correctamente: {area.nombre}")
+
+def update_area_dict(area_id: str, campos_actualizados: dict):
+    try:
+        oid = ObjectId(area_id)
+    except Exception as e:
+        raise ValueError(f"ID de área inválido: {area_id}") from e
+
+    result = coleccion.update_one(
+        {"_id": oid},
+        {"$set": campos_actualizados}
+    )
+
+    if result.matched_count == 0:
+        print(f"⚠️ No se encontró el área con _id: {area_id}")
+    elif result.modified_count == 0:
+        print(f"ℹ️ El área ya estaba actualizada, sin cambios.")
+    else:
+        print(f"✅ Área actualizada correctamente.")
+
+# PATCH agregar concepto a un área (solo _id)
 def agregar_concepto_a_area(area_id: str, concepto_id: str):
     area_dict = get_area_by_id(area_id)
     if not area_dict:
         raise ValueError("Área no encontrada")
+    
+    concepto_oid = ObjectId(concepto_id)
 
-    area = AreaDeTrabajo.from_dict(area_dict)
-    concepto = get_concepto_by_id(concepto_id)
-    if not concepto:
-        raise ValueError("Concepto no encontrado")
+    conceptos_actuales = area_dict.get("conceptos_interes_ids", [])
 
-    if any(c._id == concepto._id for c in area.conceptos_interes):
-        print(f"⚠️ El concepto ya está en el área: {concepto.nombre}")
+    # Asegurar comparación correcta entre ObjectIds
+    if concepto_oid in conceptos_actuales:
+        print(f"⚠️ El concepto ya está en el área (id: {concepto_id})")
         return False
 
-    area.agregar_concepto(concepto)
-    update_area(area)
+    conceptos_actuales.append(concepto_oid)
+    update_area_dict(area_id, {"conceptos_interes_ids": conceptos_actuales})
+
     return True
 
-# PATCH agregar fuente a un área
+
+
+# PATCH agregar fuente a un área (solo _id)
 def agregar_fuente_a_area(area_id: str, fuente_id: str):
     area_dict = get_area_by_id(area_id)
     if not area_dict:
         raise ValueError("Área no encontrada")
+    
+    fuente_oid = ObjectId(fuente_id)
 
-    area = AreaDeTrabajo.from_dict(area_dict)
-    fuente = get_fuente_by_id(fuente_id)
-    if not fuente:
-        raise ValueError("Fuente no encontrada")
+    fuentes_actuales = area_dict.get("fuentes_ids", [])
 
-    if any(f._id == fuente._id for f in area.fuentes):
-        print(f"⚠️ La fuente ya está en el área: {fuente.nombre}")
+    if fuente_oid in fuentes_actuales:
+        print(f"⚠️ La fuente ya está en el área (id: {fuente_id})")
         return False
 
-    area.agregar_fuente(fuente)
-    update_area(area)
+    fuentes_actuales.append(fuente_oid)
+    update_area_dict(area_id, {"fuentes_ids": fuentes_actuales})
+
     return True
+
