@@ -5,7 +5,8 @@ from ..mongo.mongo_publicaciones import (
     get_publicacion_by_id,
     create_publicacion,
     update_publicacion,
-    delete_publicacion
+    delete_publicacion,
+    delete_all_publicaciones
 )
 
 api_publicaciones = Blueprint('api_publicaciones', __name__)
@@ -83,3 +84,12 @@ def delete_publicacion_endpoint(pub_id):
         return jsonify({"error": f"ID inválido: {str(ve)}"}), 400
     except Exception as e:
         return jsonify({"error": f"Error al eliminar publicación: {str(e)}"}), 500
+
+@api_publicaciones.route('/publicaciones', methods=['DELETE'])
+def delete_all_publicaciones_endpoint():
+    try:
+        count = delete_all_publicaciones()
+        return jsonify({"mensaje": f"Se eliminaron {count} publicaciones"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+

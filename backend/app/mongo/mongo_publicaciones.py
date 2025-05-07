@@ -64,6 +64,16 @@ def delete_publicacion(pub_id):
     result = coleccion.delete_one({"_id": ObjectId(pub_id)})
     return result.deleted_count
 
+#DELETE ALL
+def delete_all_publicaciones():
+    try:
+        result = coleccion.delete_many({})
+        print(f"🔴 Se eliminaron {result.deleted_count} publicaciones")
+        return result.deleted_count
+    except Exception as e:
+        print(f"❌ Error eliminando publicaciones: {e}")
+        raise
+
 #UPDATE
 def update_publicacion(pub_id, data):
     if not ObjectId.is_valid(pub_id):
