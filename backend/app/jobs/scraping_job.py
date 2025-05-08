@@ -2,21 +2,9 @@ import time
 import threading
 import subprocess
 import random
-from pymongo import MongoClient
-from dotenv import load_dotenv
-import os
-from bson import ObjectId
 from datetime import datetime, timedelta
-from subprocess import TimeoutExpired
 
-# =========================
-# Cargar configuración del entorno (.env)
-# =========================
-load_dotenv()
-mongo_uri = os.getenv("MONGO_URI")
-client = MongoClient(mongo_uri)
-db = client["baseDatosScrauron"]
-coleccion_fuentes = db["fuentes"]
+from app.mongo.mongo_utils import get_collection
 
 # Frecuencia base para ejecutar scraping (en minutos)
 SCRAPING_FREQ_MIN = 40  
@@ -41,7 +29,7 @@ def ejecutar_scraping(url):
 # Ejecuta scraping para todas las fuentes guardadas en MongoDB
 # =========================
 def scraping_todas_las_fuentes():
-    fuentes = list(coleccion_fuentes.find())
+    fuentes = list(get_collection("fuentes").find())
     for fuente in fuentes:
         url = fuente.get("url")
         if url:

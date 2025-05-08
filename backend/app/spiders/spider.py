@@ -9,13 +9,12 @@ import random
 from urllib.parse import urlparse
 
 # Funciones de acceso a Mongo y modelo de datos
-from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion
+from app.mongo.mongo_publicaciones import create_publicacion
 from pymongo.errors import DuplicateKeyError, WriteError, ConnectionFailure
 from app.models.publicacion import Publicacion
+from app.mongo.mongo_utils import get_collection
 from app.similarity_search.similarity_search import buscar_y_enlazar_a_conceptos
 
-# Establece conexión con la colección Mongo de publicaciones
-coleccion = get_mongo_collection()
 
 # Extrae nombre base y dominio completo a partir de una URL
 def extraer_fuente_info(url):
@@ -23,6 +22,7 @@ def extraer_fuente_info(url):
     nombre_base_match = re.match(r"(?:www\.)?([^\.]+)", dominio_completo)
     nombre_base = nombre_base_match.group(1) if nombre_base_match else dominio_completo
     return nombre_base, dominio_completo
+
 
 # Define la clase principal del spider
 class NoticiasSpider(scrapy.Spider):
@@ -77,7 +77,7 @@ class NoticiasSpider(scrapy.Spider):
                     url_completa = response.urljoin(enlace)
 
                     # Verifica si ya existe en Mongo para evitar duplicados
-                    if coleccion.find_one({"url": url_completa}):
+                    if get_collection("publicaciones").find_one({"url": url_completa}):
                         print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Ya existe en Mongo: {url_completa}")
                         self.total_ignorados += 1
                         continue
@@ -135,7 +135,8 @@ class NoticiasSpider(scrapy.Spider):
             publicacion._id = str(insert_result.inserted_id)  # Asigna ID real
 
             self.total_guardados += 1
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Artículo guardado: {titulo} | Fuente: {fuente_nombre} ({fuente_dominio})")
+            print(
+                f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Artículo guardado: {titulo} | Fuente: {fuente_nombre} ({fuente_dominio})")
 
             # Busca conceptos semánticamente relacionados y asocia la publicación
             buscar_y_enlazar_a_conceptos(publicacion)

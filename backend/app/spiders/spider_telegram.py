@@ -7,8 +7,6 @@ from app.models.publicacion import Publicacion
 from app.similarity_search.similarity_search import buscar_y_enlazar_a_conceptos
 import re
 
-# Se conecta a la colección de publicaciones en MongoDB
-coleccion = get_mongo_collection()
 
 # Spider especializado para scraping de páginas similares a Telegram
 class TelegramSpider(scrapy.Spider):
