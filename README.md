@@ -12,7 +12,6 @@ La version de creacion del proyecto --> angular@19.2.8
 npm install -g @angular/cli
 ```
 
-
 ```bash
 ng new frontend
 
@@ -97,7 +96,6 @@ Con el comando, se deben haber incluido las dependencias necesarias para el comp
 
 Con eso ya estaria el componente listo para usarse
 
-
 ## Backend
 
 ### Instalar dependencias
@@ -109,9 +107,11 @@ pip install flask
 ```
 
 Comprobar instalación
+
 ```bash
 python -m flask --version
 ```
+
 Versión empleada: Flask==2.3.2 (en requirements.txt)
 
 Licencia BSD (Similar a MIT)
@@ -123,6 +123,7 @@ pip install scrapy
 ```
 
 Comprobar instalación
+
 ```bash
 scrapy version
 ```
@@ -137,38 +138,44 @@ Licencia BSD (modificada, uso libre y sin atribución, solo restingido el uso de
 python -m pip install "pymongo[srv]"==3.10
 ```
 
+#### Playwright
 
-#### Playwright 
 Playwright permite renderizar páginas dinámicas con JavaScript dentro de Scrapy, haciendo posible el scraping de canales de Telegram en formato web público donde los mensajes están ocultos hasta que el contenido se carga completamente mediante scripts.
+
 ```bash
 pip install scrapy-playwright
 playwright install
 ```
 
 #### FAISS
+
 Permite realizar búsquedas eficientes de similitud entre vectores de alta dimensión, útil para tareas como recuperación semántica y clustering con grandes volúmenes de datos.
+
 ```bash
 pip install faiss-cpu
 ```
 
 #### NUMPY
+
 Proporciona estructuras de datos eficientes como arrays multidimensionales y funciones matemáticas de alto rendimiento para trabajar con ellos.
- 
- ```bash
+
+```bash
 pip install numpy
 ```
 
 #### SENTENCE-TRANSFORMERS
+
 Permite generar representaciones semánticas (embeddings) de textos usando modelos preentrenados basados en transformers. Es especialmente útil para tareas como búsqueda semántica, detección de similitud
- 
- ```bash
+
+```bash
 pip install sentence-transformers
 ```
 
 #### OPENAI
-Biblioteca oficial de OpenAI para Python, que te permite interactuar con sus modelos de lenguaje (como GPT-4) mediante su API. 
- 
- ```bash
+
+Biblioteca oficial de OpenAI para Python, que te permite interactuar con sus modelos de lenguaje (como GPT-4) mediante su API.
+
+```bash
 pip install openai
 ```
 
@@ -177,3 +184,7 @@ pip install openai
 ```
 python run.py
 ```
+
+### OPENAI TOKEN
+
+para conseguir un token de openAi, ir a https://platform.openai.com/settings/organization/api-keys y crear nuevo Secret Key

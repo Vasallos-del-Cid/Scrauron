@@ -1,34 +1,14 @@
-# mongo_areas.py
+import logging
 
-# Este módulo gestiona las áreas de trabajo, que agrupan conceptos de interés y fuentes informativas.
-
-import os
-from pymongo import MongoClient
 from bson import ObjectId
-from dotenv import load_dotenv
+
+from .mongo_utils import get_collection
 from ..models.area_de_trabajo import AreaDeTrabajo
-from ..models.fuente import Fuente
-from ..models.concepto_interes import ConceptoInteres
-from .mongo_fuentes import get_fuente_by_id
-from .mongo_conceptos import get_concepto_by_id
-
-# --------------------------------------------------
-# Cargar la URI de MongoDB desde .env y conectar
-load_dotenv()
-mongo_uri = os.getenv("MONGO_URI")
-client = MongoClient(mongo_uri)
-db = client["baseDatosScrauron"]
-coleccion = db["areas_de_trabajo"]
-
-# --------------------------------------------------
-# Devuelve la colección de Mongo (útil para acceso directo externo)
-def get_mongo_collection():
-    return coleccion
 
 # --------------------------------------------------
 # Recupera todas las áreas de trabajo como instancias de AreaDeTrabajo
 def get_areas():
-    areas_raw = list(coleccion.find())
+    areas_raw = list(get_collection("areas_de_trabajo").find())
     return [AreaDeTrabajo.from_dict(a) for a in areas_raw]
 
 # --------------------------------------------------
@@ -36,7 +16,7 @@ def get_areas():
 def get_area_by_id(area_id):
     if not ObjectId.is_valid(area_id):
         raise ValueError("ID no válido")
-    area = coleccion.find_one({"_id": ObjectId(area_id)})
+    area = get_collection("areas_de_trabajo").find_one({"_id": ObjectId(area_id)})
     if area:
         area["_id"] = str(area["_id"])
         return area
@@ -46,8 +26,8 @@ def get_area_by_id(area_id):
 # Crea una nueva área de trabajo en la colección
 def create_area(area):
     data = area.to_dict()
-    data.pop("_id", None)  # Eliminar _id si es None para evitar error al insertar
-    insert_result = coleccion.insert_one(data)
+    data.pop("_id", None)  # borrar _id si es None para evitar error al insertar
+    insert_result = get_collection("areas_de_trabajo").insert_one(data)
     return insert_result
 
 # --------------------------------------------------
@@ -55,7 +35,7 @@ def create_area(area):
 def delete_area(area_id):
     if not ObjectId.is_valid(area_id):
         raise ValueError("ID no válido")
-    result = coleccion.delete_one({"_id": ObjectId(area_id)})
+    result = get_collection("areas_de_trabajo").delete_one({"_id": ObjectId(area_id)})
     return result.deleted_count
 
 # --------------------------------------------------
@@ -72,17 +52,17 @@ def update_area(area: AreaDeTrabajo):
     except Exception as e:
         raise ValueError(f"ID de área inválido: {area_id}") from e
 
-    result = coleccion.update_one(
+    result = get_collection("areas_de_trabajo").update_one(
         {"_id": oid},
         {"$set": data}
     )
 
     if result.matched_count == 0:
-        print(f"⚠️ No se encontró el área con _id: {area_id}")
+        logging.warning(f"⚠️ No se encontró el área con _id: {area_id}")
     elif result.modified_count == 0:
-        print(f"ℹ️ Área encontrada pero sin cambios.")
+        logging.info(f"ℹ️ Área encontrada pero sin cambios.")
     else:
-        print(f"✅ Área actualizada correctamente: {area.nombre}")
+        logging.info(f"✅ Área actualizada correctamente: {area.nombre}")
 
 # --------------------------------------------------
 # Actualiza parcialmente un área usando un diccionario con campos modificados
@@ -92,17 +72,17 @@ def update_area_dict(area_id: str, campos_actualizados: dict):
     except Exception as e:
         raise ValueError(f"ID de área inválido: {area_id}") from e
 
-    result = coleccion.update_one(
+    result = get_collection("areas_de_trabajo").update_one(
         {"_id": oid},
         {"$set": campos_actualizados}
     )
 
     if result.matched_count == 0:
-        print(f"⚠️ No se encontró el área con _id: {area_id}")
+        logging.warning(f"⚠️ No se encontró el área con _id: {area_id}")
     elif result.modified_count == 0:
-        print(f"ℹ️ El área ya estaba actualizada, sin cambios.")
+        logging.info(f"ℹ️ El área ya estaba actualizada, sin cambios.")
     else:
-        print(f"✅ Área actualizada correctamente.")
+        logging.info(f"✅ Área actualizada correctamente.")
 
 # --------------------------------------------------
 # Añade un concepto a una área (referencia por ID)
@@ -110,12 +90,12 @@ def agregar_concepto_a_area(area_id: str, concepto_id: str):
     area_dict = get_area_by_id(area_id)
     if not area_dict:
         raise ValueError("Área no encontrada")
-    
+
     concepto_oid = ObjectId(concepto_id)
     conceptos_actuales = area_dict.get("conceptos_interes_ids", [])
 
     if concepto_oid in conceptos_actuales:
-        print(f"⚠️ El concepto ya está en el área (id: {concepto_id})")
+        logging.warning(f"⚠️ El concepto ya está en el área (id: {concepto_id})")
         return False
 
     conceptos_actuales.append(concepto_oid)
@@ -129,12 +109,12 @@ def agregar_fuente_a_area(area_id: str, fuente_id: str):
     area_dict = get_area_by_id(area_id)
     if not area_dict:
         raise ValueError("Área no encontrada")
-    
+
     fuente_oid = ObjectId(fuente_id)
     fuentes_actuales = area_dict.get("fuentes_ids", [])
 
     if fuente_oid in fuentes_actuales:
-        print(f"⚠️ La fuente ya está en el área (id: {fuente_id})")
+        logging.warning(f"⚠️ La fuente ya está en el área (id: {fuente_id})")
         return False
 
     fuentes_actuales.append(fuente_oid)

@@ -1,5 +1,6 @@
 # Spider de Scrapy para extraer titulares y contenidos de noticias, guardarlos en MongoDB
 # y enlazarlos semánticamente con conceptos registrados usando FAISS.
+import logging
 
 import scrapy
 from datetime import datetime
@@ -12,11 +13,10 @@ from urllib.parse import urlparse
 from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion, update_publicacion
 from pymongo.errors import DuplicateKeyError, WriteError, ConnectionFailure
 from app.models.publicacion import Publicacion
+from app.mongo.mongo_utils import get_collection
 from app.similarity_search.similarity_search import buscar_y_enlazar_a_conceptos
 from app.llm.llm_utils import resumir_contenido_reformulado
 
-# Establece conexión con la colección Mongo de publicaciones
-coleccion = get_mongo_collection()
 
 # Extrae nombre base y dominio completo a partir de una URL
 def extraer_fuente_info(url):
@@ -24,6 +24,7 @@ def extraer_fuente_info(url):
     nombre_base_match = re.match(r"(?:www\.)?([^\.]+)", dominio_completo)
     nombre_base = nombre_base_match.group(1) if nombre_base_match else dominio_completo
     return nombre_base, dominio_completo
+
 
 # Define la clase principal del spider
 class NoticiasSpider(scrapy.Spider):
@@ -67,7 +68,7 @@ class NoticiasSpider(scrapy.Spider):
 
                     # Ignora encabezados genéricos sin contenido informativo
                     if len(texto_limpio.split()) == 1 and texto_limpio.strip() in titulos_baneados:
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] ⛔ Título ignorado: '{texto_limpio}'")
+                        logging.info(f"⛔ Título ignorado: '{texto_limpio}'")
                         continue
 
                     # Filtra h1s demasiado cortos
@@ -78,8 +79,8 @@ class NoticiasSpider(scrapy.Spider):
                     url_completa = response.urljoin(enlace)
 
                     # Verifica si ya existe en Mongo para evitar duplicados
-                    if coleccion.find_one({"url": url_completa}):
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Ya existe en Mongo: {url_completa}")
+                    if get_collection("publicaciones").find_one({"url": url_completa}):
+                        logging.warning(f"⚠️ Ya existe en Mongo: {url_completa}")
                         self.total_ignorados += 1
                         continue
 
@@ -101,8 +102,7 @@ class NoticiasSpider(scrapy.Spider):
         delay = random.uniform(1, 5)
         time.sleep(delay)
 
-        hora_inicio = datetime.now().strftime('%H:%M:%S')
-        print(f"[{hora_inicio}] 📰 Procesando noticia...")
+        logging.info(f"📰 Procesando noticia...")
 
         # Recupera los metadatos guardados
         titulo = response.meta['titulo']
@@ -129,14 +129,14 @@ class NoticiasSpider(scrapy.Spider):
         )
 
         try:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 💾 Intentando guardar: {titulo[:60]}...")
+            logging.info(f"💾 Intentando guardar: {titulo[:60]}...")
 
             # Inserta en MongoDB
             insert_result = create_publicacion(publicacion)
             publicacion._id = str(insert_result.inserted_id)  # Asigna ID real
 
             self.total_guardados += 1
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Artículo guardado: {titulo} | Fuente: {fuente_nombre} ({fuente_dominio})")
+            logging.info(f"✅ Artículo guardado: {titulo} | Fuente: {fuente_nombre} ({fuente_dominio})")
 
             # Busca conceptos semánticamente relacionados y asocia la publicación
             buscar_y_enlazar_a_conceptos(publicacion)
@@ -151,18 +151,18 @@ class NoticiasSpider(scrapy.Spider):
             print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Contenido resumido: {publicacion.contenido}")
         # Manejo de errores específicos de Mongo
         except DuplicateKeyError:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Ya existe (aunque no se detectó antes): {url}")
+            logging.warning(f"⚠️ Ya existe (aunque no se detectó antes): {url}")
         except ConnectionFailure:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ No se pudo conectar a MongoDB.")
+            logging.error(f" ❌ No se pudo conectar a MongoDB.")
         except WriteError as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error de escritura en MongoDB: {e}")
+            logging.error(f" ❌ Error de escritura en MongoDB: {e}")
         except Exception as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error inesperado: {e}")
+            logging.error(f" ❌ Error inesperado: {e}")
 
         print("---------------------------------------------------------------------------------")
 
     # Se ejecuta al finalizar el spider e imprime estadísticas
     def closed(self, reason):
-        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 📦 Total guardados: {self.total_guardados}")
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🚫 Total ignorados (ya existentes): {self.total_ignorados}")
+        logging.info(f" 📦 Total guardados: {self.total_guardados}")
+        logging.info(f" 🚫 Total ignorados (ya existentes): {self.total_ignorados}")
         print("---------------------------------------------------------------------------------")

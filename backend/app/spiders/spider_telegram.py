@@ -1,3 +1,5 @@
+import logging
+
 import scrapy
 from scrapy_playwright.page import PageMethod
 from datetime import datetime
@@ -7,8 +9,6 @@ from app.models.publicacion import Publicacion
 from app.similarity_search.similarity_search import buscar_y_enlazar_a_conceptos
 import re
 
-# Se conecta a la colección de publicaciones en MongoDB
-coleccion = get_mongo_collection()
 
 # Spider especializado para scraping de páginas similares a Telegram
 class TelegramSpider(scrapy.Spider):
@@ -55,7 +55,7 @@ class TelegramSpider(scrapy.Spider):
 
 
     def extraer_publicacion_telegram(self, response):
-        print("Entró en extraer_publicacion_telegram():", response.url)
+        logging.info("Entró en extraer_publicacion_telegram():", response.url)
 
         # Guarda el HTML para debug
         with open("app/spiders/debug/debug_telegram.html", "w", encoding="utf-8") as f:
@@ -63,7 +63,7 @@ class TelegramSpider(scrapy.Spider):
 
         # Selecciona todos los artículos visibles en la página
         articulos = response.css("article.cpost-wt-text")
-        print(f"Artículos encontrados: {len(articulos)}")
+        logging.info(f"Artículos encontrados: {len(articulos)}")
 
         total_guardados = 0
 
@@ -101,23 +101,23 @@ class TelegramSpider(scrapy.Spider):
                 if insert_result:
                     publicacion._id = str(insert_result.inserted_id)
                     total_guardados += 1
-                    print(f"✅ Artículo guardado: {titulo} | Fuente: {publicacion.fuente}")
+                    logging.info(f"✅ Artículo guardado: {titulo} | Fuente: {publicacion.fuente}")
 
                     # Enlaza con conceptos relacionados
                     buscar_y_enlazar_a_conceptos(publicacion)
                 else:
-                    print("⚠️ No se insertó (posiblemente duplicado).")
+                    logging.warning("⚠️ No se insertó (posiblemente duplicado).")
 
             except DuplicateKeyError:
-                print("❌ Ya existe un artículo con esa clave.")
+                logging.error("❌ Ya existe un artículo con esa clave.")
             except ConnectionFailure:
-                print("❌ No se pudo conectar a MongoDB.")
+                logging.error("❌ No se pudo conectar a MongoDB.")
             except WriteError as e:
-                print(f"❌ Error al escribir en la base de datos: {e}")
+                logging.error(f"❌ Error al escribir en la base de datos: {e}")
             except Exception as e:
-                print(f"❌ Error inesperado: {e}")
+                logging.error(f"❌ Error inesperado: {e}")
 
             print("---------------------------------------------------------------------------------")
 
-        print(f"\n💾 Total guardados: {total_guardados}")
+        logging.info(f"\n💾 Total guardados: {total_guardados}")
 

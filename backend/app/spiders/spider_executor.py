@@ -1,3 +1,4 @@
+import logging
 import sys
 import os
 from scrapy.crawler import CrawlerProcess
@@ -19,10 +20,10 @@ process = CrawlerProcess(settings={
 
 #Si es una url de Telegram usar TelegramSpider, sino usar NoticiasSpider
 if url.startswith(("https://tlgrm", "http://tlgrm")):
-    print("Detectado Telegram. Usando TelegramSpider.")
+    logging.info("Detectado Telegram. Usando TelegramSpider.")
     process.crawl(TelegramSpider, url=url)
 else:
-    print("Detectada URL de noticia. Usando NoticiasSpider.")
+    logging.info("Detectada URL de noticia. Usando NoticiasSpider.")
     process.crawl(NoticiasSpider, url=url)
 
 process.start()

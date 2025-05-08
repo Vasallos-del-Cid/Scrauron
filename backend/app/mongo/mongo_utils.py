@@ -1,20 +1,63 @@
 import logging
+import os
+from dotenv import load_dotenv
 from pymongo import MongoClient
-from pymongo.errors import DuplicateKeyError
+
+def get_db():
+    if db is None:
+        raise Exception("❌ MongoDB no ha sido inicializado. Llama a init_mongo() primero.")
+    return db
 
 
-def init_mongo(uri):
-    global client
-    logging.info("Iniciando conexión a MongoDB...")
-    #logging.info(f"DEBUG: mongo_uri = {uri}")
-    client = MongoClient(uri)
+def get_collection(nombre):
+    """
+    Devuelve la colección de MongoDB especificada por nombre.
+    :param nombre:
+    :return: la colección para hacer consultas.
+    """
+    return get_db()[nombre]
+
+
+def init_mongo(uri=None):
+    """
+    Inicializa la conexión a MongoDB y crea la base de datos.
+    :param uri: la cadeba de conexión a MongoDB. Si no se proporciona, se carga desde el archivo .env.
+    """
+    global client, db
+
+    load_dotenv()
+    mongo_uri = uri or os.getenv("MONGO_URI")
+
+    # COMENTARIO descomentar para ver la URI de conexión
+    # logging.info(f"📡 Conectando a MongoDB: {mongo_uri}")
+    client = MongoClient(mongo_uri)
+
+    # Comprobación de conexión
+    test_mongo_connection()
+
+    db = client["baseDatosScrauron"]
+
+    # Crear índices u otras configuraciones
+    config_mongo_index(db["publicaciones"])
 
 
 def test_mongo_connection():
     logging.info("Test conexion a MongoDB...")
     try:
         client.admin.command('ping')
-        logging.info("Conexión a MongoDB exitosa.")
+        logging.info("✅ Conexión a MongoDB exitosa.")
     except Exception as e:
-        logging.error(f"Error de conexión a MongoDB:\n{e}")
+        logging.error(f"❌ Error de conexión a MongoDB:\n{e}")
         raise e
+
+
+def config_mongo_index(coleccion):
+    try:
+        # Indice único combinación de título u url. Evita duplicados en BBDD.
+        coleccion.create_index(
+            [("titulo", 1), ("url", 1)],
+            unique=True,
+            name="titulo_url_unique"
+        )
+    except Exception as e:
+        logging.warning(f"❌ Error al crear índice de: {coleccion}\n {e}")
