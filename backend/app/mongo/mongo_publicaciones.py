@@ -1,48 +1,32 @@
-import os
 from pymongo import MongoClient
 from bson import ObjectId
-from dotenv import load_dotenv
-from ..models.publicacion import Publicacion
+
+from .mongo_utils import get_collection
+
 from datetime import datetime
 from app.llm.llm_utils import estimar_tono_publicacion
 
-# Conexión a MongoDB (igual que en fuentes)
-load_dotenv()
-mongo_uri = os.getenv("MONGO_URI")
-client = MongoClient(mongo_uri)
-db = client["baseDatosScrauron"]
-coleccion = db["publicaciones"]
-
-#Indice único combinación de título u url. Evita duplicados en BBDD.
-coleccion.create_index(
-    [("titulo", 1), ("url", 1)],
-    unique=True,
-    name="titulo_url_unique"
-)
-
-#GET COLLECTION
-def get_mongo_collection():
-    return coleccion
-#GET
+# GET
 def get_publicaciones():
-    publicaciones = list(coleccion.find())
+    publicaciones = list(get_collection("publicaciones").find())
     for p in publicaciones:
         p["_id"] = str(p["_id"])
     return publicaciones
 
+
 def get_publicacion_by_id(pub_id):
     if not ObjectId.is_valid(pub_id):
         raise ValueError("ID no válido")
-    pub = coleccion.find_one({"_id": ObjectId(pub_id)})
+    pub = get_collection("publicaciones").find_one({"_id": ObjectId(pub_id)})
     if pub:
         pub["_id"] = str(pub["_id"])
     return pub
 
+
 # POST
 def create_publicacion(publicacion):
-
     url = publicacion.url.strip().lower()
-    existe = coleccion.find_one({"url": url})
+    existe = get_collection("publicaciones").find_one({"url": url})
 
     if existe:
         print(f"⚠️ Ya existe publicación con URL: {url}")
@@ -66,35 +50,38 @@ def create_publicacion(publicacion):
     if "_id" in data and data["_id"] is None:
         del data["_id"]
 
-    insert_result = coleccion.insert_one(data)
+    insert_result = get_collection("publicaciones").insert_one(data)
     return insert_result
 
-#DELETE
+
+# DELETE
 def delete_publicacion(pub_id):
     if not ObjectId.is_valid(pub_id):
         raise ValueError("ID no válido")
-    result = coleccion.delete_one({"_id": ObjectId(pub_id)})
+    result = get_collection("publicaciones").delete_one({"_id": ObjectId(pub_id)})
     return result.deleted_count
 
-#DELETE ALL
+
+# DELETE ALL
 def delete_all_publicaciones():
     try:
-        result = coleccion.delete_many({})
+        result = get_collection("publicaciones").delete_many({})
         print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔴 Se eliminaron {result.deleted_count} publicaciones")
         return result.deleted_count
     except Exception as e:
         print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error eliminando publicaciones: {e}")
         raise
 
-#UPDATE
+
+# UPDATE
 def update_publicacion(pub_id, data):
     if not ObjectId.is_valid(pub_id):
         raise ValueError("ID no válido")
     if "_id" in data:
         del data["_id"]
-    result = coleccion.update_one({"_id": ObjectId(pub_id)}, {"$set": data})
+    result = get_collection("publicaciones").update_one({"_id": ObjectId(pub_id)}, {"$set": data})
     if result.matched_count == 0:
         return None
-    updated = coleccion.find_one({"_id": ObjectId(pub_id)})
+    updated = get_collection("publicaciones").find_one({"_id": ObjectId(pub_id)})
     updated["_id"] = str(updated["_id"])
     return updated

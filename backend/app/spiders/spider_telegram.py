@@ -7,12 +7,10 @@ from scrapy_playwright.page import PageMethod
 import hashlib
 from datetime import datetime
 import re
-from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion
+from app.mongo.mongo_publicaciones import create_publicacion
 from pymongo.errors import DuplicateKeyError, ConnectionFailure, WriteError
 from app.models.publicacion import Publicacion
 
-# Se conecta a la colección de publicaciones en MongoDB
-coleccion = get_mongo_collection()
 
 # Spider especializado para Telegram usando Playwright para renderizar JavaScript
 class TelegramSpider(scrapy.Spider):

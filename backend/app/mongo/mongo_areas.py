@@ -1,52 +1,40 @@
-import os
-from pymongo import MongoClient
 from bson import ObjectId
-from dotenv import load_dotenv
+
+from .mongo_utils import get_collection
 from ..models.area_de_trabajo import AreaDeTrabajo
-from ..models.fuente import Fuente
-from ..models.concepto_interes import ConceptoInteres
-from .mongo_fuentes import get_fuente_by_id
-from .mongo_conceptos import get_concepto_by_id
-
-# Conexión a MongoDB
-load_dotenv()
-mongo_uri = os.getenv("MONGO_URI")
-client = MongoClient(mongo_uri)
-db = client["baseDatosScrauron"]
-coleccion = db["areas_de_trabajo"]
-
-# GET colección (opcional para acceso directo)
-def get_mongo_collection():
-    return coleccion
 
 # GET todas las áreas
 def get_areas():
-    areas_raw = list(coleccion.find())
+    areas_raw = list(get_collection("areas_de_trabajo").find())
     return [AreaDeTrabajo.from_dict(a) for a in areas_raw]
+
 
 # GET una sola área por ID
 def get_area_by_id(area_id):
     if not ObjectId.is_valid(area_id):
         raise ValueError("ID no válido")
-    area = coleccion.find_one({"_id": ObjectId(area_id)})
+    area = get_collection("areas_de_trabajo").find_one({"_id": ObjectId(area_id)})
     if area:
         area["_id"] = str(area["_id"])
         return area
     return None
 
+
 # POST crear nueva área
 def create_area(area):
     data = area.to_dict()
     data.pop("_id", None)  # ❗️Eliminar _id siempre antes de insertar
-    insert_result = coleccion.insert_one(data)
+    insert_result = get_collection("areas_de_trabajo").insert_one(data)
     return insert_result
+
 
 # DELETE un área
 def delete_area(area_id):
     if not ObjectId.is_valid(area_id):
         raise ValueError("ID no válido")
-    result = coleccion.delete_one({"_id": ObjectId(area_id)})
+    result = get_collection("areas_de_trabajo").delete_one({"_id": ObjectId(area_id)})
     return result.deleted_count
+
 
 # UPDATE un área
 def update_area(area: AreaDeTrabajo):
@@ -61,7 +49,7 @@ def update_area(area: AreaDeTrabajo):
     except Exception as e:
         raise ValueError(f"ID de área inválido: {area_id}") from e
 
-    result = coleccion.update_one(
+    result = get_collection("areas_de_trabajo").update_one(
         {"_id": oid},
         {"$set": data}
     )
@@ -73,13 +61,14 @@ def update_area(area: AreaDeTrabajo):
     else:
         print(f"✅ Área actualizada correctamente: {area.nombre}")
 
+
 def update_area_dict(area_id: str, campos_actualizados: dict):
     try:
         oid = ObjectId(area_id)
     except Exception as e:
         raise ValueError(f"ID de área inválido: {area_id}") from e
 
-    result = coleccion.update_one(
+    result = get_collection("areas_de_trabajo").update_one(
         {"_id": oid},
         {"$set": campos_actualizados}
     )
@@ -91,12 +80,13 @@ def update_area_dict(area_id: str, campos_actualizados: dict):
     else:
         print(f"✅ Área actualizada correctamente.")
 
+
 # PATCH agregar concepto a un área (solo _id)
 def agregar_concepto_a_area(area_id: str, concepto_id: str):
     area_dict = get_area_by_id(area_id)
     if not area_dict:
         raise ValueError("Área no encontrada")
-    
+
     concepto_oid = ObjectId(concepto_id)
 
     conceptos_actuales = area_dict.get("conceptos_interes_ids", [])
@@ -112,13 +102,12 @@ def agregar_concepto_a_area(area_id: str, concepto_id: str):
     return True
 
 
-
 # PATCH agregar fuente a un área (solo _id)
 def agregar_fuente_a_area(area_id: str, fuente_id: str):
     area_dict = get_area_by_id(area_id)
     if not area_dict:
         raise ValueError("Área no encontrada")
-    
+
     fuente_oid = ObjectId(fuente_id)
 
     fuentes_actuales = area_dict.get("fuentes_ids", [])
@@ -131,4 +120,3 @@ def agregar_fuente_a_area(area_id: str, fuente_id: str):
     update_area_dict(area_id, {"fuentes_ids": fuentes_actuales})
 
     return True
-

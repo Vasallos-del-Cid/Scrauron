@@ -9,12 +9,10 @@ from bson import ObjectId
 from datetime import datetime, timedelta
 from subprocess import TimeoutExpired
 
+from app.mongo.mongo_utils import get_collection
+
 # Cargar entorno
-load_dotenv()
-mongo_uri = os.getenv("MONGO_URI")
-client = MongoClient(mongo_uri)
-db = client["baseDatosScrauron"]
-coleccion_fuentes = db["fuentes"]
+coleccion_fuentes = get_collection("fuentes")
 
 SCRAPING_FREQ_MIN = 40  # frecuencia base de scraping en minutos
 
