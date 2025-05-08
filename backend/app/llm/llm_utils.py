@@ -8,6 +8,7 @@ from dotenv import load_dotenv         # Carga variables de entorno desde un arc
 from openai import OpenAI              # Cliente oficial para la API de OpenAI
 import ast                             # Permite evaluar strings como estructuras de Python de forma segura
 import re
+from app.models.publicacion import Publicacion
 
 # Cargar la API Key desde el archivo .env
 load_dotenv()
@@ -97,3 +98,39 @@ def estimar_tono_publicacion(publicacion) -> int:
         return int(tono_str)  # Convertimos el resultado a entero
     except ValueError:
         raise ValueError(f"Respuesta inesperada del modelo: {tono_str}")  # Manejo de errores si no devuelve un número
+
+# Resume el contenido de una publicación, reformulando con sinónimos para evitar infracción de copyright
+def resumir_contenido_reformulado(publicacion: Publicacion, modelo="gpt-4", max_tokens=600) -> Publicacion:
+    """
+    Resume y reformula el contenido de una publicación utilizando un LLM.
+    El resumen no debe reproducir frases literales del original y debe limitarse a 5 líneas.
+    Modifica el objeto Publicacion en memoria y lo devuelve.
+    Si el contenido excede los 25,000 caracteres, se recorta automáticamente.
+    """
+    if not publicacion.contenido.strip():
+        raise ValueError("El contenido está vacío o no disponible.")
+
+    # Limitar el contenido a los primeros 25,000 caracteres
+    if len(publicacion.contenido) > 25000:
+        publicacion.contenido = publicacion.contenido[:25000]
+
+    prompt = (
+        "Resume el siguiente artículo en un máximo de 5 líneas. "
+        "No copies frases exactas del original: reformula y utiliza sinónimos para evitar infracción de copyright. "
+        "El tono debe ser claro, profesional y accesible. Aquí está el artículo:\n\n"
+        f"{publicacion.contenido}"
+    )
+
+    response = client.chat.completions.create(
+        model=modelo,
+        messages=[
+            {"role": "system", "content": "Eres un asistente experto en resumir y reformular artículos de prensa evitando plagio."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=max_tokens,
+        temperature=0.7
+    )
+
+    resumen = response.choices[0].message.content.strip()
+    publicacion.contenido = resumen
+    return publicacion

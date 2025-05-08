@@ -9,10 +9,11 @@ import random
 from urllib.parse import urlparse
 
 # Funciones de acceso a Mongo y modelo de datos
-from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion
+from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion, update_publicacion
 from pymongo.errors import DuplicateKeyError, WriteError, ConnectionFailure
 from app.models.publicacion import Publicacion
 from app.similarity_search.similarity_search import buscar_y_enlazar_a_conceptos
+from app.llm.llm_utils import resumir_contenido_reformulado
 
 # Establece conexión con la colección Mongo de publicaciones
 coleccion = get_mongo_collection()
@@ -140,6 +141,14 @@ class NoticiasSpider(scrapy.Spider):
             # Busca conceptos semánticamente relacionados y asocia la publicación
             buscar_y_enlazar_a_conceptos(publicacion)
 
+            publicacion = resumir_contenido_reformulado(publicacion)
+
+            update_publicacion(
+                pub_id=publicacion._id,
+                data={"contenido": publicacion.contenido}
+            )
+
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Contenido resumido: {publicacion.contenido}")
         # Manejo de errores específicos de Mongo
         except DuplicateKeyError:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Ya existe (aunque no se detectó antes): {url}")
