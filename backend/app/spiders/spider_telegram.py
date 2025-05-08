@@ -1,57 +1,46 @@
-# Spider que accede a canales de Telegram vía navegador automatizado con Playwright,
-# extrae mensajes visibles, los guarda como publicaciones en MongoDB
-# y captura el HTML renderizado para depuración.
-
 import scrapy
 from scrapy_playwright.page import PageMethod
-import hashlib
 from datetime import datetime
-import re
-from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion
 from pymongo.errors import DuplicateKeyError, ConnectionFailure, WriteError
+from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion
 from app.models.publicacion import Publicacion
+from app.similarity_search.similarity_search import buscar_y_enlazar_a_conceptos
+import re
 
 # Se conecta a la colección de publicaciones en MongoDB
 coleccion = get_mongo_collection()
 
-# Spider especializado para Telegram usando Playwright para renderizar JavaScript
+# Spider especializado para scraping de páginas similares a Telegram
 class TelegramSpider(scrapy.Spider):
     name = "telegram"
 
-    # Configuración de Scrapy + Playwright para navegar con Chromium sin interfaz gráfica
+    # Configuración para usar Playwright con Scrapy
     custom_settings = {
-        "PLAYWRIGHT_BROWSER_TYPE": "chromium",  # Usa el navegador Chromium
-        "PLAYWRIGHT_LAUNCH_OPTIONS": {"headless": True},  # Sin interfaz
+        "PLAYWRIGHT_BROWSER_TYPE": "chromium",
+        "PLAYWRIGHT_LAUNCH_OPTIONS": {"headless": True},
         "DOWNLOAD_HANDLERS": {
             "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
             "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
         },
-        "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",  # Reactor compatible con async
-        "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 60 * 1000,  # Timeout de 60s
+        "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
+        "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 60 * 1000,
     }
 
-    # Constructor que recibe la URL del canal de Telegram
     def __init__(self, url=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        print("TelegramSpider inicializado con:", url)
         self.start_urls = [url] if url else [""]
         self.fuente = self.start_urls[0]
 
-    # Inicia la navegación y espera que el contenido se renderice antes de continuar
     def start_requests(self):
-        print("📡 Ejecutando start_requests()")
         for url in self.start_urls:
             yield scrapy.Request(
                 url,
                 meta={
-                    "playwright": True,  # Usa Playwright
+                    "playwright": True,
                     "playwright_include_page": True,
                     "playwright_page_methods": [
-                        # Espera que los mensajes se carguen
-                        PageMethod("wait_for_selector", "div.tgme_widget_message_text", timeout=30000),
-                        # Espera extra de 5 segundos para asegurar carga completa
+                        PageMethod("wait_for_selector", "article.cpost-wt-text", timeout=30000),
                         PageMethod("wait_for_timeout", 5000),
-                        # Captura screenshot para debug visual
                         PageMethod("screenshot", path="app/spiders/debug/debug_telegram.png", full_page=True),
                     ],
                 },
@@ -59,52 +48,66 @@ class TelegramSpider(scrapy.Spider):
                 errback=self.handle_error
             )
 
-    # Manejador de errores en la solicitud
     def handle_error(self, failure):
         self.logger.error("ERROR en la solicitud:")
         self.logger.error(repr(failure))
 
-    # Extrae todos los mensajes de la página de Telegram ya renderizada
+
+
     def extraer_publicacion_telegram(self, response):
-        print("Entró en extraer_publicaciones_telegram():", response.url)
+        print("Entró en extraer_publicacion_telegram():", response.url)
 
         # Guarda el HTML para debug
         with open("app/spiders/debug/debug_telegram.html", "w", encoding="utf-8") as f:
             f.write(response.text)
 
-        # Selecciona los mensajes del canal
-        mensajes = response.css("div.tgme_widget_message_text")
-        print(f"Mensajes encontrados: {len(mensajes)}")
+        # Selecciona todos los artículos visibles en la página
+        articulos = response.css("article.cpost-wt-text")
+        print(f"Artículos encontrados: {len(articulos)}")
 
         total_guardados = 0
 
-        for msg in mensajes:
-            contenido = msg.xpath("string()").get().strip()
-            if not contenido or len(contenido) < 10:
+        for articulo in articulos:
+            # Extrae todo el contenido de texto del artículo (sin etiquetas)
+            texto_completo = articulo.xpath("string()").get(default="").strip()
+
+            # Omite artículos vacíos o demasiado cortos
+            if not texto_completo or len(texto_completo) < 10:
                 continue
 
-            # Usa la primera frase como título si es posible
-            match = re.match(r"^(.*?[.!?])(\s|$)", contenido)
-            titulo = match.group(1).strip() if match else contenido[:60]
+            # Elimina cualquier URL del texto
+            texto_limpio = re.sub(r'https?://\S+|www\.\S+', '', texto_completo).strip()
 
-            # Crea hash único como ID para evitar duplicados
-            hash_id = hashlib.sha1((self.fuente + contenido).encode("utf-8")).hexdigest()
+            # Título: si empieza con <b> úsalo, si no, toma primera frase
+            titulo = ""
+            if articulo.css("b::text"):
+                titulo = articulo.css("b::text").get().strip()
+            else:
+                match = re.match(r"^(.*?[.!?])(\s|$)", texto_limpio)
+                titulo = match.group(1).strip() if match else texto_limpio[:60]
 
-            # Crea el objeto Publicación con los datos del mensaje
+            # Crea objeto Publicación
             publicacion = Publicacion(
                 titulo=titulo,
                 url=self.fuente,
                 fecha=datetime.now(),
-                contenido=contenido,
+                contenido=texto_limpio,
                 fuente=self.fuente
             )
-            publicacion._id = hash_id
 
-            # Intenta guardar la publicación en MongoDB
             try:
-                create_publicacion(publicacion)
-                total_guardados += 1
-                print(f"✅ Artículo guardado: {titulo} | Fuente: {publicacion.fuente}")
+                # Intenta guardar en MongoDB
+                insert_result = create_publicacion(publicacion)
+                if insert_result:
+                    publicacion._id = str(insert_result.inserted_id)
+                    total_guardados += 1
+                    print(f"✅ Artículo guardado: {titulo} | Fuente: {publicacion.fuente}")
+
+                    # Enlaza con conceptos relacionados
+                    buscar_y_enlazar_a_conceptos(publicacion)
+                else:
+                    print("⚠️ No se insertó (posiblemente duplicado).")
+
             except DuplicateKeyError:
                 print("❌ Ya existe un artículo con esa clave.")
             except ConnectionFailure:
@@ -114,4 +117,7 @@ class TelegramSpider(scrapy.Spider):
             except Exception as e:
                 print(f"❌ Error inesperado: {e}")
 
+            print("---------------------------------------------------------------------------------")
+
         print(f"\n💾 Total guardados: {total_guardados}")
+

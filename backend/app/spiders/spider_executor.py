@@ -18,7 +18,7 @@ process = CrawlerProcess(settings={
 })
 
 #Si es una url de Telegram usar TelegramSpider, sino usar NoticiasSpider
-if url.startswith(("https://t.me/", "http://t.me/")):
+if url.startswith(("https://tlgrm", "http://tlgrm")):
     print("Detectado Telegram. Usando TelegramSpider.")
     process.crawl(TelegramSpider, url=url)
 else:

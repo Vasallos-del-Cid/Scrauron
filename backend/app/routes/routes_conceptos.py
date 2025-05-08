@@ -87,7 +87,6 @@ def generar_descripcion_concepto(concepto_id):
         return jsonify({"error": "Concepto no encontrado"}), 404
 
     add_descripcion_llm(concepto)
-    update_concepto(concepto)
 
     return jsonify(concepto.to_dict()), 200
 
@@ -100,8 +99,7 @@ def generar_keywords_concepto(concepto_id):
 
     if not concepto.descripcion:
         return jsonify({"error": "La descripción del concepto es requerida para generar keywords"}), 400
-
+    
     add_keywords_llm(concepto)
-    update_concepto(concepto)
 
     return jsonify(concepto.to_dict()), 200

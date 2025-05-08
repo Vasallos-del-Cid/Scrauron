@@ -1,14 +1,20 @@
 # llm_utils.py
 
-import os
-from dotenv import load_dotenv
-from openai import OpenAI
-import ast
+# Este módulo utiliza la API de OpenAI para generar descripciones, keywords
+# y estimaciones de tono emocional a partir de conceptos o publicaciones.
 
-# Cargar la API Key desde el entorno
+import os
+from dotenv import load_dotenv         # Carga variables de entorno desde un archivo .env
+from openai import OpenAI              # Cliente oficial para la API de OpenAI
+import ast                             # Permite evaluar strings como estructuras de Python de forma segura
+import re
+
+# Cargar la API Key desde el archivo .env
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# ------------------------------------------------------------------------------
+# Genera una descripción clara y concisa de un concepto dado
 def generar_descripcion_concepto(nombre_concepto: str) -> str:
     """
     Genera una descripción de 4 frases sobre el concepto dado.
@@ -18,17 +24,21 @@ def generar_descripcion_concepto(nombre_concepto: str) -> str:
         "Usa lenguaje técnico pero comprensible. No repitas palabras innecesarias."
     )
 
+    # Se hace una llamada al modelo GPT-4 con el prompt diseñado
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "Eres un redactor experto en comunicación clara y precisa."},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.7
+        temperature=0.7  # Un poco de variabilidad para enriquecer el lenguaje
     )
 
+    # Se devuelve el contenido limpio del mensaje generado
     return response.choices[0].message.content.strip()
 
+# ------------------------------------------------------------------------------
+# Extrae 10 keywords representativas a partir de una descripción
 def generar_keywords_descriptivos(descripcion_concepto: str) -> list:
     """
     Genera 10 keywords representativas a partir de la descripción del concepto.
@@ -41,39 +51,49 @@ def generar_keywords_descriptivos(descripcion_concepto: str) -> list:
         "Devuelve solo una lista de Python válida, sin explicación adicional."
     )
 
+    # Solicita al modelo que devuelva una lista sintácticamente válida
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "Eres un analista experto en inteligencia semántica y taxonomías."},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.5
+        temperature=0.5  # Menos aleatoriedad, más consistencia en la salida
     )
 
+    # Convierte la respuesta (string) a lista real de Python de forma segura
     return ast.literal_eval(response.choices[0].message.content.strip())
 
+# ------------------------------------------------------------------------------
+# Estima el tono emocional del título de una publicación entre 1 (muy negativo) y 10 (muy positivo)
 def estimar_tono_publicacion(publicacion) -> int:
     """
     Usa el título de una publicación para estimar su tono del 1 (muy negativo) al 10 (muy positivo).
+    Si hay enlaces en el título, los elimina antes del análisis.
     """
+
+    # Elimina enlaces (http, https o www) del título
+    titulo_limpio = re.sub(r'https?://\S+|www\.\S+', '', publicacion.titulo).strip()
+
     prompt = (
-        f"A partir del siguiente título:\n\n\"{publicacion.titulo}\"\n\n"
+        f"A partir del siguiente título:\n\n\"{titulo_limpio}\"\n\n"
         "Valora el tono emocional del contenido implícito en el título, del 1 al 10, "
         "donde 1 es muy negativo, 5 es neutro, y 10 es muy positivo. "
         "Devuelve solo el número entero, sin explicación adicional."
     )
 
+    # Se envía el prompt al modelo para que devuelva un número emocional
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "Eres un analista experto en comunicación y análisis emocional de lenguaje."},
             {"role": "user", "content": prompt}
         ],
-        temperature=0
+        temperature=0  # Resultado determinista
     )
 
     tono_str = response.choices[0].message.content.strip()
     try:
-        return int(tono_str)
+        return int(tono_str)  # Convertimos el resultado a entero
     except ValueError:
-        raise ValueError(f"Respuesta inesperada del modelo: {tono_str}")
+        raise ValueError(f"Respuesta inesperada del modelo: {tono_str}")  # Manejo de errores si no devuelve un número

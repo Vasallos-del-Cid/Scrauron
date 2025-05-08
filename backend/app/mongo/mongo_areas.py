@@ -1,3 +1,7 @@
+# mongo_areas.py
+
+# Este módulo gestiona las áreas de trabajo, que agrupan conceptos de interés y fuentes informativas.
+
 import os
 from pymongo import MongoClient
 from bson import ObjectId
@@ -8,23 +12,27 @@ from ..models.concepto_interes import ConceptoInteres
 from .mongo_fuentes import get_fuente_by_id
 from .mongo_conceptos import get_concepto_by_id
 
-# Conexión a MongoDB
+# --------------------------------------------------
+# Cargar la URI de MongoDB desde .env y conectar
 load_dotenv()
 mongo_uri = os.getenv("MONGO_URI")
 client = MongoClient(mongo_uri)
 db = client["baseDatosScrauron"]
 coleccion = db["areas_de_trabajo"]
 
-# GET colección (opcional para acceso directo)
+# --------------------------------------------------
+# Devuelve la colección de Mongo (útil para acceso directo externo)
 def get_mongo_collection():
     return coleccion
 
-# GET todas las áreas
+# --------------------------------------------------
+# Recupera todas las áreas de trabajo como instancias de AreaDeTrabajo
 def get_areas():
     areas_raw = list(coleccion.find())
     return [AreaDeTrabajo.from_dict(a) for a in areas_raw]
 
-# GET una sola área por ID
+# --------------------------------------------------
+# Recupera una única área por su ID
 def get_area_by_id(area_id):
     if not ObjectId.is_valid(area_id):
         raise ValueError("ID no válido")
@@ -34,21 +42,24 @@ def get_area_by_id(area_id):
         return area
     return None
 
-# POST crear nueva área
+# --------------------------------------------------
+# Crea una nueva área de trabajo en la colección
 def create_area(area):
     data = area.to_dict()
-    data.pop("_id", None)  # ❗️Eliminar _id siempre antes de insertar
+    data.pop("_id", None)  # Eliminar _id si es None para evitar error al insertar
     insert_result = coleccion.insert_one(data)
     return insert_result
 
-# DELETE un área
+# --------------------------------------------------
+# Elimina un área de trabajo por su ID
 def delete_area(area_id):
     if not ObjectId.is_valid(area_id):
         raise ValueError("ID no válido")
     result = coleccion.delete_one({"_id": ObjectId(area_id)})
     return result.deleted_count
 
-# UPDATE un área
+# --------------------------------------------------
+# Actualiza por completo un objeto de tipo AreaDeTrabajo
 def update_area(area: AreaDeTrabajo):
     data = area.to_dict()
     area_id = data.pop("_id", None)
@@ -73,6 +84,8 @@ def update_area(area: AreaDeTrabajo):
     else:
         print(f"✅ Área actualizada correctamente: {area.nombre}")
 
+# --------------------------------------------------
+# Actualiza parcialmente un área usando un diccionario con campos modificados
 def update_area_dict(area_id: str, campos_actualizados: dict):
     try:
         oid = ObjectId(area_id)
@@ -91,17 +104,16 @@ def update_area_dict(area_id: str, campos_actualizados: dict):
     else:
         print(f"✅ Área actualizada correctamente.")
 
-# PATCH agregar concepto a un área (solo _id)
+# --------------------------------------------------
+# Añade un concepto a una área (referencia por ID)
 def agregar_concepto_a_area(area_id: str, concepto_id: str):
     area_dict = get_area_by_id(area_id)
     if not area_dict:
         raise ValueError("Área no encontrada")
     
     concepto_oid = ObjectId(concepto_id)
-
     conceptos_actuales = area_dict.get("conceptos_interes_ids", [])
 
-    # Asegurar comparación correcta entre ObjectIds
     if concepto_oid in conceptos_actuales:
         print(f"⚠️ El concepto ya está en el área (id: {concepto_id})")
         return False
@@ -111,16 +123,14 @@ def agregar_concepto_a_area(area_id: str, concepto_id: str):
 
     return True
 
-
-
-# PATCH agregar fuente a un área (solo _id)
+# --------------------------------------------------
+# Añade una fuente a un área (referencia por ID)
 def agregar_fuente_a_area(area_id: str, fuente_id: str):
     area_dict = get_area_by_id(area_id)
     if not area_dict:
         raise ValueError("Área no encontrada")
     
     fuente_oid = ObjectId(fuente_id)
-
     fuentes_actuales = area_dict.get("fuentes_ids", [])
 
     if fuente_oid in fuentes_actuales:
@@ -131,4 +141,3 @@ def agregar_fuente_a_area(area_id: str, fuente_id: str):
     update_area_dict(area_id, {"fuentes_ids": fuentes_actuales})
 
     return True
-

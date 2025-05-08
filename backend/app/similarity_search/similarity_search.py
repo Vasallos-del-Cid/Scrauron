@@ -100,7 +100,6 @@ def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_simi
                 # Actualiza el concepto en la base de datos
                 update_concepto_dict(concepto)
                 conceptos_actualizados.append((concepto["nombre"], similitud))
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Relacionada con '{concepto['nombre']}' (similitud: {similitud:.2f})")
             except Exception as e:
                 # Captura errores de actualización
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error al actualizar concepto: {e}")

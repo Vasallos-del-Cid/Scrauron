@@ -1,3 +1,9 @@
+# mongo_conceptos.py
+
+# Este módulo gestiona el acceso, creación y actualización de los documentos
+# del tipo "ConceptoInteres" en MongoDB. Además, integra funciones de LLM
+# para generar descripciones y keywords de forma automática.
+
 import os
 from datetime import datetime
 from pymongo import MongoClient
@@ -6,6 +12,7 @@ from dotenv import load_dotenv
 from ..models.concepto_interes import ConceptoInteres
 from ..llm.llm_utils import generar_descripcion_concepto, generar_keywords_descriptivos
 
+# --------------------------------------------------------------------
 # Conexión a MongoDB
 load_dotenv()
 mongo_uri = os.getenv("MONGO_URI")
@@ -13,6 +20,8 @@ client = MongoClient(mongo_uri)
 db = client["baseDatosScrauron"]
 coleccion = db["conceptos_interes"]
 
+# --------------------------------------------------------------------
+# Recupera todos los conceptos de la colección y convierte ObjectId a string
 def get_conceptos():
     conceptos_raw = list(coleccion.find())
     conceptos = []
@@ -22,6 +31,8 @@ def get_conceptos():
         conceptos.append(c)
     return conceptos
 
+# --------------------------------------------------------------------
+# Recupera los conceptos tal y como están en Mongo (sin transformar a clase)
 def get_conceptos_dict():
     conceptos_raw = list(coleccion.find())
     conceptos = []
@@ -32,6 +43,8 @@ def get_conceptos_dict():
         conceptos.append(c)
     return conceptos
 
+# --------------------------------------------------------------------
+# Busca un concepto por su ID y lo convierte a instancia de clase
 def get_concepto_by_id(concepto_id: str):
     if not ObjectId.is_valid(concepto_id):
         return None
@@ -40,9 +53,13 @@ def get_concepto_by_id(concepto_id: str):
         return ConceptoInteres.from_dict(raw)
     return None
 
+# --------------------------------------------------------------------
+# Devuelve los conceptos que tengan IDs en la lista dada
 def get_conceptos_ids(ids):
     return list(coleccion.find({"_id": {"$in": ids}}))
 
+# --------------------------------------------------------------------
+# Crea un nuevo concepto en MongoDB
 def create_concepto(concepto):
     data = concepto.to_dict()
     if "_id" in data and data["_id"] is None:
@@ -50,12 +67,16 @@ def create_concepto(concepto):
     insert_result = coleccion.insert_one(data)
     return insert_result
 
+# --------------------------------------------------------------------
+# Elimina un concepto por su ID
 def delete_concepto(concepto_id):
     if not ObjectId.is_valid(concepto_id):
         raise ValueError("ID no válido")
     result = coleccion.delete_one({"_id": ObjectId(concepto_id)})
     return result.deleted_count
 
+# --------------------------------------------------------------------
+# Actualiza un concepto a partir de su instancia
 def update_concepto(concepto: ConceptoInteres):
     data = concepto.to_dict()
     concepto_id = data.pop("_id", None)
@@ -75,6 +96,8 @@ def update_concepto(concepto: ConceptoInteres):
     except Exception as e:
         print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error actualizando el concepto: {e}")
 
+# --------------------------------------------------------------------
+# Actualiza un concepto a partir de un diccionario
 def update_concepto_dict(concepto_dict: dict):
     concepto_id = concepto_dict.get("_id")
     if not concepto_id:
@@ -88,16 +111,20 @@ def update_concepto_dict(concepto_dict: dict):
         if result.matched_count == 0:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ No se encontró el concepto con _id: {concepto_id}")
         else:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Concepto actualizado correctamente: {concepto_dict.get('nombre')}")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Publicación relacionada con concepto: {concepto_dict.get('nombre')} -> actualizado correctamente.")
     except Exception as e:
         print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error actualizando el concepto: {e}")
 
+# --------------------------------------------------------------------
+# Usa el modelo LLM para generar una descripción automática del concepto
 def add_descripcion_llm(concepto: ConceptoInteres):
     descripcion = generar_descripcion_concepto(concepto.nombre)
     concepto.descripcion = descripcion
     update_concepto(concepto)
     return descripcion
 
+# --------------------------------------------------------------------
+# Usa el modelo LLM para generar keywords representativas de un concepto
 def add_keywords_llm(concepto: ConceptoInteres):
     keywords = generar_keywords_descriptivos(concepto.descripcion)
     concepto.keywords = keywords
