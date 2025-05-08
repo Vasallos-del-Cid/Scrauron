@@ -21,14 +21,12 @@ class ConceptoInteres:
             "nombre": self.nombre,
             "descripcion": self.descripcion,
             "keywords": self.keywords,
-            "publicaciones_relacionadas_ids": [
-                str(pid) for pid in self.publicaciones_relacionadas_ids
-            ]
+            "publicaciones_relacionadas_ids": [str(pid) for pid in self.publicaciones_relacionadas_ids]
         }
         if self._id:
-            data["_id"] = ObjectId(self._id) if ObjectId.is_valid(self._id) else self._id
-
+            data["_id"] = str(self._id)
         return data
+
 
     @classmethod
     def from_dict(cls, data):

@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 from dotenv import load_dotenv
 from ..models.publicacion import Publicacion
+from app.llm.llm_utils import estimar_tono_publicacion
 
 # Conexión a MongoDB (igual que en fuentes)
 load_dotenv()
@@ -36,27 +37,38 @@ def get_publicacion_by_id(pub_id):
         pub["_id"] = str(pub["_id"])
     return pub
 
-#POST
+# POST
 def create_publicacion(publicacion):
-    url = publicacion.url.strip().lower()
 
+    url = publicacion.url.strip().lower()
     existe = coleccion.find_one({"url": url})
 
     if existe:
         print(f"⚠️ Ya existe publicación con URL: {url}")
         return None
 
+    # Estimar el tono antes de guardar
+    try:
+        tono = estimar_tono_publicacion(publicacion)
+        publicacion.tono = tono
+        print(f"🎯 Tono estimado: {tono}")
+    except Exception as e:
+        print(f"⚠️ Error al estimar el tono: {e}")
+        publicacion.tono = None
+
     data = publicacion.to_dict()
 
-    # Normalizar también antes de guardar
+    # Normalizar URL
     data["url"] = url
 
+    # Limpiar _id nulo
     if "_id" in data and data["_id"] is None:
         del data["_id"]
 
     insert_result = coleccion.insert_one(data)
     print(f"✅ Publicación creada: {url}")
     return insert_result
+
 #DELETE
 def delete_publicacion(pub_id):
     if not ObjectId.is_valid(pub_id):

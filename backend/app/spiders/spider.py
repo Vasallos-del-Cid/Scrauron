@@ -9,7 +9,7 @@ import random
 from urllib.parse import urlparse
 
 # Funciones de acceso a Mongo y modelo de datos
-from app.mongo.mongo_publicaciones import get_mongo_collection
+from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion
 from pymongo.errors import DuplicateKeyError, WriteError, ConnectionFailure
 from app.models.publicacion import Publicacion
 from app.similarity_search.similarity_search import buscar_y_enlazar_a_conceptos
@@ -131,7 +131,7 @@ class NoticiasSpider(scrapy.Spider):
             print(f"[{datetime.now().strftime('%H:%M:%S')}] 💾 Intentando guardar: {titulo[:60]}...")
 
             # Inserta en MongoDB
-            insert_result = coleccion.insert_one(publicacion.to_dict())
+            insert_result = create_publicacion(publicacion)
             publicacion._id = str(insert_result.inserted_id)  # Asigna ID real
 
             self.total_guardados += 1

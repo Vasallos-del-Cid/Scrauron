@@ -145,14 +145,32 @@ pip install scrapy-playwright
 playwright install
 ```
 
+#### FAISS
+Permite realizar búsquedas eficientes de similitud entre vectores de alta dimensión, útil para tareas como recuperación semántica y clustering con grandes volúmenes de datos.
+```bash
 pip install faiss-cpu
+```
 
-
+#### NUMPY
+Proporciona estructuras de datos eficientes como arrays multidimensionales y funciones matemáticas de alto rendimiento para trabajar con ellos.
+ 
+ ```bash
 pip install numpy
+```
 
+#### SENTENCE-TRANSFORMERS
+Permite generar representaciones semánticas (embeddings) de textos usando modelos preentrenados basados en transformers. Es especialmente útil para tareas como búsqueda semántica, detección de similitud
+ 
+ ```bash
 pip install sentence-transformers
+```
 
-
+#### OPENAI
+Biblioteca oficial de OpenAI para Python, que te permite interactuar con sus modelos de lenguaje (como GPT-4) mediante su API. 
+ 
+ ```bash
+pip install openai
+```
 
 ### Run project
 

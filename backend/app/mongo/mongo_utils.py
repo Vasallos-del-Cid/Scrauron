@@ -9,19 +9,6 @@ def init_mongo(uri):
     #logging.info(f"DEBUG: mongo_uri = {uri}")
     client = MongoClient(uri)
 
-def get_mongo_collection():
-    db = client["baseDatosScrauron"]
-    coleccion = db["noticias"]
-
-    # Crear índice único para evitar duplicados de título+url
-    try:
-        coleccion.create_index([("url", 1), ("titulo", 1)], unique=True)
-    except DuplicateKeyError as e:
-        print(f"Índice no creado: ya existen duplicados. {e}")
-    except Exception as e:
-        print(f"Error al crear índice: {e}")
-
-    return coleccion
 
 def test_mongo_connection():
     logging.info("Test conexion a MongoDB...")

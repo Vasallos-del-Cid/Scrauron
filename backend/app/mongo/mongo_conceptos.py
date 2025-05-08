@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 from dotenv import load_dotenv
 from ..models.concepto_interes import ConceptoInteres
+from ..llm.llm_utils import generar_descripcion_concepto, generar_keywords_descriptivos
 
 # Conexión a MongoDB
 load_dotenv()
@@ -90,3 +91,15 @@ def update_concepto_dict(concepto_dict: dict):
             print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Concepto actualizado correctamente: {concepto_dict.get('nombre')}")
     except Exception as e:
         print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error actualizando el concepto: {e}")
+
+def add_descripcion_llm(concepto: ConceptoInteres):
+    descripcion = generar_descripcion_concepto(concepto.nombre)
+    concepto.descripcion = descripcion
+    update_concepto(concepto)
+    return descripcion
+
+def add_keywords_llm(concepto: ConceptoInteres):
+    keywords = generar_keywords_descriptivos(concepto.descripcion)
+    concepto.keywords = keywords
+    update_concepto(concepto)
+    return keywords

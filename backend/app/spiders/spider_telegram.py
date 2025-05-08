@@ -7,7 +7,7 @@ from scrapy_playwright.page import PageMethod
 import hashlib
 from datetime import datetime
 import re
-from app.mongo.mongo_publicaciones import get_mongo_collection
+from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion
 from pymongo.errors import DuplicateKeyError, ConnectionFailure, WriteError
 from app.models.publicacion import Publicacion
 
@@ -102,7 +102,7 @@ class TelegramSpider(scrapy.Spider):
 
             # Intenta guardar la publicación en MongoDB
             try:
-                coleccion.insert_one(publicacion.to_dict())
+                create_publicacion(publicacion)
                 total_guardados += 1
                 print(f"✅ Artículo guardado: {titulo} | Fuente: {publicacion.fuente}")
             except DuplicateKeyError:

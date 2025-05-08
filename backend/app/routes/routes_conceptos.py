@@ -5,7 +5,9 @@ from ..mongo.mongo_conceptos import (
     get_concepto_by_id,
     create_concepto,
     update_concepto,
-    delete_concepto
+    delete_concepto,
+    add_descripcion_llm,
+    add_keywords_llm
 )
 
 api_conceptos = Blueprint('api_conceptos', __name__)
@@ -77,4 +79,29 @@ def delete_concepto_endpoint(concepto_id):
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
 
+# PATCH /conceptos/<id>/generar_descripcion → Genera descripción y devuelve el concepto actualizado
+@api_conceptos.route('/conceptos/<concepto_id>/generar_descripcion', methods=['PATCH'])
+def generar_descripcion_concepto(concepto_id):
+    concepto = get_concepto_by_id(concepto_id)
+    if not concepto:
+        return jsonify({"error": "Concepto no encontrado"}), 404
 
+    add_descripcion_llm(concepto)
+    update_concepto(concepto)
+
+    return jsonify(concepto.to_dict()), 200
+
+# PATCH /conceptos/<id>/generar_keywords → Genera keywords y devuelve el concepto actualizado
+@api_conceptos.route('/conceptos/<concepto_id>/generar_keywords', methods=['PATCH'])
+def generar_keywords_concepto(concepto_id):
+    concepto = get_concepto_by_id(concepto_id)
+    if not concepto:
+        return jsonify({"error": "Concepto no encontrado"}), 404
+
+    if not concepto.descripcion:
+        return jsonify({"error": "La descripción del concepto es requerida para generar keywords"}), 400
+
+    add_keywords_llm(concepto)
+    update_concepto(concepto)
+
+    return jsonify(concepto.to_dict()), 200
