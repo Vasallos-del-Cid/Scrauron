@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 from dotenv import load_dotenv
 from ..models.publicacion import Publicacion
+from datetime import datetime
 from app.llm.llm_utils import estimar_tono_publicacion
 
 # Conexión a MongoDB (igual que en fuentes)
@@ -51,9 +52,9 @@ def create_publicacion(publicacion):
     try:
         tono = estimar_tono_publicacion(publicacion)
         publicacion.tono = tono
-        print(f"🎯 Tono estimado: {tono}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🎯 Tono estimado: {tono}")
     except Exception as e:
-        print(f"⚠️ Error al estimar el tono: {e}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Error al estimar el tono: {e}")
         publicacion.tono = None
 
     data = publicacion.to_dict()
@@ -66,7 +67,6 @@ def create_publicacion(publicacion):
         del data["_id"]
 
     insert_result = coleccion.insert_one(data)
-    print(f"✅ Publicación creada: {url}")
     return insert_result
 
 #DELETE
@@ -80,10 +80,10 @@ def delete_publicacion(pub_id):
 def delete_all_publicaciones():
     try:
         result = coleccion.delete_many({})
-        print(f"🔴 Se eliminaron {result.deleted_count} publicaciones")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔴 Se eliminaron {result.deleted_count} publicaciones")
         return result.deleted_count
     except Exception as e:
-        print(f"❌ Error eliminando publicaciones: {e}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error eliminando publicaciones: {e}")
         raise
 
 #UPDATE
