@@ -1,4 +1,5 @@
 # mongo_publicaciones.py
+import logging
 
 # Este módulo gestiona la persistencia de objetos tipo "Publicacion" en MongoDB.
 # Incluye operaciones CRUD y además estima automáticamente el tono emocional de
@@ -45,16 +46,16 @@ def create_publicacion(publicacion):
     })
 
     if existe:
-        print(f"⚠️ Ya existe publicación con URL: {url}")
+        logging.info(f"⚠️ Ya existe publicación con URL  : {url}")
         return None
 
     # Estima el tono usando LLM (basado en el título)
     try:
         tono = estimar_tono_publicacion(publicacion)
         publicacion.tono = tono
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🎯 Tono estimado: {tono}")
+        logging.info(f"🎯 Tono estimado: {tono}")
     except Exception as e:
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Error al estimar el tono: {e}")
+        logging.error(f"⚠️ Error al estimar el tono: {e}")
         publicacion.tono = None
 
     data = publicacion.to_dict()
@@ -80,11 +81,11 @@ def delete_publicacion(pub_id):
 def delete_all_publicaciones():
     try:
         result = get_collection("publicaciones").delete_many({})
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔴 Se eliminaron {result.deleted_count} publicaciones")
+        logging.info(f" 🔴 Se eliminaron {result.deleted_count} publicaciones")
         return result.deleted_count
     except Exception as e:
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error eliminando publicaciones: {e}")
-        raise
+        logging.error(f"❌ Error eliminando publicaciones:\n{e}")
+        # raise e
 
 # --------------------------------------------------
 # Actualiza parcialmente una publicación por ID

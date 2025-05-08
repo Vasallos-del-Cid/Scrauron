@@ -15,7 +15,7 @@ env_arg = None
 if len(sys.argv) >= 3 and sys.argv[1] == "--env":
     env_arg = sys.argv[2]
 
-logging.info(f"ℹ️ Inciando app...Argumentos de arranque: {env_arg}")
+logging.info(f"ℹ️ Iniciando app...Argumentos de arranque: {env_arg}")
 config = load_config_from_args(env_arg)
 logging.info("✅ Configuración cargada")
 

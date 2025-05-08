@@ -1,17 +1,58 @@
 # llm_utils.py
-
 # Este módulo utiliza la API de OpenAI para generar descripciones, keywords
 # y estimaciones de tono emocional a partir de conceptos o publicaciones.
 
+import logging
 import os
-from dotenv import load_dotenv         # Carga variables de entorno desde un archivo .env
-from openai import OpenAI              # Cliente oficial para la API de OpenAI
-import ast                             # Permite evaluar strings como estructuras de Python de forma segura
+from dotenv import load_dotenv  # Carga variables de entorno desde un archivo .env
+from openai import OpenAI, RateLimitError  # Cliente oficial para la API de OpenAI
+import ast  # Permite evaluar strings como estructuras de Python de forma segura
 import re
 
-# Cargar la API Key desde el archivo .env
-load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def get_openai_client():
+    global open_ai_client
+    load_dotenv()
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key or not api_key.startswith("sk-"):
+        raise Exception("❌ Falta la variable OPENAI_API_KEY en el entorno.")
+    model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")  # Modelo de OpenAI a utilizar
+
+    # en caso que este configurado por limite el uso de chatgpt, se puede usar open router
+    if "true" == os.getenv("USE_OPEN_ROUTER", "false").lower():
+        # Si se usa open router, se debe usar el cliente de open router
+        logging.info("Usando OpenRouter como cliente de OpenAI.")
+        open_ai_client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=os.getenv("OPEN_ROUTER_API_KEY"),
+        )
+        model = f"openai/{model}"  # Cambia el modelo para que sea compatible con open router
+    else:
+        open_ai_client = OpenAI(api_key=api_key)
+    return open_ai_client, model
+
+
+def get_gpt_response(messages, temperature):
+    """
+    Envía un mensaje a la API de OpenAI y devuelve la respuesta generada.
+    :param messages:
+    :param temperature:
+    :return:
+    """
+
+    # Cargar la API Key desde el archivo .env
+    client, model = get_openai_client()
+    response = None
+    try:
+        response = client.chat.completions.create(model=model, messages=messages, temperature=temperature)
+        response = response.choices[0].message.content.strip()
+    except Exception as e:
+        logging.error(f"Error al generar la descripción del concepto: \n{e}")
+        raise e
+    except RateLimitError as e:
+        logging.error("🚫 Límite de cuota alcanzado. Verifica tu facturación en OpenAI.\n La IA no puede generar una respuesta en este momento: se ha alcanzado el límite de uso.")
+        raise e
+    # Se devuelve el contenido limpio del mensaje generado
+    return response if response else "Error al obtener respuesta de la IA."
 
 # ------------------------------------------------------------------------------
 # Genera una descripción clara y concisa de un concepto dado
@@ -23,19 +64,14 @@ def generar_descripcion_concepto(nombre_concepto: str) -> str:
         f"Redacta un párrafo de 4 frases explicando de manera clara y específica el tema: '{nombre_concepto}'. "
         "Usa lenguaje técnico pero comprensible. No repitas palabras innecesarias."
     )
+    messages = [
+        {"role": "system", "content": "Eres un redactor experto en comunicación clara y precisa."},
+        {"role": "user", "content": prompt}
+    ]
 
-    # Se hace una llamada al modelo GPT-4 con el prompt diseñado
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "Eres un redactor experto en comunicación clara y precisa."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.7  # Un poco de variabilidad para enriquecer el lenguaje
-    )
+    response = get_gpt_response(messages, 0.7)
+    return response if response else "Error al generar la descripción."
 
-    # Se devuelve el contenido limpio del mensaje generado
-    return response.choices[0].message.content.strip()
 
 # ------------------------------------------------------------------------------
 # Extrae 10 keywords representativas a partir de una descripción
@@ -50,19 +86,35 @@ def generar_keywords_descriptivos(descripcion_concepto: str) -> list:
         "Cada keyword puede tener hasta 4 palabras. Deben ser útiles para análisis semántico con IA. "
         "Devuelve solo una lista de Python válida, sin explicación adicional."
     )
+    messages = [
+        {"role": "system", "content": "Eres un analista experto en inteligencia semántica y taxonomías."},
+        {"role": "user", "content": prompt}
+    ]
 
-    # Solicita al modelo que devuelva una lista sintácticamente válida
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "Eres un analista experto en inteligencia semántica y taxonomías."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.5  # Menos aleatoriedad, más consistencia en la salida
-    )
+    try:
+        # Solicita al modelo que devuelva una lista sintácticamente válida
+        response = get_gpt_response(messages, 0.5)
+        if not response:
+            raise ValueError("Respuesta vacía del modelo.")
 
-    # Convierte la respuesta (string) a lista real de Python de forma segura
-    return ast.literal_eval(response.choices[0].message.content.strip())
+        # Limpieza si viene con ```python
+        def limpiar_respuesta_de_codigo(respuesta: str) -> str:
+            if respuesta.startswith("```") and respuesta.endswith("```"):
+                lineas = respuesta.strip().splitlines()
+                return "\n".join(lineas[1:-1]).strip()
+            return respuesta.strip()
+
+        keywords = ast.literal_eval(limpiar_respuesta_de_codigo(response))
+
+
+        if not isinstance(keywords, list) or not all(isinstance(k, str) for k in keywords):
+            raise TypeError("La respuesta no es una lista de strings válida.")
+
+        return keywords
+
+    except (ValueError, SyntaxError, TypeError) as e:
+        logging.error(f"❌ Error al generar keywords: {e}\nRespuesta recibida: {response}")
+        raise e
 
 # ------------------------------------------------------------------------------
 # Estima el tono emocional del título de una publicación entre 1 (muy negativo) y 10 (muy positivo)
@@ -81,18 +133,13 @@ def estimar_tono_publicacion(publicacion) -> int:
         "donde 1 es muy negativo, 5 es neutro, y 10 es muy positivo. "
         "Devuelve solo el número entero, sin explicación adicional."
     )
+    messages = [
+        {"role": "system", "content": "Eres un analista experto en comunicación y análisis emocional de lenguaje."},
+        {"role": "user", "content": prompt}
+    ]
 
     # Se envía el prompt al modelo para que devuelva un número emocional
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "Eres un analista experto en comunicación y análisis emocional de lenguaje."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0  # Resultado determinista
-    )
-
-    tono_str = response.choices[0].message.content.strip()
+    tono_str = get_gpt_response(messages, 0)
     try:
         return int(tono_str)  # Convertimos el resultado a entero
     except ValueError:

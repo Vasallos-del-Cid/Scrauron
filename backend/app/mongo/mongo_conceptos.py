@@ -1,9 +1,9 @@
 # mongo_conceptos.py
-
 # Este módulo gestiona el acceso, creación y actualización de los documentos
 # del tipo "ConceptoInteres" en MongoDB. Además, integra funciones de LLM
 # para generar descripciones y keywords de forma automática.
 
+import logging
 from datetime import datetime
 from bson import ObjectId
 
@@ -88,11 +88,11 @@ def update_concepto(concepto: ConceptoInteres):
             {"$set": data}
         )
         if result.matched_count == 0:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ No se encontró el concepto con _id: {concepto_id}")
+            logging.warning(f"⚠️ No se encontró el concepto con _id: {concepto_id}")
         else:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Concepto actualizado correctamente: {concepto.nombre}")
+            logging.info(f"✅ Concepto actualizado correctamente: {concepto.nombre}")
     except Exception as e:
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error actualizando el concepto: {e}")
+        logging.error(f"❌ Error actualizando el concepto: {e}")
 
 
 # --------------------------------------------------------------------
@@ -108,12 +108,11 @@ def update_concepto_dict(concepto_dict: dict):
             {"$set": concepto_dict}
         )
         if result.matched_count == 0:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ No se encontró el concepto con _id: {concepto_id}")
+            logging.warning(f"⚠️ No se encontró el concepto con _id: {concepto_id}")
         else:
-            print(
-                f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Publicación relacionada con concepto: {concepto_dict.get('nombre')} -> actualizado correctamente.")
+            logging.info(f"✅ Publicación relacionada con concepto: {concepto_dict.get('nombre')} -> actualizado correctamente.")
     except Exception as e:
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error actualizando el concepto: {e}")
+        logging.error(f"❌ Error actualizando el concepto: {e}")
 
 
 # --------------------------------------------------------------------

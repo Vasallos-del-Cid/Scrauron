@@ -1,3 +1,5 @@
+import logging
+
 from bson import ObjectId
 
 from .mongo_utils import get_collection
@@ -24,7 +26,7 @@ def get_area_by_id(area_id):
 # Crea una nueva área de trabajo en la colección
 def create_area(area):
     data = area.to_dict()
-    data.pop("_id", None)  # Eliminar _id si es None para evitar error al insertar
+    data.pop("_id", None)  # borrar _id si es None para evitar error al insertar
     insert_result = get_collection("areas_de_trabajo").insert_one(data)
     return insert_result
 
@@ -56,11 +58,11 @@ def update_area(area: AreaDeTrabajo):
     )
 
     if result.matched_count == 0:
-        print(f"⚠️ No se encontró el área con _id: {area_id}")
+        logging.warning(f"⚠️ No se encontró el área con _id: {area_id}")
     elif result.modified_count == 0:
-        print(f"ℹ️ Área encontrada pero sin cambios.")
+        logging.info(f"ℹ️ Área encontrada pero sin cambios.")
     else:
-        print(f"✅ Área actualizada correctamente: {area.nombre}")
+        logging.info(f"✅ Área actualizada correctamente: {area.nombre}")
 
 # --------------------------------------------------
 # Actualiza parcialmente un área usando un diccionario con campos modificados
@@ -76,11 +78,11 @@ def update_area_dict(area_id: str, campos_actualizados: dict):
     )
 
     if result.matched_count == 0:
-        print(f"⚠️ No se encontró el área con _id: {area_id}")
+        logging.warning(f"⚠️ No se encontró el área con _id: {area_id}")
     elif result.modified_count == 0:
-        print(f"ℹ️ El área ya estaba actualizada, sin cambios.")
+        logging.info(f"ℹ️ El área ya estaba actualizada, sin cambios.")
     else:
-        print(f"✅ Área actualizada correctamente.")
+        logging.info(f"✅ Área actualizada correctamente.")
 
 # --------------------------------------------------
 # Añade un concepto a una área (referencia por ID)
@@ -93,7 +95,7 @@ def agregar_concepto_a_area(area_id: str, concepto_id: str):
     conceptos_actuales = area_dict.get("conceptos_interes_ids", [])
 
     if concepto_oid in conceptos_actuales:
-        print(f"⚠️ El concepto ya está en el área (id: {concepto_id})")
+        logging.warning(f"⚠️ El concepto ya está en el área (id: {concepto_id})")
         return False
 
     conceptos_actuales.append(concepto_oid)
@@ -112,7 +114,7 @@ def agregar_fuente_a_area(area_id: str, fuente_id: str):
     fuentes_actuales = area_dict.get("fuentes_ids", [])
 
     if fuente_oid in fuentes_actuales:
-        print(f"⚠️ La fuente ya está en el área (id: {fuente_id})")
+        logging.warning(f"⚠️ La fuente ya está en el área (id: {fuente_id})")
         return False
 
     fuentes_actuales.append(fuente_oid)

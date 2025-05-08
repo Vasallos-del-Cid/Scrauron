@@ -28,9 +28,9 @@ def get_fuente_by_id(fuente_id: str):
 # --------------------------------------------------
 # Crea una nueva fuente si no existe una con la misma URL
 def create_fuente(fuente):
-    print(fuente)
+    #print(fuente)
     data = fuente.to_dict()
-    print("DATA: ", data)
+    #print("DATA: ", data)
     # Verificar si ya existe una fuente con la misma URL
     if get_collection("fuentes").find_one({"url": data["url"]}):
         return jsonify({"error": "Ya existe una fuente con esa URL"}), 409

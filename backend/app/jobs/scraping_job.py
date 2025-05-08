@@ -1,3 +1,4 @@
+import logging
 import time
 import threading
 import subprocess
@@ -13,7 +14,7 @@ SCRAPING_FREQ_MIN = 40
 # Ejecuta el script spider_executor.py pasando la URL como argumento
 # =========================
 def ejecutar_scraping(url):
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] 🕷️ Ejecutando scraping para: {url}")
+    logging.info(f" 🕷️ Ejecutando scraping para: {url}")
     try:
         # Ejecuta el spider como subproceso
         subprocess.run(
@@ -21,9 +22,9 @@ def ejecutar_scraping(url):
             check=True  # Lanza excepción si el script falla
         )
     except subprocess.CalledProcessError as e:
-        print(f"❌ Scraping falló con código {e.returncode}")
+        logging.error(f"❌ Scraping falló con código {e.returncode}")
     except Exception as e:
-        print(f"💥 Error ejecutando spider: {e}")
+        logging.error(f"💥 Error ejecutando spider: {e}")
 
 # =========================
 # Ejecuta scraping para todas las fuentes guardadas en MongoDB
@@ -41,7 +42,7 @@ def scraping_todas_las_fuentes():
 def scheduler_loop():
     while True:
         hora_inicio = datetime.now().strftime('%H:%M:%S')
-        print(f"\n[{hora_inicio}] 🔁 Lanzando scraping de todas las fuentes...")
+        logging.info(f"\n[{hora_inicio}] 🔁 Lanzando scraping de todas las fuentes...")
         
         # Ejecutar scraping de todas las fuentes
         scraping_todas_las_fuentes()
@@ -53,8 +54,8 @@ def scheduler_loop():
 
         hora_siguiente = datetime.now() + timedelta(seconds=espera_seg)
 
-        print(f"🕒 Esperando {espera_min:.2f} minutos para la siguiente ejecución...")
-        print(f"🕒 Próxima ejecución a las {hora_siguiente.strftime('%H:%M:%S')}")
+        logging.info(f"🕒 Esperando {espera_min:.2f} minutos para la siguiente ejecución...")
+        logging.info(f"🕒 Próxima ejecución a las {hora_siguiente.strftime('%H:%M:%S')}")
 
         # Pausar hasta la próxima ejecución
         time.sleep(espera_seg)

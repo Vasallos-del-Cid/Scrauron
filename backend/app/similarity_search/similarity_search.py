@@ -1,3 +1,5 @@
+import logging
+
 from bson import ObjectId
 from datetime import datetime
 import faiss
@@ -45,7 +47,7 @@ def construir_indice_conceptos(conceptos):
 def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_similitud=0.85):
     # Verifica que la publicación sea válida y tenga un ID asignado
     if not publicacion or not publicacion._id:
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Publicación inválida o sin _id.")
+        logging.warning(f"⚠️ Publicación inválida o sin _id.")
         return []
 
     # Prepara el texto combinando título y contenido, y lo normaliza (quita saltos, espacios, etc.)
@@ -57,7 +59,7 @@ def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_simi
     # Recupera todos los conceptos desde MongoDB en formato dict
     conceptos = get_conceptos_dict()
     if not conceptos:
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ No hay conceptos registrados.")
+        logging.info(f"❌ No hay conceptos registrados.")
         return []
 
     # Construye el índice semántico FAISS a partir de los conceptos
@@ -81,7 +83,7 @@ def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_simi
         concepto = conceptos[i]
 
         # Muestra en consola información del concepto y su similitud
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔎 Evaluando '{concepto['nombre']}' (similitud: {similitud:.4f})")
+        logging.info(f" 🔎 Evaluando '{concepto['nombre']}' (similitud: {similitud:.4f})")
 
         # Verifica si la similitud es suficientemente alta para enlazar
         if similitud >= umbral_similitud:
@@ -89,7 +91,7 @@ def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_simi
 
             # Evita duplicar el ID de la publicación si ya está relacionado
             if pub_oid in relacionados:
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] 🛑 Ya relacionada con '{concepto['nombre']}'")
+                logging.error(f"🛑 Ya relacionada con '{concepto['nombre']}'")
                 continue
 
             # Añade el ID de la publicación a la lista del concepto
@@ -102,10 +104,10 @@ def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_simi
                 conceptos_actualizados.append((concepto["nombre"], similitud))
             except Exception as e:
                 # Captura errores de actualización
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error al actualizar concepto: {e}")
+                logging.error(f"❌ Error al actualizar concepto: {e}")
         else:
             # Muestra conceptos cuya similitud es demasiado baja
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 📉 Similitud insuficiente con '{concepto['nombre']}': {similitud:.2f}")
+            logging.info(f"📉 Similitud insuficiente con '{concepto['nombre']}': {similitud:.2f}")
 
     # Devuelve la lista de conceptos actualizados con los que hubo relación
     return conceptos_actualizados

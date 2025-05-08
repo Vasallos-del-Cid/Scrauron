@@ -1,5 +1,7 @@
 import logging
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 
@@ -18,14 +20,19 @@ def load_config_from_args(env_arg=None):
         force=True  # esto es clave para que sobrescriba configuraciones previas
     )
 
-    # Cargar el archivo .env correspondiente según el entorno
-    # Ruta base del .env
-    dotenv_base = "../.env"
-    load_dotenv(dotenv_base, override=False)  # Cargar variables base, sin sobrescribir las existentes
+    # Ruta absoluta al directorio del proyecto (donde esté .env)
+    base_path = Path(__file__).resolve().parent.parent
+    # Ruta base del .env con variables con secretos
+    dotenv_base = base_path / ".env"
+    load_dotenv(dotenv_base, override=False)
+    # Cargar variables base no sensibles, sin sobrescribir las existentes
+    dotenv_config = base_path / ".env.config"
+    load_dotenv(dotenv_config, override=False)
 
+    # Cargar el archivo .env correspondiente según el entorno
     if env_arg == "local":
         logging.info("ℹ️ Cargando configuración local (.env.local)")
-        dotenv_local = "../.env.local"
+        dotenv_local = base_path / ".env.local"
         load_dotenv(dotenv_local, override=True)  # Sobrescribe solo las que están en .env.local
     else:
         if env_arg is None:
@@ -36,5 +43,7 @@ def load_config_from_args(env_arg=None):
 
     return {
         "MONGO_URI": os.getenv("MONGO_URI"),
-        "USE_RELOADER": use_reloader
+        "USE_RELOADER": use_reloader,
+        "OPENAI_MODEL": os.getenv("OPENAI_MODEL", "gpt-4"),
+        "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY")
     }

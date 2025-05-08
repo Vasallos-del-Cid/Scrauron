@@ -1,5 +1,6 @@
 # Spider de Scrapy para extraer titulares y contenidos de noticias, guardarlos en MongoDB
 # y enlazarlos semánticamente con conceptos registrados usando FAISS.
+import logging
 
 import scrapy
 from datetime import datetime
@@ -66,7 +67,7 @@ class NoticiasSpider(scrapy.Spider):
 
                     # Ignora encabezados genéricos sin contenido informativo
                     if len(texto_limpio.split()) == 1 and texto_limpio.strip() in titulos_baneados:
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] ⛔ Título ignorado: '{texto_limpio}'")
+                        logging.info(f"⛔ Título ignorado: '{texto_limpio}'")
                         continue
 
                     # Filtra h1s demasiado cortos
@@ -78,7 +79,7 @@ class NoticiasSpider(scrapy.Spider):
 
                     # Verifica si ya existe en Mongo para evitar duplicados
                     if get_collection("publicaciones").find_one({"url": url_completa}):
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Ya existe en Mongo: {url_completa}")
+                        logging.warning(f"⚠️ Ya existe en Mongo: {url_completa}")
                         self.total_ignorados += 1
                         continue
 
@@ -100,8 +101,7 @@ class NoticiasSpider(scrapy.Spider):
         delay = random.uniform(1, 5)
         time.sleep(delay)
 
-        hora_inicio = datetime.now().strftime('%H:%M:%S')
-        print(f"[{hora_inicio}] 📰 Procesando noticia...")
+        logging.info(f"📰 Procesando noticia...")
 
         # Recupera los metadatos guardados
         titulo = response.meta['titulo']
@@ -128,33 +128,32 @@ class NoticiasSpider(scrapy.Spider):
         )
 
         try:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 💾 Intentando guardar: {titulo[:60]}...")
+            logging.info(f"💾 Intentando guardar: {titulo[:60]}...")
 
             # Inserta en MongoDB
             insert_result = create_publicacion(publicacion)
             publicacion._id = str(insert_result.inserted_id)  # Asigna ID real
 
             self.total_guardados += 1
-            print(
-                f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Artículo guardado: {titulo} | Fuente: {fuente_nombre} ({fuente_dominio})")
+            logging.info(f"✅ Artículo guardado: {titulo} | Fuente: {fuente_nombre} ({fuente_dominio})")
 
             # Busca conceptos semánticamente relacionados y asocia la publicación
             buscar_y_enlazar_a_conceptos(publicacion)
 
         # Manejo de errores específicos de Mongo
         except DuplicateKeyError:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Ya existe (aunque no se detectó antes): {url}")
+            logging.warning(f"⚠️ Ya existe (aunque no se detectó antes): {url}")
         except ConnectionFailure:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ No se pudo conectar a MongoDB.")
+            logging.error(f" ❌ No se pudo conectar a MongoDB.")
         except WriteError as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error de escritura en MongoDB: {e}")
+            logging.error(f" ❌ Error de escritura en MongoDB: {e}")
         except Exception as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error inesperado: {e}")
+            logging.error(f" ❌ Error inesperado: {e}")
 
         print("---------------------------------------------------------------------------------")
 
     # Se ejecuta al finalizar el spider e imprime estadísticas
     def closed(self, reason):
-        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 📦 Total guardados: {self.total_guardados}")
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🚫 Total ignorados (ya existentes): {self.total_ignorados}")
+        logging.info(f" 📦 Total guardados: {self.total_guardados}")
+        logging.info(f" 🚫 Total ignorados (ya existentes): {self.total_ignorados}")
         print("---------------------------------------------------------------------------------")
