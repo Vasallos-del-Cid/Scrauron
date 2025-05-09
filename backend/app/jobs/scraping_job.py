@@ -1,4 +1,6 @@
 import logging
+import os
+import sys
 import time
 import threading
 import subprocess
@@ -18,13 +20,16 @@ def ejecutar_scraping(url):
     try:
         # Ejecuta el spider como subproceso
         subprocess.run(
-            ["python", "app/spiders/spider_executor.py", url],
+            [sys.executable, "app/spiders/spider_executor.py", url],
+            env=os.environ.copy(),  # pasa todas las vars actuales, incluyendo MONGO_URI
             check=True  # Lanza excepción si el script falla
         )
     except subprocess.CalledProcessError as e:
         logging.error(f"❌ Scraping falló con código {e.returncode}")
+        raise RuntimeError(f"Error durante el scraping {e}")
     except Exception as e:
         logging.error(f"💥 Error ejecutando spider: {e}")
+        raise RuntimeError(f"Error durante el scraping {e}")
 
 # =========================
 # Ejecuta scraping para todas las fuentes guardadas en MongoDB

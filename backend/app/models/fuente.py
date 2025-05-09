@@ -11,8 +11,14 @@ class Fuente:
     url = None
     nombre = None
 
-    def __init__(self, nombre: str, url: str, tipo: str, fecha_alta: time, activa: bool = True,
-                 _id: Optional[str] = None, ):
+    def __init__(self,
+                 nombre: str,
+                 url: str,
+                 tipo: str,
+                 fecha_alta: time,
+                 activa: bool = True,
+                 _id: Optional[str] = None,
+                 ):
         self._id = _id
         self.nombre = nombre
         self.url = url

@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
-from ..scraper import ejecutar_scraping
-from ..mongo.mongo_fuentes import get_fuentes, create_fuente, delete_fuente, update_fuente
-from ..models.fuente import Fuente
+
+from app.jobs.scraping_job import ejecutar_scraping
 
 api_scraping = Blueprint('api_scraping', __name__)
 
@@ -15,7 +14,8 @@ def scraping():
 
     try:
         resultados = ejecutar_scraping(url)
-        return jsonify({"Success": f"Realizado scraping, capturados {len(resultados) if resultados else 0}"}), 200
+
+        return jsonify({"Success": f"Realizado scraping"}), 200
 
 
     except Exception as e:
