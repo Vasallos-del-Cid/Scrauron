@@ -4,7 +4,7 @@ import scrapy
 from scrapy_playwright.page import PageMethod
 from datetime import datetime
 from pymongo.errors import DuplicateKeyError, ConnectionFailure, WriteError
-from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion
+from app.mongo.mongo_publicaciones import create_publicacion
 from app.models.publicacion import Publicacion
 from app.similarity_search.similarity_search import buscar_y_enlazar_a_conceptos
 import re

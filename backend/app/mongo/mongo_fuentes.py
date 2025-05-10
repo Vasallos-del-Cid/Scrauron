@@ -2,8 +2,9 @@
 
 # Este módulo gestiona operaciones CRUD sobre documentos de tipo "Fuente" en MongoDB.
 # Cada fuente representa un sitio web o dominio monitorizado para extraer noticias.
-from flask import jsonify
+import logging
 
+from flask import jsonify
 from .mongo_utils import get_collection
 from ..models.fuente import Fuente
 from bson import ObjectId
@@ -28,21 +29,18 @@ def get_fuente_by_id(fuente_id: str):
 # --------------------------------------------------
 # Crea una nueva fuente si no existe una con la misma URL
 def create_fuente(fuente):
-    #print(fuente)
     data = fuente.to_dict()
-    #print("DATA: ", data)
+
     # Verificar si ya existe una fuente con la misma URL
     if get_collection("fuentes").find_one({"url": data["url"]}):
-        return jsonify({"error": "Ya existe una fuente con esa URL"}), 409
+        error = {"error": "Ya existe una fuente con esa URL"}
+        logging.error(f" Fallo al guardar fuente: {error}")
+        return jsonify(error), 409
     else:
-        print("En else")
         insert_result = get_collection("fuentes").insert_one(data)
-        print(insert_result)
-        return jsonify({
-            "_id": str(insert_result.inserted_id),
-            "nombre": data["nombre"],
-            "url": data["url"]
-        }), 201
+        logging.info(f"Fuente guardada: {insert_result}")
+        data["_id"] = str(insert_result.inserted_id)  # convertir el ObjectId a string
+        return jsonify(data), 201 # 201 Created
 
 # --------------------------------------------------
 # Elimina una fuente de la colección por su ID

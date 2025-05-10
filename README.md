@@ -188,3 +188,13 @@ python run.py
 ### OPENAI TOKEN
 
 para conseguir un token de openAi, ir a https://platform.openai.com/settings/organization/api-keys y crear nuevo Secret Key
+
+* Incluir en `.env` del backend
+
+### Copiar la BBDD de mongo desde CLOUD a local
+
+- ejecutar
+  - copiar a local
+    - `mongodump --uri="mongodb+srv://user:pass@scrauroncluster.pwatkak.mongodb.net/baseDatos" --out=dump_atlas`
+  - Restaurar en mongo local (sobreescribe la bbdd local)
+    - `mongorestore --drop dump_atlas`

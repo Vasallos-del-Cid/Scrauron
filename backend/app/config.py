@@ -12,14 +12,7 @@ def load_config_from_args(env_arg=None):
     :param env_arg:
     :return:
     """
-
-    # Configuración del logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='[%(asctime)s] %(levelname)-5s : %(module)-15s: %(message)s',
-        force=True  # esto es clave para que sobrescriba configuraciones previas
-    )
-
+    logqing_config()
     # Ruta absoluta al directorio del proyecto (donde esté .env)
     base_path = Path(__file__).resolve().parent.parent
     # Ruta base del .env con variables con secretos
@@ -47,3 +40,15 @@ def load_config_from_args(env_arg=None):
         "OPENAI_MODEL": os.getenv("OPENAI_MODEL", "gpt-4"),
         "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY")
     }
+
+def logqing_config():
+    """
+    Configura el logging para la aplicación.
+    :return:
+    """
+    # Configuración del logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='[%(asctime)s] %(levelname)-5s : %(module)-15s: %(message)s',
+        force=True  # esto es clave para que sobrescriba configuraciones previas
+    )
