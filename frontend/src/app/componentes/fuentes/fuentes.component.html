@@ -33,8 +33,14 @@
         textAlign="Left"
       ></e-column>
       <e-column
-        field="activo"
-        headerText="Estado"
+        field="url"
+        headerText="Dirección URL"
+        width="200"
+        textAlign="Left"
+      ></e-column>
+      <e-column
+        field="activa"
+        headerText="Activada"
         width="120"
         textAlign="Center"
         [template]="switchTemplate"
@@ -43,16 +49,17 @@
         field="fecha_alta"
         headerText="Fecha de Alta"
         width="150"
-        format="yMd"
+        format="yyyy/MM/dd"
         textAlign="Center"
+        type="datetime"
       ></e-column>
     </e-columns>
 
     <ng-template #switchTemplate let-data>
       <ejs-switch
-        [checked]="data.activo"
+        [checked]="data.activa"
         (change)="switchChange($event, data)"
-        cssClass="custom-switch"
+        [cssClass]="'switch-fuente'"
       >
       </ejs-switch>
     </ng-template>
@@ -66,6 +73,7 @@
     [showCloseIcon]="true"
     [isModal]="true"
     [allowDragging]="true"
+    cssClass="dialog-fuente"
     (close)="cancelarFuente()"
   >
     <app-form-crear-fuentes

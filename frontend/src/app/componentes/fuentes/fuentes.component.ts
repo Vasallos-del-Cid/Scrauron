@@ -12,6 +12,8 @@ import {
 import { DialogComponent, DialogModule } from '@syncfusion/ej2-angular-popups';
 import { SwitchModule } from '@syncfusion/ej2-angular-buttons';
 import { FormCrearFuentesComponent } from './form-crear-fuentes/form-crear-fuentes.component';
+import { FuenteService } from './fuentes.service';
+import { Fuente } from './fuente.model';
 
 @Component({
   selector: 'app-fuentes',
@@ -37,7 +39,7 @@ export class FuentesComponent implements OnInit {
   @ViewChild('grid') public grid?: GridComponent;
   @ViewChild('dialogoFuente') public dialogoFuente?: DialogComponent;
 
-  public fuentes: any[] = [];
+  public fuentes: Fuente[] = [];
 
   public toolbar: any[] = [
     { text: 'Crear', id: 'Crear', prefixIcon: 'e-add' },
@@ -60,35 +62,12 @@ export class FuentesComponent implements OnInit {
     allowAdding: false,
   };
   public modoEdicion = false;
-  public fuenteSeleccionada: any = null;
+  public fuenteSeleccionada: Fuente | null = null;
 
-  constructor() {}
+  constructor(private fuenteService: FuenteService) {}
 
   ngOnInit(): void {
-    this.cargarFuentesMock();
-  }
-
-  cargarFuentesMock(): void {
-    this.fuentes = [
-      {
-        nombre: 'Twitter',
-        tipo: 'Red Social',
-        activo: true,
-        fecha_alta: '2024-04-01',
-      },
-      {
-        nombre: 'La Vanguardia',
-        tipo: 'Prensa Escrita',
-        activo: true,
-        fecha_alta: '2024-04-15',
-      },
-      {
-        nombre: 'Canal Noticias Telegram',
-        tipo: 'Canal Telegram',
-        activo: false,
-        fecha_alta: '2024-03-20',
-      },
-    ];
+    this.cargarFuentes();
   }
 
   toolbarClick(args: any): void {
@@ -100,7 +79,7 @@ export class FuentesComponent implements OnInit {
         this.abrirDialogoEditar();
         break;
       case 'Eliminar':
-        this.eliminarFuente();
+        this.borrarFuente();
         break;
       case 'Reset':
         this.grid?.clearFiltering();
@@ -120,34 +99,9 @@ export class FuentesComponent implements OnInit {
     const seleccionados = this.grid?.getSelectedRecords();
     if (seleccionados && seleccionados.length > 0) {
       this.modoEdicion = true;
-      this.fuenteSeleccionada = { ...seleccionados[0] };
+      this.fuenteSeleccionada = { ...seleccionados[0] } as Fuente;
       this.dialogoFuente?.show();
     }
-  }
-
-  eliminarFuente(): void {
-    const seleccionados = this.grid?.getSelectedRecords();
-    if (seleccionados && seleccionados.length > 0) {
-      const nombre = (seleccionados[0] as { nombre: string })['nombre'];
-      this.fuentes = this.fuentes.filter((f) => f.nombre !== nombre);
-      this.grid?.refresh();
-      console.log(`Fuente ${nombre} eliminada`);
-    }
-  }
-
-  guardarFuente(fuente: any): void {
-    if (this.modoEdicion) {
-      const index = this.fuentes.findIndex(
-        (f) => f.nombre === this.fuenteSeleccionada.nombre
-      );
-      if (index !== -1) {
-        this.fuentes[index] = fuente;
-      }
-    } else {
-      this.fuentes.push(fuente);
-    }
-    this.grid?.refresh();
-    this.dialogoFuente?.hide();
   }
 
   cancelarFuente(): void {
@@ -191,7 +145,54 @@ export class FuentesComponent implements OnInit {
     this.activarODesactivarResetFiltros(false);
   }
 
+  cargarFuentes(): void {
+    this.fuenteService.getFuentes((data) => {
+      this.fuentes = data;
+    });
+  }
+
+  borrarFuente(): void {
+    const seleccionados = this.grid?.getSelectedRecords();
+    if (seleccionados && seleccionados.length > 0) {
+      const fuente = seleccionados[0] as Fuente;
+      if (fuente._id) {
+        this.fuenteService.deleteFuente(fuente._id, () => {
+          this.cargarFuentes();
+          console.log(`Fuente ${fuente.nombre} eliminada`);
+        });
+      }
+    }
+  }
+
+  guardarFuente(fuente: Fuente): void {
+    if (this.modoEdicion && this.fuenteSeleccionada?._id) {
+      this.fuenteService.updateFuente(this.fuenteSeleccionada._id, fuente, {
+        success: () => {
+          this.cargarFuentes();
+          this.dialogoFuente?.hide();
+        },
+      });
+    } else {
+      this.fuenteService.createFuente(fuente, {
+        success: () => {
+          this.cargarFuentes();
+          this.dialogoFuente?.hide();
+        },
+      });
+    }
+  }
+
   switchChange(args: any, rowData: any): void {
-    rowData.activo = args.checked;
+    const activa = args.checked;
+    const id = rowData._id;
+    if (!id) return;
+    this.fuenteService.updateFuente(
+      id,
+      { activa: activa },
+      {
+        success: () => console.log(`Fuente ${rowData.nombre} actualizada`),
+        failure: (err) => console.error('Error al actualizar fuente:', err),
+      }
+    );
   }
 }
