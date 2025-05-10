@@ -47,7 +47,7 @@ def create_fuente_endpoint():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-#Eliminar fuente
+#borrar fuente
 @api_fuentes.route('/fuentes/<fuente_id>', methods=['DELETE'])
 def delete_fuente_endpoint(fuente_id):
     try:
