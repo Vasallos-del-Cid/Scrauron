@@ -1,7 +1,7 @@
 <div class="contenedor-grid">
   <ejs-grid
     #grid
-    [dataSource]="fuentes"
+    [dataSource]="items$ | async"
     [allowPaging]="true"
     [pageSettings]="pageSettings"
     [allowSorting]="true"
@@ -33,8 +33,14 @@
         textAlign="Left"
       ></e-column>
       <e-column
-        field="activo"
-        headerText="Estado"
+        field="url"
+        headerText="Dirección URL"
+        width="200"
+        textAlign="Left"
+      ></e-column>
+      <e-column
+        field="activa"
+        headerText="Activada"
         width="120"
         textAlign="Center"
         [template]="switchTemplate"
@@ -43,16 +49,17 @@
         field="fecha_alta"
         headerText="Fecha de Alta"
         width="150"
-        format="yMd"
+        format="yyyy/MM/dd"
         textAlign="Center"
+        type="datetime"
       ></e-column>
     </e-columns>
 
     <ng-template #switchTemplate let-data>
       <ejs-switch
-        [checked]="data.activo"
+        [checked]="data.activa"
         (change)="switchChange($event, data)"
-        cssClass="custom-switch"
+        [cssClass]="'switch-fuente'"
       >
       </ejs-switch>
     </ng-template>
@@ -62,15 +69,17 @@
     #dialogoFuente
     [visible]="false"
     [width]="'500px'"
-    [header]="modoEdicion ? 'Editar Fuente' : 'Crear Nueva Fuente'"
+    [header]="dialogTitle"
     [showCloseIcon]="true"
     [isModal]="true"
     [allowDragging]="true"
+    cssClass="dialog-fuente"
     (close)="cancelarFuente()"
   >
     <app-form-crear-fuentes
-      [fuente]="fuenteSeleccionada"
-      (guardar)="guardarFuente($event)"
+      #formularioFuente
+      [fuente]="getSeleccionado()"
+      (guardar)="guardar($event)"
       (cancelar)="cancelarFuente()"
     >
     </app-form-crear-fuentes>

@@ -12,6 +12,9 @@ import {
 import { DialogComponent, DialogModule } from '@syncfusion/ej2-angular-popups';
 import { SwitchModule } from '@syncfusion/ej2-angular-buttons';
 import { FormCrearFuentesComponent } from './form-crear-fuentes/form-crear-fuentes.component';
+import { FuenteService } from './fuentes.service';
+import { Fuente } from './fuente.model';
+import { CrudAbstractMethodsComponent } from '../../core/services/data-service/crud-abstract-methods.component';
 
 @Component({
   selector: 'app-fuentes',
@@ -33,11 +36,38 @@ import { FormCrearFuentesComponent } from './form-crear-fuentes/form-crear-fuent
   templateUrl: './fuentes.component.html',
   styleUrls: ['./fuentes.component.css'],
 })
-export class FuentesComponent implements OnInit {
-  @ViewChild('grid') public grid?: GridComponent;
-  @ViewChild('dialogoFuente') public dialogoFuente?: DialogComponent;
 
-  public fuentes: any[] = [];
+/**
+ * Componente para manejar la lógica de negocio de las fuentes
+ *
+ * usa CrudAbstractMethodsComponent para manejar la lógica CRUD, teniendo disponibles sus métodos
+ *
+ * necesita implementar
+ * - el método getSeleccionado() para obtener el item seleccionado
+ * - el método servicio para definir el servicio a usar
+ *
+ * usa el formulario FormCrearFuentesComponent para crear y editar fuentes
+ *
+ * @see {@link FormCrearFuentesComponent} para más información sobre el formulario
+ *
+ * para el acceso a datos:
+ * @see {@link CrudAbstractMethodsComponent} para más información sobre la lógica CRUD
+ * @see {@link FuenteService} para más información sobre el servicio de fuentes
+ * @See {@link DataService} para más información sobre las llamadas http a la API
+ */
+export class FuentesComponent
+  extends CrudAbstractMethodsComponent<Fuente>
+  implements OnInit
+{
+  @ViewChild('grid') public grid?: GridComponent;
+  @ViewChild('dialogoFuente') public formularioFuente?: DialogComponent;
+  @ViewChild('formularioFuente')
+  public formularioFuenteComponent?: FormCrearFuentesComponent;
+
+  getSeleccionado(): Fuente {
+    return (this.itemSeleccionado as Fuente) ?? [];
+  }
+  override servicio: FuenteService;
 
   public toolbar: any[] = [
     { text: 'Crear', id: 'Crear', prefixIcon: 'e-add' },
@@ -59,36 +89,20 @@ export class FuentesComponent implements OnInit {
     allowDeleting: false,
     allowAdding: false,
   };
-  public modoEdicion = false;
-  public fuenteSeleccionada: any = null;
+  dialogTitle = 'Formulario'; // Título del modal a mostrar
 
-  constructor() {}
-
-  ngOnInit(): void {
-    this.cargarFuentesMock();
+  /**
+   * permite el acceso a los métodos y propiedades del servicio de fuentes
+   * @param fuenteService los metodos base para CRUD se definen en CrudService que es implementado por el servicio, no es necesario definirlos aquí, solo se deben sobreescribir para definir callbacks o success/failure específicos
+   */
+  constructor(private fuenteService: FuenteService) {
+    super();
+    this.servicio = fuenteService;
   }
 
-  cargarFuentesMock(): void {
-    this.fuentes = [
-      {
-        nombre: 'Twitter',
-        tipo: 'Red Social',
-        activo: true,
-        fecha_alta: '2024-04-01',
-      },
-      {
-        nombre: 'La Vanguardia',
-        tipo: 'Prensa Escrita',
-        activo: true,
-        fecha_alta: '2024-04-15',
-      },
-      {
-        nombre: 'Canal Noticias Telegram',
-        tipo: 'Canal Telegram',
-        activo: false,
-        fecha_alta: '2024-03-20',
-      },
-    ];
+  ngOnInit(): void {
+    // Inicializa el componente y carga el grid
+    this.cargarDatos(); //método heredado de CrudComponent
   }
 
   toolbarClick(args: any): void {
@@ -100,7 +114,12 @@ export class FuentesComponent implements OnInit {
         this.abrirDialogoEditar();
         break;
       case 'Eliminar':
-        this.eliminarFuente();
+        let id = (this.grid?.getSelectedRecords()[0] as Fuente)._id || '';
+        this.fuenteService.delete(id, {
+          callback: () => {
+            this.grid?.clearSelection();
+          },
+        });
         break;
       case 'Reset':
         this.grid?.clearFiltering();
@@ -112,46 +131,25 @@ export class FuentesComponent implements OnInit {
 
   abrirDialogoCrear(): void {
     this.modoEdicion = false;
-    this.fuenteSeleccionada = null;
-    this.dialogoFuente?.show();
+    this.itemSeleccionado = null;
+    this.dialogTitle = 'Crear Nueva Fuente';
+    this.formularioFuente?.show();
   }
 
   abrirDialogoEditar(): void {
     const seleccionados = this.grid?.getSelectedRecords();
     if (seleccionados && seleccionados.length > 0) {
       this.modoEdicion = true;
-      this.fuenteSeleccionada = { ...seleccionados[0] };
-      this.dialogoFuente?.show();
+      this.itemSeleccionado = { ...seleccionados[0] } as Fuente;
+      this.dialogTitle = 'Editar Fuente';
+      this.formularioFuente?.show();
     }
-  }
-
-  eliminarFuente(): void {
-    const seleccionados = this.grid?.getSelectedRecords();
-    if (seleccionados && seleccionados.length > 0) {
-      const nombre = (seleccionados[0] as { nombre: string })['nombre'];
-      this.fuentes = this.fuentes.filter((f) => f.nombre !== nombre);
-      this.grid?.refresh();
-      console.log(`Fuente ${nombre} eliminada`);
-    }
-  }
-
-  guardarFuente(fuente: any): void {
-    if (this.modoEdicion) {
-      const index = this.fuentes.findIndex(
-        (f) => f.nombre === this.fuenteSeleccionada.nombre
-      );
-      if (index !== -1) {
-        this.fuentes[index] = fuente;
-      }
-    } else {
-      this.fuentes.push(fuente);
-    }
-    this.grid?.refresh();
-    this.dialogoFuente?.hide();
   }
 
   cancelarFuente(): void {
-    this.dialogoFuente?.hide();
+    this.formularioFuente?.hide();
+    this.itemSeleccionado = null;
+    this.modoEdicion = false;
   }
 
   onActionBegin(args: any): void {
@@ -191,7 +189,21 @@ export class FuentesComponent implements OnInit {
     this.activarODesactivarResetFiltros(false);
   }
 
+  /**
+   * permite definir las acciones a realizar despues de guardar una fuente
+   * la logica de guardar se define en el servicio
+   * @param fuente
+   */
+  override guardar(fuente: Fuente): void {
+    super.guardar(fuente);
+    this.formularioFuenteComponent?.cancelarForm();
+    this.formularioFuente?.hide();
+  }
+
   switchChange(args: any, rowData: any): void {
-    rowData.activo = args.checked;
+    const activa = args.checked;
+    const id = rowData._id;
+    if (!id) return;
+    super.actualizar(id, { activa: activa }, { success: () => {} }); //en el succes no se hace nada
   }
 }

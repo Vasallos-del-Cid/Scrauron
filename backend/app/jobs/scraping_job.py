@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from app.mongo.mongo_utils import get_collection
 
 # Frecuencia base para ejecutar scraping (en minutos)
-SCRAPING_FREQ_MIN = 40  
+SCRAPING_FREQ_MIN = os.getenv("SCRAPING_FREQUENCY", 40)
 
 # =========================
 # Ejecuta el script spider_executor.py pasando la URL como argumento
@@ -69,5 +69,9 @@ def scheduler_loop():
 # Lanza el scheduler en un hilo en segundo plano al iniciar la app
 # =========================
 def iniciar_scheduler_en_segundo_plano():
+    """
+    Inicia el scheduler en segundo plano al levantar Flask.
+    :return:
+    """
     hilo = threading.Thread(target=scheduler_loop, daemon=True)
     hilo.start()
