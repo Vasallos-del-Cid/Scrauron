@@ -147,7 +147,7 @@ def estimar_tono_publicacion(publicacion) -> int:
         raise ValueError(f"Respuesta inesperada del modelo: {tono_str}")  # Manejo de errores si no devuelve un número
 
 # Resume el contenido de una publicación, reformulando con sinónimos para evitar infracción de copyright
-def resumir_contenido_reformulado(publicacion: Publicacion, modelo="gpt-4", max_tokens=600) -> Publicacion:
+def resumir_contenido_reformulado(publicacion: Publicacion, max_tokens=600) -> Publicacion:
     """
     Resume y reformula el contenido de una publicación utilizando un LLM.
     El resumen no debe reproducir frases literales del original y debe limitarse a 5 líneas.
@@ -156,8 +156,7 @@ def resumir_contenido_reformulado(publicacion: Publicacion, modelo="gpt-4", max_
     """
     if not publicacion.contenido.strip():
         raise ValueError("El contenido está vacío o no disponible.")
-
-    # Limitar el contenido a los primeros 25,000 caracteres
+    # Limitar el contenido a los primeros 25,000 caracteres     
     if len(publicacion.contenido) > 25000:
         publicacion.contenido = publicacion.contenido[:25000]
 
@@ -168,16 +167,12 @@ def resumir_contenido_reformulado(publicacion: Publicacion, modelo="gpt-4", max_
         f"{publicacion.contenido}"
     )
 
-    response = client.chat.completions.create(
-        model=modelo,
-        messages=[
-            {"role": "system", "content": "Eres un asistente experto en resumir y reformular artículos de prensa evitando plagio."},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=max_tokens,
-        temperature=0.7
-    )
+    messages = [
+        {"role": "system", "content": "Eres un asistente experto en resumir y reformular artículos de prensa evitando plagio."},
+        {"role": "user", "content": prompt}
+    ]
 
-    resumen = response.choices[0].message.content.strip()
+    resumen = get_gpt_response(messages, temperature=0.7)
     publicacion.contenido = resumen
     return publicacion
+

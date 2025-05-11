@@ -10,7 +10,7 @@ import random
 from urllib.parse import urlparse
 
 # Funciones de acceso a Mongo y modelo de datos
-from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion, update_publicacion
+from app.mongo.mongo_publicaciones import create_publicacion, update_publicacion
 from pymongo.errors import DuplicateKeyError, WriteError, ConnectionFailure
 from app.models.publicacion import Publicacion
 from app.mongo.mongo_utils import get_collection
@@ -148,7 +148,7 @@ class NoticiasSpider(scrapy.Spider):
                 data={"contenido": publicacion.contenido}
             )
 
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Contenido resumido: {publicacion.contenido}")
+            logging.info(f" ✅ Contenido resumido: {publicacion.contenido}")
         # Manejo de errores específicos de Mongo
         except DuplicateKeyError:
             logging.warning(f"⚠️ Ya existe (aunque no se detectó antes): {url}")

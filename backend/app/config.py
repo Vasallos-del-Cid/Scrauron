@@ -24,12 +24,12 @@ def load_config_from_args(env_arg=None):
 
     # Cargar el archivo .env correspondiente según el entorno
     if env_arg == "local":
-        logging.info("ℹ️ Cargando configuración local (.env.local)")
+        logging.info(f"ℹ️ Cargando configuración local (.env.local)")
         dotenv_local = base_path / ".env.local"
         load_dotenv(dotenv_local, override=True)  # Sobrescribe solo las que están en .env.local
     else:
         if env_arg is None:
-            logging.info("ℹ️ Cargando configuración por defecto (.env)")
+            logging.info(f"ℹ️ Cargando configuración por defecto (.env)")
 
     # Leer use_reloader desde variable de entorno, por defecto en local es true, se usa para debug en pycharm
     use_reloader = os.getenv("FLASK_RELOAD", "true").lower() == "true"
@@ -49,6 +49,9 @@ def logqing_config():
     # Configuración del logging
     logging.basicConfig(
         level=logging.INFO,
-        format='[%(asctime)s] %(levelname)-5s : %(module)-15s: %(message)s',
+        format='[%(asctime)s] %(levelname)-5s : %(module)-19s: %(message)s',
         force=True  # esto es clave para que sobrescriba configuraciones previas
     )
+      # Silenciar DEBUG de librerías externas
+    for lib in ["pymongo", "openai", "httpx", "httpcore", "urllib3", "werkzeug", "scrapy"]:
+        logging.getLogger(lib).setLevel(logging.WARNING)
