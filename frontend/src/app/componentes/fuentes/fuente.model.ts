@@ -1,4 +1,5 @@
-import { Identificable } from "../../core/services/api-service/identificable.model";
+import { Identificable } from "../../core/services/data-service/identificable.model";
+
 
 export interface Fuente extends Identificable {
   nombre: string;

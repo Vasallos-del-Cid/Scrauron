@@ -77,7 +77,8 @@
     (close)="cancelarFuente()"
   >
     <app-form-crear-fuentes
-      [fuente]="fuenteSeleccionada ?? undefined"
+      #formularioFuente
+      [fuente]="getSeleccionado()"
       (guardar)="guardar($event)"
       (cancelar)="cancelarFuente()"
     >

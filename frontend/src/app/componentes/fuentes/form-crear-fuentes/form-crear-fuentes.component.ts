@@ -24,6 +24,7 @@ import { Fuente } from '../fuente.model';
   styleUrls: ['./form-crear-fuentes.component.css'],
 })
 export class FormCrearFuentesComponent implements OnChanges {
+  //parametros de entrada y salida por el html
   @Output() guardar = new EventEmitter<any>();
   @Output() cancelar = new EventEmitter<void>();
   @Input() fuente?: Fuente; // 👈 Recibimos la fuente a editar
@@ -39,7 +40,7 @@ export class FormCrearFuentesComponent implements OnChanges {
         [Validators.required, Validators.pattern('^(http://|https://).+')],
       ],
       activa: [true],
-      fecha_alta: [new Date().toISOString().split('T')[0]],
+      fecha_alta: [new Date().toISOString()],
     });
   }
 
@@ -49,7 +50,7 @@ export class FormCrearFuentesComponent implements OnChanges {
     } else {
       this.fuenteForm.reset({
         activa: true,
-        fecha_alta: new Date().toISOString().split('T')[0],
+        fecha_alta: new Date().toISOString(),
       });
     }
   }
@@ -57,7 +58,9 @@ export class FormCrearFuentesComponent implements OnChanges {
   submitForm() {
     if (this.fuenteForm.valid) {
       const formValue = this.fuenteForm.value;
-
+      if (!formValue.fecha_alta) {
+        formValue.fecha_alta = new Date().toISOString();
+      }
       if (this.fuente && this.fuente._id) {
         formValue._id = this.fuente._id;
       }
