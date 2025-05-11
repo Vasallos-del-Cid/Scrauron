@@ -1,7 +1,7 @@
 <div class="contenedor-grid">
   <ejs-grid
     #grid
-    [dataSource]="fuentes"
+    [dataSource]="items$ | async"
     [allowPaging]="true"
     [pageSettings]="pageSettings"
     [allowSorting]="true"
@@ -69,7 +69,7 @@
     #dialogoFuente
     [visible]="false"
     [width]="'500px'"
-    [header]="modoEdicion ? 'Editar Fuente' : 'Crear Nueva Fuente'"
+    [header]="dialogTitle"
     [showCloseIcon]="true"
     [isModal]="true"
     [allowDragging]="true"
@@ -77,8 +77,8 @@
     (close)="cancelarFuente()"
   >
     <app-form-crear-fuentes
-      [fuente]="fuenteSeleccionada"
-      (guardar)="guardarFuente($event)"
+      [fuente]="fuenteSeleccionada ?? undefined"
+      (guardar)="guardar($event)"
       (cancelar)="cancelarFuente()"
     >
     </app-form-crear-fuentes>

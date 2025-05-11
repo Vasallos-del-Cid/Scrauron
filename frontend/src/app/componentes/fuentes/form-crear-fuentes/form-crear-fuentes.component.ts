@@ -14,6 +14,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { SwitchModule } from '@syncfusion/ej2-angular-buttons';
+import { Fuente } from '../fuente.model';
 
 @Component({
   selector: 'app-form-crear-fuentes',
@@ -25,7 +26,7 @@ import { SwitchModule } from '@syncfusion/ej2-angular-buttons';
 export class FormCrearFuentesComponent implements OnChanges {
   @Output() guardar = new EventEmitter<any>();
   @Output() cancelar = new EventEmitter<void>();
-  @Input() fuente: any = null; // 👈 Recibimos la fuente a editar
+  @Input() fuente?: Fuente; // 👈 Recibimos la fuente a editar
 
   fuenteForm: FormGroup;
 
@@ -33,7 +34,10 @@ export class FormCrearFuentesComponent implements OnChanges {
     this.fuenteForm = this.fb.group({
       nombre: ['', Validators.required],
       tipo: [''],
-      url: ['', [Validators.required, Validators.pattern('https?://.+')]],
+      url: [
+        '',
+        [Validators.required, Validators.pattern('^(http://|https://).+')],
+      ],
       activa: [true],
       fecha_alta: [new Date().toISOString().split('T')[0]],
     });
@@ -52,7 +56,13 @@ export class FormCrearFuentesComponent implements OnChanges {
 
   submitForm() {
     if (this.fuenteForm.valid) {
-      this.guardar.emit(this.fuenteForm.value);
+      const formValue = this.fuenteForm.value;
+
+      if (this.fuente && this.fuente._id) {
+        formValue._id = this.fuente._id;
+      }
+      this.guardar.emit(formValue);
+      this.fuente = undefined; // Limpiamos la fuente después de guardar
     }
   }
 
@@ -62,6 +72,7 @@ export class FormCrearFuentesComponent implements OnChanges {
   }
 
   cancelarForm() {
+    this.fuenteForm.reset(); // Limpia valores anteriores
     this.cancelar.emit();
   }
 }
