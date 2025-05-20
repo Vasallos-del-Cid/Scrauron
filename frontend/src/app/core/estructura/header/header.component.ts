@@ -40,6 +40,7 @@ export class HeaderComponent {
       subItems: [
         { header: '<i class="e-icons e-bookmark"></i> Intereses' },
         { header: '<i class="e-icons e-eye"></i> Fuentes' },
+        { header: '<i class="e-icons e-location"></i> Areas' },
       ],
     },
     {
@@ -91,6 +92,10 @@ export class HeaderComponent {
         break;
       case 'Fuentes':
         this._router.navigate(['/fuentes']);
+        this.sidebarObj?.hide();
+        break;
+      case 'Areas':
+        this._router.navigate(['/areas']);
         this.sidebarObj?.hide();
         break;
       case 'Ver alertas':

@@ -1,14 +1,11 @@
 import { Identificable } from "../../core/services/data-service/identificable.model";
 
-export interface Intereses extends Identificable {
+export interface Areas extends Identificable {
   nombre: string;
-  descripcion?: string;
-  keywords?: string[];
-  publicaciones_relacionadas_ids?: string[];
+  conceptos_interes_ids?: string[];
+  fuentes_ids?: string[];
   // estos se deben agregar en back
-  num_menciones?: number;
   usuario_creador?: string;
-  num_usuarios?: number;
   fecha_creacion?: string;
   activa?: boolean;
 }

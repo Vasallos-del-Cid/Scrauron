@@ -42,7 +42,7 @@ interesesService: InteresesService;
       name: 'publicaciones_relacionadas_ids',
       label: 'Publicaciones Relacionadas',
       type: 'select',
-      options: []  // si quieres cargarlas dinámicamente
+      options: [{ value: 'twiter', label: 'Twitter'}]  // si quieres cargarlas dinámicamente
     }
   ];
  
