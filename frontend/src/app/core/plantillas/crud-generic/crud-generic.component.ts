@@ -35,10 +35,11 @@ import { DataService } from '../../services/data-service/data-service.service';
   styleUrls: ['./crud-generic.component.css'],
 })
 export class CrudGenericComponent implements OnInit {
+  @Input() componentTitle?: string;// = 'CRUD Generic';
   @Input() columns: ColumnConfig[] = [];
   @Input() formFields: FormFieldConfig[] = [];
   @Input() servicio!: DataService<any>;
-    @Input() toolbarItems: any[] = [
+  @Input() toolbarItems: any[] = [
     { text: 'Crear', id: 'Crear', prefixIcon: 'e-add' },
     { text: 'Editar', id: 'Editar', prefixIcon: 'e-edit' },
     { text: 'Eliminar', id: 'Eliminar', prefixIcon: 'e-delete' },

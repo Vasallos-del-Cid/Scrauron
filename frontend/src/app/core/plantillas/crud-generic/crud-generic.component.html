@@ -1,4 +1,9 @@
 <div class="crud-container">
+
+  <div class="crud-header">
+    <span class="header-text">{{ componentTitle }}</span>
+  </div>
+
   <ejs-grid #grid
     [dataSource]="servicio.items$ | async"
     [toolbar]="toolbarItems"

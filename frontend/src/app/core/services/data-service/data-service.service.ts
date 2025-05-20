@@ -237,8 +237,24 @@ export abstract class DataService<T extends Identificable> {
         }),
         catchError((error: HttpErrorResponse) => {
           if (!options?.silent) {
-            const msg =
-              error.error?.error || error.error || 'Error en la operación';
+            let msg = 'Error en la operación';
+            if (error.status === 0) {
+              msg = 'Error de conexión. Verifica el servidor.';
+            } else if (error.status === 401) {
+              msg = 'No tienes permiso para realizar esta operación.';
+            } else if (error.status === 404) {
+              msg = 'Elemento no encontrado.';
+            } else if (error.status === 500) {
+              msg = 'Error interno del servidor.';
+            } else if (error.status === 400) {
+              msg = 'Error de validación. Revisa los datos enviados.';
+            } else if (error.status === 403) {
+              msg =
+                'Acceso denegado. No tienes permiso para realizar esta operación.';
+            }
+            msg = msg + '\n' + `Codigo: ${error.status}\n` +  error.message || error.statusText || error.error.error || 'Error desconocido';
+            console.error('Error:', error);
+
             alert(`❌ ${msg}`);
           }
           options?.failure?.(error);

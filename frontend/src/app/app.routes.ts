@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { BodyComponent } from './core/estructura/body/body.component';
-import { PruebaGridComponent } from './componentes/grid/prueba-grid/prueba-grid.component';
 import { InteresesComponent } from './componentes/intereses/intereses.component';
 import { FuentesComponent } from './componentes/fuentes/fuentes.component';
 import { AreasComponent } from './componentes/areas/areas.component';
@@ -10,7 +9,6 @@ import { AlertasFeedComponent } from './componentes/alertas/alertas-feed/alertas
 
 export const routes: Routes = [
   { path: '', component: BodyComponent },         // Home
-  { path: 'grid', component: PruebaGridComponent },// (esto lo puedes quitar si ya no usas grid de prueba)
   { path: 'intereses', component: InteresesComponent },
   { path: 'fuentes', component: FuentesComponent },
   { path: 'alertas', component: AlertasFeedComponent },

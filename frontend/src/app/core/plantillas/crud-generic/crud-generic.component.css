@@ -91,3 +91,20 @@ button {
 button:hover {
   background-color: #2c41c0;
 }
+
+
+/* para el titulo */
+
+.crud-header {
+  background-color: #6270d0; /* Azul material */
+  color: white;
+  padding: 12px 16px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 8px;
+}
+
+.header-text {
+  vertical-align: middle;
+}
