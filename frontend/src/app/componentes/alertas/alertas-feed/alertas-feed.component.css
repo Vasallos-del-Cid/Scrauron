@@ -135,3 +135,37 @@ box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);}
   color: #3953f6;
   text-decoration: underline;
 }
+
+
+
+/* Para colapsar el contenido */
+/* Resumen: cuando está colapsado, solo una línea con puntos suspensivos */
+.contenido.collapsed {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+/* Cuando está expandido, muestra todo y permite hacer scroll interno si es muy largo */
+.contenido {
+  transition: max-height 0.2s ease;
+  max-height: 6rem; /* altura para ~3 líneas */
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.contenido:not(.collapsed) {
+  max-height: none;
+}
+
+/* Botón pequeño para alternar */
+.toggle-btn {
+  background: transparent;
+  border: none;
+  color: #3953f6;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-top: 4px;
+  padding: 0;
+}

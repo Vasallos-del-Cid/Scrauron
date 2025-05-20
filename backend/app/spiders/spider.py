@@ -10,7 +10,7 @@ import random
 from urllib.parse import urlparse
 
 # Funciones de acceso a Mongo y modelo de datos
-from app.mongo.mongo_publicaciones import get_mongo_collection, create_publicacion, update_publicacion
+from app.mongo.mongo_publicaciones import create_publicacion, update_publicacion
 from pymongo.errors import DuplicateKeyError, WriteError, ConnectionFailure
 from app.models.publicacion import Publicacion
 from app.mongo.mongo_utils import get_collection

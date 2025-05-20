@@ -1,73 +1,74 @@
 <div class="barra-filtros">
-  <div class="filtro-item">
-    <ejs-textbox placeholder="Buscar alerta..." [(ngModel)]="filtroBusqueda" (input)="aplicarFiltros()">
-    </ejs-textbox>
-  </div>
+  <ejs-textbox
+    placeholder="Buscar alerta..."
+    [(ngModel)]="filtroBusqueda"
+    (input)="aplicarFiltros()"
+  ></ejs-textbox>
 
-  <div class="filtro-item">
-    <ejs-dropdownlist [dataSource]="intereses" [(ngModel)]="filtroInteres" (change)="aplicarFiltros()" placeholder="Interés">
-    </ejs-dropdownlist>
-  </div>
+  <ejs-dropdownlist
+    [dataSource]="fuentes"
+    [(ngModel)]="filtroFuente"
+    (change)="aplicarFiltros()"
+    placeholder="Fuente"
+  ></ejs-dropdownlist>
 
-  <div class="filtro-item">
-    <ejs-dropdownlist [dataSource]="fuentes" [(ngModel)]="filtroFuente" (change)="aplicarFiltros()" placeholder="Fuente">
-    </ejs-dropdownlist>
-  </div>
+  <ejs-dropdownlist
+    [dataSource]="valoraciones"
+    [(ngModel)]="filtroValoracion"
+    (change)="aplicarFiltros()"
+    placeholder="Valoración"
+  ></ejs-dropdownlist>
 
-  <div class="filtro-item">
-    <ejs-dropdownlist [dataSource]="valoraciones" [(ngModel)]="filtroValoracion" (change)="aplicarFiltros()" placeholder="Valoración">
-    </ejs-dropdownlist>
-  </div>
+  <ejs-datepicker
+    [(ngModel)]="fechaDesde"
+    (change)="aplicarFiltros()"
+    placeholder="Desde"
+  ></ejs-datepicker>
 
-  <div class="filtro-item">
-    <input type="number" placeholder="Impacto mínimo" [(ngModel)]="filtroImpacto" (input)="aplicarFiltros()" />
-  </div>
+  <ejs-datepicker
+    [(ngModel)]="fechaHasta"
+    (change)="aplicarFiltros()"
+    placeholder="Hasta"
+  ></ejs-datepicker>
 
-  <div class="filtro-item">
-    <ejs-datepicker [(ngModel)]="fechaDesde" (change)="aplicarFiltros()" placeholder="Desde">
-    </ejs-datepicker>
-  </div>
-
-  <div class="filtro-item">
-    <ejs-datepicker [(ngModel)]="fechaHasta" (change)="aplicarFiltros()" placeholder="Hasta">
-    </ejs-datepicker>
-  </div>
-
-  <div class="filtro-item">
-    <button class="boton-reset" (click)="resetFiltros()">Resetear</button>
-  </div>
+  <button class="boton-reset" (click)="resetFiltros()">Resetear</button>
 </div>
 
 <div class="contenedor-cards">
-  <div *ngFor="let alerta of alertasFiltradas" class="alerta-card" [ngClass]="obtenerClaseValoracion(alerta.valoracion)">
-    <div class="card-contenido">
-      <img [src]="alerta.imagen" alt="Imagen Alerta" class="imagen-alerta" />
-      <div class="card-texto">
-        <div class="fila-header">
-          <div class="titulo">{{ alerta.titulo }}</div>
-          <div class="fecha-impactos">
-            <div class="fecha">{{ alerta.fecha | date:'short' }}</div>
-            <div class="impactos">{{ alerta.impactos }} impactos</div>
-          </div>
-          <button class="ver-detalles" ejs-tooltip title="Ver detalles">⋮</button>
-        </div>
-        <div class="resumen">{{ alerta.resumen }}</div>
-        <div class="fila-footer">
-          <div class="tags">
-            <span *ngFor="let interes of alerta.intereses" class="badge">{{ interes }}</span>
-          </div>
-          <div class="fuente">
-            <ng-container *ngIf="alerta.enlaces.length === 1">
-              <a [href]="alerta.enlaces[0].url" target="_blank">{{ alerta.enlaces[0].titulo }}</a>
-            </ng-container>
-            <ng-container *ngIf="alerta.enlaces.length > 1">
-              <select (change)="abrirEnlace($event)">
-                <option *ngFor="let enlace of alerta.enlaces" [value]="enlace.url">{{ enlace.titulo }}</option>
-              </select>
-            </ng-container>
-          </div>
+  <div
+    *ngFor="let alerta of alertasFiltradas"
+    class="alerta-card"
+    [ngClass]="getColor(alerta.tono)"
+  >
+    <div class="card-texto">
+      <!-- Header -->
+      <div class="fila-header">
+        <div class="titulo">{{ alerta.titulo }}</div>
+        <div class="fecha">{{ alerta.fecha | date: 'short' }}</div>
+      </div>
+
+      <!-- Contenido colapsable -->
+      <div
+        class="resumen contenido"
+        [class.collapsed]="!isExpanded(alerta._id!)"
+        (click)="toggleExpand(alerta._id!)"
+      >
+        {{ alerta.contenido }}
+      </div>
+      <button
+        class="toggle-btn"
+        (click)="toggleExpand(alerta._id!); $event.stopPropagation()"
+      >
+        {{ isExpanded(alerta._id!) ? 'Mostrar menos' : 'Mostrar más' }}
+      </button>
+
+      <!-- Footer -->
+      <div class="fila-footer">
+        <div class="fuente">
+          <a [href]="alerta.url" target="_blank">{{ alerta.fuente }}</a>
         </div>
       </div>
     </div>
   </div>
 </div>
+

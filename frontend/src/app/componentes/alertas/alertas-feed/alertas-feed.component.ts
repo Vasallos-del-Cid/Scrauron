@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
-import { FormsModule } from '@angular/forms'; // Para [(ngModel)]
-import { ALERTAS_MOCK } from './alertas-mock'; // Asegúrate de que la ruta sea correcta
+import { FormsModule } from '@angular/forms';
+import { PublicacionesService } from './alertas-feed.service';
+import { Publicacion } from './publicacion.model';
 
 @Component({
   selector: 'app-alertas-feed',
@@ -20,95 +21,93 @@ import { ALERTAS_MOCK } from './alertas-mock'; // Asegúrate de que la ruta sea 
   styleUrls: ['./alertas-feed.component.css'],
 })
 export class AlertasFeedComponent implements OnInit {
-  public alertas: any[] = [];
-  public alertasFiltradas: any[] = [];
+  public alertas: Publicacion[] = [];
+  public alertasFiltradas: Publicacion[] = [];
 
-  public intereses: string[] = ['Todos', 'Wilkinson', 'Crisis', 'Publicidad'];
-  public fuentes: string[] = ['Todos', 'Twitter', 'Telegram', 'Prensa'];
-  public valoraciones: string[] = ['Todos', 'Buena', 'Regular', 'Mala'];
+  public fuentes: string[] = ['Todos'];
+  public valoraciones: number[] = [0, 1, 2, 3];
 
-  public filtroBusqueda: string = '';
-  public filtroInteres: string = 'Todos';
-  public filtroFuente: string = 'Todos';
-  public filtroValoracion: string = 'Todos';
-  public filtroImpacto: number = 0;
+  public filtroBusqueda = '';
+  public filtroFuente = 'Todos';
+  public filtroValoracion = 0;
   public fechaDesde?: Date;
   public fechaHasta?: Date;
 
-  constructor() {}
+  public expandidos = new Set<string>();
+
+  constructor(private servicio: PublicacionesService) {}
 
   ngOnInit(): void {
-    this.cargarAlertasMock();
-    this.aplicarFiltros();
-  }
+    // 1) Lanza la petición
+    this.servicio.getAll({ silent: true });
 
-  cargarAlertasMock(): void {
-    this.alertas = ALERTAS_MOCK
+    // 2) Suscríbete al BehaviorSubject y transforma fecha a Date
+    this.servicio.items$.subscribe((list) => {
+      this.alertas = list.map((pub) => ({
+        ...pub,
+        fecha: pub.fecha ? new Date(pub.fecha) : undefined,
+      }));
+      // Extrae fuentes únicas para el filtro
+      const setFuentes = new Set(this.alertas.map((a) => a.fuente || ''));
+      this.fuentes = ['Todos', ...Array.from(setFuentes)];
+      this.aplicarFiltros();
+    });
   }
 
   aplicarFiltros(): void {
-    this.alertasFiltradas = this.alertas.filter((alerta) => {
-      const coincideBusqueda =
-        this.filtroBusqueda === '' ||
-        alerta.titulo
-          .toLowerCase()
-          .includes(this.filtroBusqueda.toLowerCase()) ||
-        alerta.resumen
-          .toLowerCase()
-          .includes(this.filtroBusqueda.toLowerCase());
+    this.alertasFiltradas = this.alertas.filter((a) => {
+      const titulo = a.titulo.toLowerCase();
+      const contenido = (a.contenido || '').toLowerCase();
+      const texto = this.filtroBusqueda.toLowerCase();
 
-      const coincideInteres =
-        this.filtroInteres === 'Todos' ||
-        alerta.intereses.includes(this.filtroInteres);
-      const coincideFuente =
-        this.filtroFuente === 'Todos' || alerta.fuente === this.filtroFuente;
-      const coincideValoracion =
-        this.filtroValoracion === 'Todos' ||
-        alerta.valoracion === this.filtroValoracion;
-      const coincideImpacto = alerta.impactos >= this.filtroImpacto;
-      const coincideFechaDesde =
-        !this.fechaDesde || alerta.fecha >= this.fechaDesde;
-      const coincideFechaHasta =
-        !this.fechaHasta || alerta.fecha <= this.fechaHasta;
+      const okBusqueda =
+        !this.filtroBusqueda ||
+        titulo.includes(texto) ||
+        contenido.includes(texto);
 
-      return (
-        coincideBusqueda &&
-        coincideInteres &&
-        coincideFuente &&
-        coincideValoracion &&
-        coincideImpacto &&
-        coincideFechaDesde &&
-        coincideFechaHasta
-      );
+      const okFuente =
+        this.filtroFuente === 'Todos' || a.fuente === this.filtroFuente;
+
+      const okValoracion =
+        this.filtroValoracion === 0 || a.tono === this.filtroValoracion;
+
+      const okDesde =
+        !this.fechaDesde || (a.fecha != null && a.fecha >= this.fechaDesde);
+
+      const okHasta =
+        !this.fechaHasta || (a.fecha != null && a.fecha <= this.fechaHasta);
+
+      return okBusqueda && okFuente && okValoracion && okDesde && okHasta;
     });
   }
 
   resetFiltros(): void {
     this.filtroBusqueda = '';
-    this.filtroInteres = 'Todos';
     this.filtroFuente = 'Todos';
-    this.filtroValoracion = 'Todos';
-    this.filtroImpacto = 0;
+    this.filtroValoracion = 0;
     this.fechaDesde = undefined;
     this.fechaHasta = undefined;
     this.aplicarFiltros();
   }
 
-  obtenerClaseValoracion(valoracion: string): string {
-    switch (valoracion) {
-      case 'Buena':
-        return 'verde';
-      case 'Mala':
-        return 'rojo';
-      default:
-        return '';
+  /** Mapea el tono numérico a una clase CSS */
+  getColor(tono?: number): string {
+    if (tono === 1) return 'verde'; // positivo
+    if (tono === 3) return 'rojo'; // negativo
+    return ''; // neutro o sin tono
+  }
+
+  /** Alterna el estado expandido de una alerta */
+  toggleExpand(id: string): void {
+    if (this.expandidos.has(id)) {
+      this.expandidos.delete(id);
+    } else {
+      this.expandidos.add(id);
     }
   }
 
-  abrirEnlace(event: any): void {
-    const url = event.target.value;
-    if (url) {
-      window.open(url, '_blank');
-    }
+  /** Consulta si está expandida */
+  isExpanded(id: string): boolean {
+    return this.expandidos.has(id);
   }
 }
