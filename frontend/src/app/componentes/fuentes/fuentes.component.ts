@@ -102,7 +102,10 @@ export class FuentesComponent
 
   ngOnInit(): void {
     // Inicializa el componente y carga el grid
-    this.cargarDatos(); //método heredado de CrudComponent
+    this.cargarDatos({
+      callback: () => {
+      console.log('➡️ Se han cargado los datos de la tabla\n' + this.items$); // Callback después de cargar los datos
+    }}); //método heredado de CrudComponent
   }
 
   toolbarClick(args: any): void {
