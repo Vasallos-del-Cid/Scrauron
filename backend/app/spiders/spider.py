@@ -15,7 +15,7 @@ from pymongo.errors import DuplicateKeyError, WriteError, ConnectionFailure
 from app.models.publicacion import Publicacion
 from app.mongo.mongo_utils import get_collection
 from app.similarity_search.similarity_search import buscar_y_enlazar_a_conceptos
-from app.llm.llm_utils import resumir_contenido_reformulado
+from app.llm.llm_utils import analizar_publicacion
 
 
 # Extrae nombre base y dominio completo a partir de una URL
@@ -139,16 +139,21 @@ class NoticiasSpider(scrapy.Spider):
             logging.info(f"✅ Artículo guardado: {titulo} | Fuente: {fuente_nombre} ({fuente_dominio})")
 
             # Busca conceptos semánticamente relacionados y asocia la publicación
-            buscar_y_enlazar_a_conceptos(publicacion)
+            conceptos_enlazados = buscar_y_enlazar_a_conceptos(publicacion)
 
-            publicacion = resumir_contenido_reformulado(publicacion)
+            if conceptos_enlazados:
+                publicacion = analizar_publicacion(publicacion)
+            else:
+                publicacion.contenido = ""  # Vacía el contenido si no hay conceptos
 
+            # Guarda el contenido (resumen o vacío según el caso)
             update_publicacion(
                 pub_id=publicacion._id,
                 data={"contenido": publicacion.contenido}
             )
 
-            logging.info(f" ✅ Contenido resumido: {publicacion.contenido}")
+
+            logging.info(f"✅ Contenido resumido: {publicacion.contenido}")
         # Manejo de errores específicos de Mongo
         except DuplicateKeyError:
             logging.warning(f"⚠️ Ya existe (aunque no se detectó antes): {url}")

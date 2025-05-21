@@ -9,6 +9,7 @@ from openai import OpenAI, RateLimitError  # Cliente oficial para la API de Open
 import ast  # Permite evaluar strings como estructuras de Python de forma segura
 import re
 from app.models.publicacion import Publicacion
+import json
 
 def get_openai_client():
     global open_ai_client
@@ -156,9 +157,9 @@ def resumir_contenido_reformulado(publicacion: Publicacion, max_tokens=600) -> P
     """
     if not publicacion.contenido.strip():
         raise ValueError("El contenido está vacío o no disponible.")
-    # Limitar el contenido a los primeros 25,000 caracteres     
-    if len(publicacion.contenido) > 25000:
-        publicacion.contenido = publicacion.contenido[:25000]
+    # Limitar el contenido a los primeros 15,000 caracteres     
+    if len(publicacion.contenido) > 15000:
+        publicacion.contenido = publicacion.contenido[:15000]
 
     prompt = (
         "Resume el siguiente artículo en un máximo de 5 líneas. "
@@ -176,3 +177,48 @@ def resumir_contenido_reformulado(publicacion: Publicacion, max_tokens=600) -> P
     publicacion.contenido = resumen
     return publicacion
 
+
+
+def analizar_publicacion(publicacion, max_tokens=600):
+    """
+    Analiza una publicación:
+    - Resume y reformula el contenido.
+    - Estima el tono emocional del título (1-10).
+    
+    Devuelve el objeto Publicacion con:
+    - contenido: actualizado con el resumen.
+    - tono: nuevo atributo con el valor del tono emocional.
+    """
+    if not publicacion.contenido.strip():
+        raise ValueError("El contenido está vacío o no disponible.")
+
+    if len(publicacion.contenido) > 25000:
+        publicacion.contenido = publicacion.contenido[:25000]
+
+    titulo_limpio = re.sub(r'https?://\S+|www\.\S+', '', publicacion.titulo).strip()
+
+    prompt = (
+        f"Título: \"{titulo_limpio}\"\n\n"
+        f"Contenido:\n{publicacion.contenido}\n\n"
+        "Primero, resume el artículo en un máximo de 5 líneas, reformulando con sinónimos para evitar copiar frases literales.\n"
+        "Después, valora el tono emocional implícito en el título del 1 (muy negativo) al 9 (muy positivo). Y 5 neutro.\n\n"
+        "Devuelve el resultado en formato JSON con las claves:\n"
+        "{ 'resumen': ..., 'tono': ... }"
+    )
+
+    messages = [
+        {"role": "system", "content": "Eres un asistente experto en análisis de prensa, resumen profesional y valoración emocional del lenguaje."},
+        {"role": "user", "content": prompt}
+    ]
+
+    respuesta = get_gpt_response(messages, temperature=0.7)
+
+    try:
+        resultado = json.loads(respuesta)
+        publicacion.contenido = resultado['resumen']
+        publicacion.tono = int(resultado['tono'])  # Agregamos el atributo "tono"
+        logging.info(f"🎯 Tono estimado: {publicacion.tono}")
+        logging.info(f"🎯 Resumen creardo: {publicacion.contenido}")
+        return publicacion
+    except (json.JSONDecodeError, KeyError, ValueError):
+        raise ValueError(f"Respuesta inesperada del modelo, se esperaba JSON con claves 'resumen' y 'tono': {respuesta}")

@@ -47,13 +47,13 @@ def create_publicacion(publicacion):
         return None
 
     # Estima el tono usando LLM (basado en el título)
-    try:
-        tono = estimar_tono_publicacion(publicacion)
-        publicacion.tono = tono
-        logging.info(f"🎯 Tono estimado: {tono}")
-    except Exception as e:
-        logging.error(f"⚠️ Error al estimar el tono: {e}")
-        publicacion.tono = None
+    # try:
+    #     tono = estimar_tono_publicacion(publicacion)
+    #     publicacion.tono = tono
+    #     logging.info(f"🎯 Tono estimado: {tono}")
+    # except Exception as e:
+    #     logging.error(f"⚠️ Error al estimar el tono: {e}")
+    #     publicacion.tono = None
 
     data = publicacion.to_dict()
     data["url"] = url  # Asegura consistencia de formato de URL
