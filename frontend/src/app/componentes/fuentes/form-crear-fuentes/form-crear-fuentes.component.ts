@@ -1,29 +1,46 @@
-import { Component, EventEmitter, Output, Input, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Output,
+  Input,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
 import { SwitchModule } from '@syncfusion/ej2-angular-buttons';
+import { Fuente } from '../fuente.model';
 
 @Component({
   selector: 'app-form-crear-fuentes',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, SwitchModule],
   templateUrl: './form-crear-fuentes.component.html',
-  styleUrls: ['./form-crear-fuentes.component.css']
+  styleUrls: ['./form-crear-fuentes.component.css'],
 })
 export class FormCrearFuentesComponent implements OnChanges {
-
+  //parametros de entrada y salida por el html
   @Output() guardar = new EventEmitter<any>();
   @Output() cancelar = new EventEmitter<void>();
-  @Input() fuente: any = null; // 👈 Recibimos la fuente a editar
+  @Input() fuente?: Fuente; // 👈 Recibimos la fuente a editar
 
   fuenteForm: FormGroup;
 
   constructor(private fb: FormBuilder) {
     this.fuenteForm = this.fb.group({
       nombre: ['', Validators.required],
-      tipo: ['', Validators.required],
-      activo: [true],
-      fecha_alta: [new Date().toISOString().split('T')[0]]
+      tipo: [''],
+      url: [
+        '',
+        [Validators.required, Validators.pattern('^(http://|https://).+')],
+      ],
+      activa: [true],
+      fecha_alta: [new Date().toISOString()],
     });
   }
 
@@ -32,19 +49,33 @@ export class FormCrearFuentesComponent implements OnChanges {
       this.fuenteForm.patchValue(this.fuente);
     } else {
       this.fuenteForm.reset({
-        activo: true,
-        fecha_alta: new Date().toISOString().split('T')[0]
+        activa: true,
+        fecha_alta: new Date().toISOString(),
       });
     }
   }
 
   submitForm() {
     if (this.fuenteForm.valid) {
-      this.guardar.emit(this.fuenteForm.value);
+      const formValue = this.fuenteForm.value;
+      if (!formValue.fecha_alta) {
+        formValue.fecha_alta = new Date().toISOString();
+      }
+      if (this.fuente && this.fuente._id) {
+        formValue._id = this.fuente._id;
+      }
+      this.guardar.emit(formValue);
+      this.fuente = undefined; // Limpiamos la fuente después de guardar
     }
   }
 
+  campoInvalido(campo: string): boolean {
+    const control = this.fuenteForm.get(campo);
+    return !!(control && control.invalid && control.touched);
+  }
+
   cancelarForm() {
+    this.fuenteForm.reset(); // Limpia valores anteriores
     this.cancelar.emit();
   }
 }

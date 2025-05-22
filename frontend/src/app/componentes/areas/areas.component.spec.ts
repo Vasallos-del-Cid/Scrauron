@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PruebaGridComponent } from './prueba-grid.component';
+import { AreasComponent } from './areas.component';
 
-describe('PruebaGridComponent', () => {
-  let component: PruebaGridComponent;
-  let fixture: ComponentFixture<PruebaGridComponent>;
+describe('InteresesComponent', () => {
+  let component: AreasComponent;
+  let fixture: ComponentFixture<AreasComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PruebaGridComponent]
+      imports: [AreasComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(PruebaGridComponent);
+    fixture = TestBed.createComponent(AreasComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

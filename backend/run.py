@@ -12,7 +12,6 @@ from app.config import load_config_from_args
 
 # Leer parámetro de entorno si se pasa
 env_arg = None
-
 if len(sys.argv) >= 3 and sys.argv[1] == "--env":
     env_arg = sys.argv[2]
 
@@ -36,6 +35,6 @@ app.register_blueprint(api_publicaciones, url_prefix='/api')
 app.register_blueprint(api_conceptos, url_prefix='/api')
 app.register_blueprint(api_keywords, url_prefix='/api')
 
+# Inicializar la app
 if __name__ == '__main__':
-
-    app.run(debug=True, use_reloader=config["USE_RELOADER"])
+    app.run(debug=app.config["DEBUG"], use_reloader=app.config["USE_RELOADER"])

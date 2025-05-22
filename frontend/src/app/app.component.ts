@@ -41,7 +41,7 @@ import {
 import { HeaderComponent } from './core/estructura/header/header.component';
 import { BodyComponent } from './core/estructura/body/body.component';
 import { FooterComponent } from './core/estructura/footer/footer.component';
-import { RouterOutlet, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-root',

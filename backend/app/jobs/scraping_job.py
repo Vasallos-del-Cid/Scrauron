@@ -9,10 +9,7 @@ from datetime import datetime, timedelta
 from app.mongo.mongo_utils import get_collection
 
 # Frecuencia base para ejecutar scraping (en minutos)
-SCRAPING_FREQ_MIN = 40
-
-scheduler_thread = None
-detener_flag = threading.Event()
+SCRAPING_FREQ_MIN = os.getenv("SCRAPING_FREQUENCY", 40)
 
 # =========================
 # Ejecuta el script spider_executor.py pasando la URL como argumento
@@ -75,17 +72,9 @@ def scheduler_loop():
 # Lanza el scheduler en un hilo en segundo plano al iniciar la app
 # =========================
 def iniciar_scheduler_en_segundo_plano():
-    global scheduler_thread
-    if scheduler_thread is None or not scheduler_thread.is_alive():
-        logging.info("🚀 Iniciando scheduler en segundo plano...")
-        detener_flag.clear()
-        scheduler_thread = threading.Thread(target=scheduler_loop, daemon=True)
-        scheduler_thread.start()
-    else:
-        logging.info("⚠️ Scheduler ya está en ejecución.")
-
-def detener_scheduler():
-    logging.info("⛔ Solicitando detener scheduler...")
-    detener_flag.set()
-    # No usar join aquí directamente, solo si estás seguro de que no es el hilo Flask
-    logging.info("📤 Señal enviada para detener el scheduler.")
+    """
+    Inicia el scheduler en segundo plano al levantar Flask.
+    :return:
+    """
+    hilo = threading.Thread(target=scheduler_loop, daemon=True)
+    hilo.start()
