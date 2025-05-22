@@ -1,8 +1,5 @@
 from flask import Blueprint, request, jsonify
-from ..mongo.mongo_keywords import (
-    get_keywords, get_keyword_by_id, get_keyword_by_nombre,
-    create_keyword, delete_keyword, update_keyword
-)
+from ..mongo.mongo_keywords import (get_keywords, get_keyword_by_id,create_keyword, delete_keyword, update_keyword)
 from ..models.keyword import Keyword
 from bson import ObjectId
 

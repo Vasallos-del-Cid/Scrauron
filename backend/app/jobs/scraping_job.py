@@ -10,6 +10,7 @@ from app.mongo.mongo_utils import get_collection
 
 # Frecuencia base para ejecutar scraping (en minutos)
 SCRAPING_FREQ_MIN = os.getenv("SCRAPING_FREQUENCY", 40)
+detener_flag = threading.Event()
 
 # =========================
 # Ejecuta el script spider_executor.py pasando la URL como argumento
@@ -48,8 +49,8 @@ def scraping_todas_las_fuentes():
 # =========================
 def scheduler_loop():
     while not detener_flag.is_set():
-        logging.info(f"🔁 Lanzando scraping de todas las fuentes...")
-        
+        logging.info("🔁 Lanzando scraping de todas las fuentes...")
+
         scraping_todas_las_fuentes()
 
         factor = random.uniform(0.8, 1.2)
@@ -61,7 +62,7 @@ def scheduler_loop():
         logging.info(f"🕒 Esperando {espera_min:.2f} minutos para la siguiente ejecución...")
         logging.info(f"🕒 Próxima ejecución a las {hora_siguiente.strftime('%H:%M:%S')}")
 
-        # Esperar pero permitir interrupción si se activa el flag
+        # Espera con interrupción controlada
         if detener_flag.wait(timeout=espera_seg):
             logging.info("🛑 Scheduler detenido durante la espera.")
             break
@@ -72,9 +73,11 @@ def scheduler_loop():
 # Lanza el scheduler en un hilo en segundo plano al iniciar la app
 # =========================
 def iniciar_scheduler_en_segundo_plano():
-    """
-    Inicia el scheduler en segundo plano al levantar Flask.
-    :return:
-    """
+    detener_flag.clear()
     hilo = threading.Thread(target=scheduler_loop, daemon=True)
     hilo.start()
+
+
+def detener_scheduler():
+    detener_flag.set()
+    logging.info("🛑 Señal enviada para detener el scheduler.")

@@ -10,6 +10,7 @@ from app.routes.routes_scraping import api_scraping
 from app.routes.routes_areas import api_areas
 from app.routes.routes_publicaciones import api_publicaciones
 from app.routes.routes_conceptos import api_conceptos
+from app.routes.routes_keywords import api_keywords
 from app.config import load_config_from_args
 
 def create_app(env_arg=None):
@@ -55,6 +56,7 @@ def create_app(env_arg=None):
         app.register_blueprint(api_areas, url_prefix='/api')
         app.register_blueprint(api_publicaciones, url_prefix='/api')
         app.register_blueprint(api_conceptos, url_prefix='/api')
+        app.register_blueprint(api_keywords, url_prefix='/api')
 
         # Puedes guardar config si la necesitas luego
         app.config.update(configuracion)
