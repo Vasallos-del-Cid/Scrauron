@@ -9,6 +9,8 @@ from openai import OpenAI, RateLimitError  # Cliente oficial para la API de Open
 import ast  # Permite evaluar strings como estructuras de Python de forma segura
 import re
 from app.models.publicacion import Publicacion
+from app.models.keyword import Keyword
+from app.mongo.mongo_keywords import create_keyword
 import json
 
 def get_openai_client():
@@ -76,11 +78,11 @@ def generar_descripcion_concepto(nombre_concepto: str) -> str:
 
 
 # ------------------------------------------------------------------------------
-# Extrae 10 keywords representativas a partir de una descripción
-def generar_keywords_descriptivos(descripcion_concepto: str) -> list:
+# Extrae y guarda 10 keywords representativas a partir de una descripción
+def generar_keywords_descriptivos(descripcion_concepto: str) -> list[Keyword]:
     """
-    Genera 10 keywords representativas a partir de la descripción del concepto.
-    Las keywords pueden tener entre 1 y 4 palabras cada una.
+    Genera 10 keywords a partir de la descripción del concepto,
+    las guarda en Mongo (si no existen) y devuelve objetos Keyword con _id.
     """
     prompt = (
         f"A partir de esta descripción:\n\n\"{descripcion_concepto}\"\n\n"
@@ -94,28 +96,41 @@ def generar_keywords_descriptivos(descripcion_concepto: str) -> list:
     ]
 
     try:
-        # Solicita al modelo que devuelva una lista sintácticamente válida
         response = get_gpt_response(messages, 0.5)
         if not response:
             raise ValueError("Respuesta vacía del modelo.")
 
-        # Limpieza si viene con ```python
         def limpiar_respuesta_de_codigo(respuesta: str) -> str:
             if respuesta.startswith("```") and respuesta.endswith("```"):
                 lineas = respuesta.strip().splitlines()
                 return "\n".join(lineas[1:-1]).strip()
             return respuesta.strip()
 
-        keywords = ast.literal_eval(limpiar_respuesta_de_codigo(response))
+        raw_keywords = ast.literal_eval(limpiar_respuesta_de_codigo(response))
 
-
-        if not isinstance(keywords, list) or not all(isinstance(k, str) for k in keywords):
+        if not isinstance(raw_keywords, list) or not all(isinstance(k, str) for k in raw_keywords):
             raise TypeError("La respuesta no es una lista de strings válida.")
 
-        return keywords
+        keywords_guardadas = []
+
+        for nombre in raw_keywords:
+            nombre_limpio = nombre.strip()
+            keyword_obj = Keyword(nombre=nombre_limpio)
+
+            # Guardar usando create_keyword
+            respuesta, status = create_keyword(keyword_obj)
+
+            if status in (200, 201):  # ya existe o se acaba de crear
+                json_data = respuesta.get_json()
+                keyword_obj._id = json_data.get("_id")
+                keywords_guardadas.append(keyword_obj)
+            else:
+                logging.warning(f"No se pudo guardar la keyword: {nombre_limpio} (status {status})")
+
+        return keywords_guardadas
 
     except (ValueError, SyntaxError, TypeError) as e:
-        logging.error(f"❌ Error al generar keywords: {e}\nRespuesta recibida: {response}")
+        logging.error(f"❌ Error al generar o guardar keywords: {e}\nRespuesta recibida: {response}")
         raise e
 
 # ------------------------------------------------------------------------------

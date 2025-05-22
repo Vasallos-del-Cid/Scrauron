@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from ..models.concepto_interes import ConceptoInteres
+from bson import ObjectId
 from ..mongo.mongo_conceptos import (
     get_conceptos,
     get_concepto_by_id,
@@ -90,16 +91,108 @@ def generar_descripcion_concepto(concepto_id):
 
     return jsonify(concepto.to_dict()), 200
 
-# PATCH /conceptos/<id>/generar_keywords → Genera keywords y devuelve el concepto actualizado
+# PATCH /conceptos/<id>/generar_keywords → Actualiza descripción y genera keywords
 @api_conceptos.route('/conceptos/<concepto_id>/generar_keywords', methods=['PATCH'])
 def generar_keywords_concepto(concepto_id):
-    concepto = get_concepto_by_id(concepto_id)
-    if not concepto:
-        return jsonify({"error": "Concepto no encontrado"}), 404
+    try:
+        data = request.get_json()
+        nueva_descripcion = data.get("descripcion")
 
-    if not concepto.descripcion:
-        return jsonify({"error": "La descripción del concepto es requerida para generar keywords"}), 400
+        if not nueva_descripcion:
+            return jsonify({"error": "Debe proporcionarse una descripción para generar keywords"}), 400
+
+        concepto = get_concepto_by_id(concepto_id)
+        if not concepto:
+            return jsonify({"error": "Concepto no encontrado"}), 404
+
+        # Actualizar la descripción recibida
+        concepto.descripcion = nueva_descripcion
+
+        # Generar keywords con el LLM y actualizar el concepto
+        add_keywords_llm(concepto)
+
+        return jsonify(concepto.to_dict()), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error al generar keywords para el concepto: {str(e)}"}), 500
+
+
+# PATCH /conceptos/<id>/keywords_aceptadas → Actualiza keywords y devuelve el concepto actualizado
+@api_conceptos.route('/conceptos/<concepto_id>/keywords_aceptadas', methods=['PATCH'])
+def update_keywords_ids_endpoint(concepto_id):
+    try:
+        data = request.get_json()
+        keywords_ids_raw = data.get("keywords_ids", [])
+
+        if not isinstance(keywords_ids_raw, list):
+            return jsonify({"error": "keywords_ids debe ser una lista."}), 400
+
+        # Validar formato de ObjectId
+        keywords_ids = []
+        for kid in keywords_ids_raw:
+            if not ObjectId.is_valid(str(kid)):
+                return jsonify({"error": f"ID de keyword no válido: {kid}"}), 400
+            keywords_ids.append(ObjectId(str(kid)))
+
+        concepto = get_concepto_by_id(concepto_id)
+        if not concepto:
+            return jsonify({"error": "Concepto no encontrado"}), 404
+
+        # Actualiza las keywords_ids
+        concepto.keywords_ids = keywords_ids
+
+        # Guarda cambios
+        update_concepto(concepto)
+
+        return jsonify(concepto.to_dict()), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error al actualizar keywords del concepto: {str(e)}"}), 500
     
-    add_keywords_llm(concepto)
+    # Agrega una keyword al concepto (si no está ya)
+@api_conceptos.route('/conceptos/<concepto_id>/keywords', methods=['POST'])
+def add_keyword_to_concepto(concepto_id):
+    try:
+        data = request.get_json()
+        keyword_id = data.get("keyword_id")
 
-    return jsonify(concepto.to_dict()), 200
+        if not keyword_id or not ObjectId.is_valid(keyword_id):
+            return jsonify({"error": "keyword_id no válido"}), 400
+
+        concepto = get_concepto_by_id(concepto_id)
+        if not concepto:
+            return jsonify({"error": "Concepto no encontrado"}), 404
+
+        keyword_oid = ObjectId(keyword_id)
+
+        if keyword_oid not in concepto.keywords_ids:
+            concepto.keywords_ids.append(keyword_oid)
+            update_concepto(concepto)
+
+        return jsonify(concepto.to_dict()), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error al agregar keyword al concepto: {str(e)}"}), 500
+
+# ---------------------------------------------------
+# Elimina una keyword del concepto
+@api_conceptos.route('/conceptos/<concepto_id>/keywords/<keyword_id>', methods=['DELETE'])
+def remove_keyword_from_concepto(concepto_id, keyword_id):
+    try:
+        if not ObjectId.is_valid(keyword_id):
+            return jsonify({"error": "keyword_id no válido"}), 400
+
+        concepto = get_concepto_by_id(concepto_id)
+        if not concepto:
+            return jsonify({"error": "Concepto no encontrado"}), 404
+
+        keyword_oid = ObjectId(keyword_id)
+
+        if keyword_oid in concepto.keywords_ids:
+            concepto.keywords_ids.remove(keyword_oid)
+            update_concepto(concepto)
+
+        return jsonify(concepto.to_dict()), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error al eliminar keyword del concepto: {str(e)}"}), 500

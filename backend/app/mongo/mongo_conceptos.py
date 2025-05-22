@@ -3,6 +3,7 @@
 # del tipo "ConceptoInteres" en MongoDB. Además, integra funciones de LLM
 # para generar descripciones y keywords de forma automática.
 
+from flask import jsonify
 import logging
 from datetime import datetime
 from bson import ObjectId
@@ -13,68 +14,85 @@ from ..llm.llm_utils import generar_descripcion_concepto, generar_keywords_descr
 
 
 # --------------------------------------------------------------------
-# Recupera todos los conceptos de la colección y convierte ObjectId a string
 def get_conceptos():
-    conceptos_raw = list(get_collection("conceptos_interes").find())
-    conceptos = []
-    for c in conceptos_raw:
-        c["_id"] = str(c["_id"])
-        c["publicaciones_relacionadas_ids"] = [str(pid) for pid in c.get("publicaciones_relacionadas_ids", [])]
-        conceptos.append(c)
-    return conceptos
+    try:
+        conceptos_raw = list(get_collection("conceptos_interes").find())
+        conceptos = []
+        for c in conceptos_raw:
+            c["_id"] = str(c["_id"])
+            c["publicaciones_relacionadas_ids"] = [str(pid) for pid in c.get("publicaciones_relacionadas_ids", [])]
+            conceptos.append(c)
+        return conceptos
+    except Exception as e:
+        logging.error(f"Error al recuperar conceptos: {e}")
+        return []
 
 
 # --------------------------------------------------------------------
-# Recupera los conceptos tal y como están en Mongo (sin transformar a clase)
 def get_conceptos_dict():
-    conceptos_raw = list(get_collection("conceptos_interes").find())
-    conceptos = []
-    for c in conceptos_raw:
-        c.setdefault("publicaciones_relacionadas_ids", [])
-        if not isinstance(c["publicaciones_relacionadas_ids"], list):
-            c["publicaciones_relacionadas_ids"] = []
-        conceptos.append(c)
-    return conceptos
+    try:
+        conceptos_raw = list(get_collection("conceptos_interes").find())
+        conceptos = []
+        for c in conceptos_raw:
+            c.setdefault("publicaciones_relacionadas_ids", [])
+            if not isinstance(c["publicaciones_relacionadas_ids"], list):
+                c["publicaciones_relacionadas_ids"] = []
+            conceptos.append(c)
+        return conceptos
+    except Exception as e:
+        logging.error(f"Error al recuperar conceptos en bruto: {e}")
+        return []
 
 
 # --------------------------------------------------------------------
-# Busca un concepto por su ID y lo convierte a instancia de clase
 def get_concepto_by_id(concepto_id: str):
     if not ObjectId.is_valid(concepto_id):
+        logging.warning(f"ID no válido: {concepto_id}")
         return None
-    raw = get_collection("conceptos_interes").find_one({"_id": ObjectId(concepto_id)})
-    if raw:
-        return ConceptoInteres.from_dict(raw)
-    return None
+    try:
+        raw = get_collection("conceptos_interes").find_one({"_id": ObjectId(concepto_id)})
+        return ConceptoInteres.from_dict(raw) if raw else None
+    except Exception as e:
+        logging.error(f"Error al buscar concepto por ID: {e}")
+        return None
 
 
 # --------------------------------------------------------------------
-# Devuelve los conceptos que tengan IDs en la lista dada
 def get_conceptos_ids(ids):
-    return list(get_collection("conceptos_interes").find({"_id": {"$in": ids}}))
+    try:
+        return list(get_collection("conceptos_interes").find({"_id": {"$in": ids}}))
+    except Exception as e:
+        logging.error(f"Error al obtener conceptos por IDs: {e}")
+        return []
 
 
 # --------------------------------------------------------------------
-# Crea un nuevo concepto en MongoDB
 def create_concepto(concepto):
-    data = concepto.to_dict()
-    if "_id" in data and data["_id"] is None:
-        del data["_id"]
-    insert_result = get_collection("conceptos_interes").insert_one(data)
-    return insert_result
+    try:
+        data = concepto.to_dict()
+        if "_id" in data and data["_id"] is None:
+            del data["_id"]
+        insert_result = get_collection("conceptos_interes").insert_one(data)
+        logging.info(f"✅ Concepto creado: {concepto.nombre}")
+        return insert_result
+    except Exception as e:
+        logging.error(f"❌ Error creando concepto: {e}")
+        return None
 
 
 # --------------------------------------------------------------------
-# Elimina un concepto por su ID
 def delete_concepto(concepto_id):
     if not ObjectId.is_valid(concepto_id):
         raise ValueError("ID no válido")
-    result = get_collection("conceptos_interes").delete_one({"_id": ObjectId(concepto_id)})
-    return result.deleted_count
+    try:
+        result = get_collection("conceptos_interes").delete_one({"_id": ObjectId(concepto_id)})
+        return result.deleted_count
+    except Exception as e:
+        logging.error(f"Error al eliminar concepto: {e}")
+        return 0
 
 
 # --------------------------------------------------------------------
-# Actualiza un concepto a partir de su instancia
 def update_concepto(concepto: ConceptoInteres):
     data = concepto.to_dict()
     concepto_id = data.pop("_id", None)
@@ -93,10 +111,10 @@ def update_concepto(concepto: ConceptoInteres):
             logging.info(f"✅ Concepto actualizado correctamente: {concepto.nombre}")
     except Exception as e:
         logging.error(f"❌ Error actualizando el concepto: {e}")
+        raise
 
 
 # --------------------------------------------------------------------
-# Actualiza un concepto a partir de un diccionario
 def update_concepto_dict(concepto_dict: dict):
     concepto_id = concepto_dict.get("_id")
     if not concepto_id:
@@ -110,24 +128,55 @@ def update_concepto_dict(concepto_dict: dict):
         if result.matched_count == 0:
             logging.warning(f"⚠️ No se encontró el concepto con _id: {concepto_id}")
         else:
-            logging.info(f"✅ Publicación relacionada con concepto: {concepto_dict.get('nombre')} -> actualizado correctamente.")
+            logging.info(f"✅ Concepto actualizado desde dict: {concepto_dict.get('nombre')}")
     except Exception as e:
-        logging.error(f"❌ Error actualizando el concepto: {e}")
+        logging.error(f"❌ Error actualizando concepto desde dict: {e}")
+        raise
 
 
 # --------------------------------------------------------------------
-# Usa el modelo LLM para generar una descripción automática del concepto
 def add_descripcion_llm(concepto: ConceptoInteres):
-    descripcion = generar_descripcion_concepto(concepto.nombre)
-    concepto.descripcion = descripcion
-    update_concepto(concepto)
-    return descripcion
+    try:
+        descripcion = generar_descripcion_concepto(concepto.nombre)
+        concepto.descripcion = descripcion
+        update_concepto(concepto)
+        return descripcion
+    except Exception as e:
+        logging.error(f"Error generando descripción con LLM: {e}")
+        return None
 
 
 # --------------------------------------------------------------------
-# Usa el modelo LLM para generar keywords representativas de un concepto
 def add_keywords_llm(concepto: ConceptoInteres):
-    keywords = generar_keywords_descriptivos(concepto.descripcion)
-    concepto.keywords = keywords
-    update_concepto(concepto)
-    return keywords
+    try:
+        # Generar y guardar keywords como objetos con _id
+        keywords = generar_keywords_descriptivos(concepto.descripcion)
+
+        # Asignar solo los ObjectId de las keywords al concepto
+        concepto.keywords_ids = [ObjectId(k._id) for k in keywords if k._id]
+
+        # Guardar el concepto actualizado en Mongo
+        update_concepto(concepto)
+
+        return keywords
+
+    except Exception as e:
+        logging.error(f"❌ Error generando keywords con LLM: {e}")
+        return []
+
+# --------------------------------------------------------------------
+def add_keywords_aceptadas(concepto: ConceptoInteres):
+    try:
+        # Sobrescribe completamente las keywords anteriores (ya deben estar en concepto.keywords_ids)
+        concepto.keywords_ids = list(set(concepto.keywords_ids))  # elimina duplicados por si acaso
+
+        update_concepto(concepto)
+
+        return jsonify(concepto.to_dict()), 200
+
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error al guardar keywords en el concepto: {str(e)}"}), 500
+
+

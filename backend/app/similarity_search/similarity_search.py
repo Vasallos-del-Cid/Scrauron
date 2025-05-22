@@ -15,36 +15,45 @@ model = SentenceTransformer("intfloat/multilingual-e5-base")
 def normalizar_texto(texto):
     return texto.replace("\n", " ").strip()
 
-#Construye un índice FAISS a partir de los embeddings semánticos de las keywords de todos los conceptos, optimizados para búsquedas por similitud coseno
+# Construye un índice FAISS a partir de los embeddings semánticos enriquecidos de todos los conceptos.
+# Usa nombre, descripción y keywords para mejorar la discriminación semántica.
 def construir_indice_conceptos(conceptos):
     textos = []
 
-    # Construimos textos para cada concepto con las keywords
     for c in conceptos:
-        keywords = "; ".join(c.get("keywords", []))
-        texto = f"{keywords}"
+        # Obtener nombre y descripción
+        nombre = c.get("nombre", "")
+        descripcion = c.get("descripcion", "")
+
+        # Extraer nombres de keywords (si son objetos)
+        keyword_objs = c.get("keywords", [])
+        nombres_keywords = [kw.get("nombre", "") for kw in keyword_objs if isinstance(kw, dict)]
+
+        # Unir todo el contexto semántico del concepto
+        texto = f"{nombre}. {descripcion}. {'; '.join(nombres_keywords)}"
         textos.append(normalizar_texto(texto))
 
     # Si no hay textos, no construimos índice
     if not textos:
         return None, [], []
 
-    # Prefijamos con "query:" para optimizar compatibilidad con el modelo e5
+    # Prefijar con "query:" para compatibilidad con modelo e5
     queries = ["query: " + t for t in textos]
 
-    # Generamos embeddings normalizados para usar similitud coseno (con producto escalar)
+    # Generar embeddings normalizados para similitud coseno (producto escalar)
     embeddings = model.encode(queries, normalize_embeddings=True)
 
-    # Creamos el índice FAISS con producto escalar como métrica
     dim = embeddings.shape[1]
     index = faiss.IndexFlatIP(dim)
     index.add(embeddings.astype("float32"))
 
     return index, textos, embeddings
 
+
+
 # Analiza una publicación, calcula su similitud semántica con todos los conceptos registrados y, si supera un umbral, asocia su ID a los conceptos relevantes en la base de datos.
 
-def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_similitud=0.85):
+def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_similitud=0.83):
     # Verifica que la publicación sea válida y tenga un ID asignado
     if not publicacion or not publicacion._id:
         logging.warning(f"⚠️ Publicación inválida o sin _id.")

@@ -38,8 +38,8 @@ def init_mongo(uri=None):
     db = client["baseDatosScrauron"]
 
     # Crear índices u otras configuraciones
-    config_mongo_index(db["publicaciones"])
-
+    config_mongo_index_publicaciones(db["publicaciones"])
+    config_mongo_index_keywords(db["keywords"])
 
 def test_mongo_connection():
     logging.info("Test conexion a MongoDB...")
@@ -51,7 +51,7 @@ def test_mongo_connection():
         raise e
 
 
-def config_mongo_index(coleccion):
+def config_mongo_index_publicaciones(coleccion):
     try:
         # Indice único combinación de título u url. Evita duplicados en BBDD.
         coleccion.create_index(
@@ -59,5 +59,18 @@ def config_mongo_index(coleccion):
             unique=True,
             name="titulo_url_unique"
         )
+
+    except Exception as e:
+        logging.warning(f"❌ Error al crear índice de: {coleccion}\n {e}")
+
+def config_mongo_index_keywords(coleccion):
+    try:
+        # Indice único combinación de título u url. Evita duplicados en BBDD.
+        coleccion.create_index(
+            "nombre",
+            unique=True,
+            name="nombre_keyword_unique"
+        )
+
     except Exception as e:
         logging.warning(f"❌ Error al crear índice de: {coleccion}\n {e}")
