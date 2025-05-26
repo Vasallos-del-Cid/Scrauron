@@ -31,7 +31,6 @@ def get_publicacion_by_id(pub_id):
 # Crea una nueva publicación en la base de datos
 # También estima automáticamente el tono del contenido
 def create_publicacion(publicacion):
-
     # Normalizar campos clave
     url = publicacion.url.strip().lower()
     titulo = publicacion.titulo.strip()

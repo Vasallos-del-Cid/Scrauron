@@ -121,3 +121,4 @@ def agregar_fuente_a_area(area_id: str, fuente_id: str):
     update_area_dict(area_id, {"fuentes_ids": fuentes_actuales})
 
     return True
+

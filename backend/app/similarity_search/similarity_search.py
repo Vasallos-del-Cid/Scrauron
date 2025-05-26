@@ -1,5 +1,4 @@
 import logging
-
 from bson import ObjectId
 from datetime import datetime
 import faiss
@@ -7,117 +6,126 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from app.models.publicacion import Publicacion
 from app.mongo.mongo_conceptos import update_concepto_dict, get_conceptos_dict
+from app.mongo.mongo_keywords import get_keywords 
 
-# Modelo de embeddings semánticos mejorado
+# Modelo de embeddings semánticos
 model = SentenceTransformer("intfloat/multilingual-e5-base")
 
-# Elimina saltos de línea y espacios sobrantes
 def normalizar_texto(texto):
     return texto.replace("\n", " ").strip()
 
-# Construye un índice FAISS a partir de los embeddings semánticos enriquecidos de todos los conceptos.
-# Usa nombre, descripción y keywords para mejorar la discriminación semántica.
 def construir_indice_conceptos(conceptos):
     textos = []
 
     for c in conceptos:
-        # Obtener nombre y descripción
         nombre = c.get("nombre", "")
         descripcion = c.get("descripcion", "")
-
-        # Extraer nombres de keywords (si son objetos)
         keyword_objs = c.get("keywords", [])
         nombres_keywords = [kw.get("nombre", "") for kw in keyword_objs if isinstance(kw, dict)]
-
-        # Unir todo el contexto semántico del concepto
         texto = f"{nombre}. {descripcion}. {'; '.join(nombres_keywords)}"
         textos.append(normalizar_texto(texto))
 
-    # Si no hay textos, no construimos índice
     if not textos:
         return None, [], []
 
-    # Prefijar con "query:" para compatibilidad con modelo e5
     queries = ["query: " + t for t in textos]
-
-    # Generar embeddings normalizados para similitud coseno (producto escalar)
     embeddings = model.encode(queries, normalize_embeddings=True)
-
     dim = embeddings.shape[1]
     index = faiss.IndexFlatIP(dim)
     index.add(embeddings.astype("float32"))
 
     return index, textos, embeddings
 
+def construir_indice_keywords(keywords):
+    textos = [normalizar_texto(kw["nombre"]) for kw in keywords if kw.get("nombre")]
+    if not textos:
+        return None, [], []
 
+    queries = ["query: " + t for t in textos]
+    embeddings = model.encode(queries, normalize_embeddings=True)
+    dim = embeddings.shape[1]
+    index = faiss.IndexFlatIP(dim)
+    index.add(embeddings.astype("float32"))
 
-# Analiza una publicación, calcula su similitud semántica con todos los conceptos registrados y, si supera un umbral, asocia su ID a los conceptos relevantes en la base de datos.
+    return index, textos, embeddings
 
 def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_similitud=0.83):
-    # Verifica que la publicación sea válida y tenga un ID asignado
     if not publicacion or not publicacion._id:
         logging.warning(f"⚠️ Publicación inválida o sin _id.")
         return []
 
-    # Prepara el texto combinando título y contenido, y lo normaliza (quita saltos, espacios, etc.)
     texto = normalizar_texto(f"{publicacion.titulo}. {publicacion.contenido}")
-
-    # Genera el embedding semántico del texto con el prefijo 'query:' (usado por modelos tipo e5)
     emb_pub = model.encode(["query: " + texto], normalize_embeddings=True)[0].astype("float32")
 
-    # Recupera todos los conceptos desde MongoDB en formato dict
     conceptos = get_conceptos_dict()
     if not conceptos:
         logging.info(f"❌ No hay conceptos registrados.")
         return []
 
-    # Construye el índice semántico FAISS a partir de los conceptos
     index, textos_concepto, _ = construir_indice_conceptos(conceptos)
     if index is None:
         return []
 
-    # Busca los top_k conceptos más similares a la publicación en el índice
     D, I = index.search(np.array([emb_pub]), top_k)
 
-    # Lista para almacenar los conceptos a los que se asocia la publicación
     conceptos_actualizados = []
-    pub_oid = ObjectId(publicacion._id)  # Asegura que el ID esté en formato BSON
+    pub_oid = ObjectId(publicacion._id)
 
-    # Itera sobre los resultados (índices y scores)
     for i, score in zip(I[0], D[0]):
         if i == -1:
-            continue  # Resultado nulo (no hay suficiente para top_k)
+            continue
 
         similitud = score
         concepto = conceptos[i]
-
-        # Muestra en consola información del concepto y su similitud
         logging.info(f" 🔎 Evaluando '{concepto['nombre']}' (similitud: {similitud:.4f})")
 
-        # Verifica si la similitud es suficientemente alta para enlazar
         if similitud >= umbral_similitud:
             relacionados = concepto.get("publicaciones_relacionadas_ids", [])
-
-            # Evita duplicar el ID de la publicación si ya está relacionado
             if pub_oid in relacionados:
                 logging.error(f"🛑 Ya relacionada con '{concepto['nombre']}'")
                 continue
 
-            # Añade el ID de la publicación a la lista del concepto
             relacionados.append(pub_oid)
             concepto["publicaciones_relacionadas_ids"] = relacionados
 
             try:
-                # Actualiza el concepto en la base de datos
                 update_concepto_dict(concepto)
                 conceptos_actualizados.append((concepto["nombre"], similitud))
                 logging.info(f" ✅ Relacionada con '{concepto['nombre']}' (similitud: {similitud:.2f})")
             except Exception as e:
-                # Captura errores de actualización
                 logging.error(f"❌ Error al actualizar concepto: {e}")
         else:
-            # Muestra conceptos cuya similitud es demasiado baja
             logging.info(f"📉 Similitud insuficiente con '{concepto['nombre']}': {similitud:.2f}")
 
-    # Devuelve la lista de conceptos actualizados con los que hubo relación
     return conceptos_actualizados
+
+def obtener_keywords_relacionadas(publicacion, umbral_keyword=0.8, top_k=10):
+    texto = normalizar_texto(f"{publicacion.titulo}. {publicacion.contenido}")
+    emb_pub = model.encode(["query: " + texto], normalize_embeddings=True)[0].astype("float32")
+
+    keywords = get_keywords()
+    if not keywords:
+        logging.info("❌ No hay keywords registradas.")
+        return []
+
+    index, textos_keywords, _ = construir_indice_keywords(keywords)
+    if index is None:
+        logging.warning("⚠️ No se pudo construir el índice FAISS de keywords.")
+        return []
+
+    D, I = index.search(np.array([emb_pub]), top_k)
+
+    keywords_relacionadas = []
+    for i, score in zip(I[0], D[0]):
+        if i == -1:
+            continue
+        if score >= umbral_keyword:
+            kw = keywords[i]
+            keywords_relacionadas.append({
+                "keyword_id": kw["_id"],
+                "nombre": kw["nombre"],
+                "similitud": round(score, 4)
+            })
+
+    return keywords_relacionadas
+

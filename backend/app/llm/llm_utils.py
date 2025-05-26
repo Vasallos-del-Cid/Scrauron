@@ -66,7 +66,7 @@ def generar_descripcion_concepto(nombre_concepto: str) -> str:
     """
     prompt = (
         f"Redacta un párrafo de 4 frases explicando de manera clara y específica el tema: '{nombre_concepto}'. "
-        "Usa lenguaje técnico pero comprensible. No repitas palabras innecesarias."
+        "Usa lenguaje técnico pero comprensible. No repitas palabras innecesarias. No uses comillas ni comillas dobles"
     )
     messages = [
         {"role": "system", "content": "Eres un redactor experto en comunicación clara y precisa."},
@@ -217,8 +217,7 @@ def analizar_publicacion(publicacion, max_tokens=600):
         f"Contenido:\n{publicacion.contenido}\n\n"
         "Primero, resume el artículo en un máximo de 5 líneas, reformulando con sinónimos para evitar copiar frases literales.\n"
         "Después, valora el tono emocional implícito en el título del 1 (muy negativo) al 9 (muy positivo). Y 5 neutro.\n\n"
-        "Devuelve el resultado en formato JSON con las claves:\n"
-        "{ 'resumen': ..., 'tono': ... }"
+        "Devuelve el resultado únicamente en formato JSON con las claves: { 'resumen': ..., 'tono': ... } . Dame únicamente las llaves y su contenido, no lo envuelvas con ```json y usa en el json comillas dobles"
     )
 
     messages = [

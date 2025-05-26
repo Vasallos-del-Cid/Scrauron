@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import sys
@@ -7,6 +8,7 @@ import subprocess
 import random
 from datetime import datetime, timedelta
 from app.mongo.mongo_utils import get_collection
+from app.models.fuente import Fuente
 
 # Frecuencia base para ejecutar scraping (en minutos)
 SCRAPING_FREQ_MIN = os.getenv("SCRAPING_FREQUENCY", 40)
@@ -15,21 +17,28 @@ detener_flag = threading.Event()
 # =========================
 # Ejecuta el script spider_executor.py pasando la URL como argumento
 # =========================
-def ejecutar_scraping(url):
-    logging.info(f" 🕷️ Ejecutando scraping para: {url}")
+def ejecutar_scraping(fuente: Fuente):
+    """
+    Ejecuta el proceso de scraping para una instancia de Fuente.
+    """
+    logging.info(f" 🕷️ Ejecutando scraping para: {fuente.nombre} ({fuente.url})")
+    
+    fuente_json = json.dumps(fuente.to_dict())
+
     try:
         subprocess.run(
-            [sys.executable, "app/spiders/spider_executor.py", url],
+            [sys.executable, "app/spiders/spider_executor.py", fuente_json],
             env=os.environ.copy(),
             check=True,
-            timeout=1200 #Si tarda mas de 20 minutos en una fuente aborta
+            timeout=1200  # Si tarda más de 20 minutos, se aborta
         )
     except subprocess.CalledProcessError as e:
         logging.error(f"❌ Scraping falló con código {e.returncode}")
-        raise RuntimeError(f"Error durante el scraping {e}")
+        raise RuntimeError(f"Error durante el scraping para {fuente.url} - Código: {e.returncode}")
     except Exception as e:
         logging.error(f"💥 Error ejecutando spider: {e}")
-        raise RuntimeError(f"Error durante el scraping {e}")
+        raise RuntimeError(f"Error durante el scraping para {fuente.url}: {e}")
+
 
 # =========================
 # Ejecuta scraping para todas las fuentes guardadas en MongoDB

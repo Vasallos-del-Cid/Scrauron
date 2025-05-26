@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from ..models.concepto_interes import ConceptoInteres
+from ..mongo.mongo_areas import agregar_concepto_a_area
 from bson import ObjectId
 from ..mongo.mongo_conceptos import (
     get_conceptos,
@@ -116,38 +117,53 @@ def generar_keywords_concepto(concepto_id):
     except Exception as e:
         return jsonify({"error": f"Error al generar keywords para el concepto: {str(e)}"}), 500
 
-
-# PATCH /conceptos/<id>/keywords_aceptadas → Actualiza keywords y devuelve el concepto actualizado
-@api_conceptos.route('/conceptos/<concepto_id>/keywords_aceptadas', methods=['PATCH'])
-def update_keywords_ids_endpoint(concepto_id):
+# PATCH /conceptos/<id>/keywords_aceptadas → Actualiza keywords y agrega concepto a area
+@api_conceptos.route('/conceptos/<area_id>/keywords_aceptadas', methods=['PATCH'])
+def update_keywords_ids_en_area_endpoint(area_id):
     try:
-        data = request.get_json()
-        keywords_ids_raw = data.get("keywords_ids", [])
+        if not ObjectId.is_valid(area_id):
+            return jsonify({"error": "ID de área no válido."}), 400
 
+        data = request.get_json()
+        # Obtener y validar el objeto concepto
+        concepto_id = data.get("_id")
+        if not concepto_id:
+            return jsonify({"error": "El concepto debe contener _id."}), 400
+
+        if not ObjectId.is_valid(concepto_id):
+            return jsonify({"error": f"ID de concepto no válido: {concepto_id}"}), 400
+
+        concepto = get_concepto_by_id(concepto_id)
+        if not concepto:
+            return jsonify({"error": "Concepto no encontrado"}), 404
+
+        # Obtener y validar keywords_ids
+        keywords_ids_raw = data.get("keywords_ids", [])
         if not isinstance(keywords_ids_raw, list):
             return jsonify({"error": "keywords_ids debe ser una lista."}), 400
 
-        # Validar formato de ObjectId
         keywords_ids = []
         for kid in keywords_ids_raw:
             if not ObjectId.is_valid(str(kid)):
                 return jsonify({"error": f"ID de keyword no válido: {kid}"}), 400
             keywords_ids.append(ObjectId(str(kid)))
 
-        concepto = get_concepto_by_id(concepto_id)
-        if not concepto:
-            return jsonify({"error": "Concepto no encontrado"}), 404
-
-        # Actualiza las keywords_ids
+        # Actualiza el concepto
         concepto.keywords_ids = keywords_ids
-
-        # Guarda cambios
         update_concepto(concepto)
+
+        # Agrega el concepto al área usando tu función
+        agregar_concepto_a_area(area_id, concepto._id)
 
         return jsonify(concepto.to_dict()), 200
 
     except Exception as e:
-        return jsonify({"error": f"Error al actualizar keywords del concepto: {str(e)}"}), 500
+        return jsonify({"error": f"Error al actualizar keywords y vincular área: {str(e)}"}), 500
+
+
+    except Exception as e:
+        return jsonify({"error": f"Error al actualizar keywords y vincular área: {str(e)}"}), 500
+
     
     # Agrega una keyword al concepto (si no está ya)
 @api_conceptos.route('/conceptos/<concepto_id>/keywords', methods=['POST'])
