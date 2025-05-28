@@ -65,8 +65,8 @@ def generar_descripcion_concepto(nombre_concepto: str) -> str:
     Genera una descripción de 4 frases sobre el concepto dado.
     """
     prompt = (
-        f"Redacta un párrafo de 4 frases explicando de manera clara y específica el tema: '{nombre_concepto}'. "
-        "Usa lenguaje técnico pero comprensible. No repitas palabras innecesarias. No uses comillas ni comillas dobles"
+        f"Redacta un párrafo de 4 frases explicando de manera clara y específica el tema: '{nombre_concepto}'. Desde un punto de vista de la actualidad y las noticias publicadas"
+        "Usa lenguaje técnico pero comprensible. No repitas palabras innecesarias. No uses comillas ni comillas dobles."
     )
     messages = [
         {"role": "system", "content": "Eres un redactor experto en comunicación clara y precisa."},
@@ -163,23 +163,35 @@ def estimar_tono_publicacion(publicacion) -> int:
         raise ValueError(f"Respuesta inesperada del modelo: {tono_str}")  # Manejo de errores si no devuelve un número
 
 # Resume el contenido de una publicación, reformulando con sinónimos para evitar infracción de copyright
-def resumir_contenido_reformulado(publicacion: Publicacion, max_tokens=600) -> Publicacion:
+def resumir_contenido_reformulado(publicacion: Publicacion, keywords_dict=None, max_tokens=600) -> Publicacion:
     """
     Resume y reformula el contenido de una publicación utilizando un LLM.
-    El resumen no debe reproducir frases literales del original y debe limitarse a 5 líneas.
-    Modifica el objeto Publicacion en memoria y lo devuelve.
-    Si el contenido excede los 25,000 caracteres, se recorta automáticamente.
+    Se incorporan las keywords relacionadas (por ID) si están disponibles.
+    El resumen evita frases literales y debe mantenerse entre 6 y 10 líneas.
     """
     if not publicacion.contenido.strip():
         raise ValueError("El contenido está vacío o no disponible.")
-    # Limitar el contenido a los primeros 15,000 caracteres     
+
     if len(publicacion.contenido) > 15000:
         publicacion.contenido = publicacion.contenido[:15000]
 
+    # Extraer nombres de keywords si están disponibles
+    keyword_nombres = []
+    if hasattr(publicacion, "keywords_relacionadas_ids") and publicacion.keywords_relacionadas_ids:
+        if keywords_dict is not None:
+            keyword_nombres = [keywords_dict.get(str(kid), "") for kid in publicacion.keywords_relacionadas_ids]
+        else:
+            # Si no se pasa el diccionario, obtenerlas directamente (esto requiere acceso a Mongo)
+            from app.mongo.mongo_keywords import get_keywords_by_ids
+            keywords = get_keywords_by_ids(publicacion.keywords_relacionadas_ids)
+            keyword_nombres = [kw["nombre"] for kw in keywords if "nombre" in kw]
+
     prompt = (
-        "Resume el siguiente artículo en un máximo de 5 líneas. "
-        "No copies frases exactas del original: reformula y utiliza sinónimos para evitar infracción de copyright. "
-        "El tono debe ser claro, profesional y accesible. Aquí está el artículo:\n\n"
+        "Resume el siguiente artículo en un mínimo de 6 y un máximo de 10 líneas. "
+        "Evita repetir frases textuales del texto original: reformula con sinónimos y un estilo claro. "
+        "Enfócate especialmente en los temas relacionados con las siguientes palabras clave:\n\n"
+        f"{', '.join(keyword_nombres)}\n\n"
+        "El tono debe ser profesional y directo. Aquí está el texto completo del artículo:\n\n"
         f"{publicacion.contenido}"
     )
 
@@ -232,7 +244,7 @@ def analizar_publicacion(publicacion, max_tokens=600):
         publicacion.contenido = resultado['resumen']
         publicacion.tono = int(resultado['tono'])  # Agregamos el atributo "tono"
         logging.info(f"🎯 Tono estimado: {publicacion.tono}")
-        logging.info(f"🎯 Resumen creardo: {publicacion.contenido}")
+        logging.info(f"✅ Resumen creado: {publicacion.contenido}")
         return publicacion
     except (json.JSONDecodeError, KeyError, ValueError):
         raise ValueError(f"Respuesta inesperada del modelo, se esperaba JSON con claves 'resumen' y 'tono': {respuesta}")

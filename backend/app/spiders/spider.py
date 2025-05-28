@@ -141,9 +141,6 @@ class NoticiasSpider(scrapy.Spider):
                     "keywords_relacionadas_ids": [str(kid) for kid in publicacion.keywords_relacionadas_ids]
                 },
             )
-
-            logging.info(f"✅ Contenido resumido: {publicacion.contenido}")
-
         except DuplicateKeyError:
             logging.warning(f"⚠️ Ya existe (aunque no se detectó antes): {url}")
         except ConnectionFailure:

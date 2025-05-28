@@ -179,4 +179,31 @@ def add_keywords_aceptadas(concepto: ConceptoInteres):
     except Exception as e:
         return jsonify({"error": f"Error al guardar keywords en el concepto: {str(e)}"}), 500
 
+# --------------------------------------------------------------------
 
+
+def get_conceptos_id_by_area_id(area_id):
+
+    try:
+        area_oid = ObjectId(area_id)
+    except Exception:
+        return []
+    
+    area = get_collection('areas_de_trabajo').find_one({'_id':area_oid})
+   
+    if not area:
+        return []
+
+    conceptos_oids = area.get('conceptos_interes_ids')
+    conceptos_ids = []
+    for concepto_oid in conceptos_oids:
+        conceptos_ids.append(str(concepto_oid))
+    return conceptos_ids
+
+# --------------------------------------------------------------------
+
+def serialize_concepto(doc):
+    doc["_id"] = str(doc["_id"])
+    if "area_id" in doc:
+        doc["area_id"] = str(doc["area_id"])
+    return doc

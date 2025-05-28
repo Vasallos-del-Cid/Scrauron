@@ -84,3 +84,13 @@ def update_keyword(keyword_id, data):
     updated_keyword = get_collection("keywords").find_one({"_id": ObjectId(keyword_id)})
     updated_keyword["_id"] = str(updated_keyword["_id"])
     return updated_keyword
+
+# --------------------------------------------------
+# Devuelve las keywords de un concepto
+def get_keywords_id_by_concepto_id(concepto_id):
+    concepto = get_collection('conceptos_interes').find_one({"_id": concepto_id})
+    keywords_oids = concepto.get('keywords_ids', [])
+    keywords_ids = []
+    for keyword_oid in keywords_oids:
+        keywords_ids.append(str(keyword_oid))
+    return keywords_ids

@@ -77,7 +77,7 @@ def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_simi
 
         similitud = score
         concepto = conceptos[i]
-        logging.info(f" 🔎 Evaluando '{concepto['nombre']}' (similitud: {similitud:.4f})")
+        logging.info(f"🔎 Evaluando '{concepto['nombre']}' (similitud: {similitud:.4f})")
 
         if similitud >= umbral_similitud:
             relacionados = concepto.get("publicaciones_relacionadas_ids", [])

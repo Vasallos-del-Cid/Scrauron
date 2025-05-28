@@ -64,19 +64,24 @@ def logqing_config():
     # Configuración del logging
     logging.basicConfig(
         level=logging.INFO,
-        format='[%(asctime)s] %(levelname)-7s : %(module)-15s: %(message)s',
+        format='[%(asctime)s] %(levelname)-7s : %(module)-17s: %(message)s',
         force=True  # esto es clave para que sobrescriba configuraciones previas
     )
-    logging.getLogger("pymongo").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
+   
     logging.basicConfig(level=logging.INFO)
 
-    # Silenciar logs DEBUG del cliente OpenAI y httpcore
+    # Silenciar logs 
+    logging.getLogger("pymongo").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("openai").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("_base_client").setLevel(logging.WARNING)
     logging.getLogger("_trace").setLevel(logging.WARNING)
     logging.getLogger("_client").setLevel(logging.WARNING)
+    logging.getLogger("engine").setLevel(logging.ERROR)
+    logging.getLogger("logstats").setLevel(logging.WARNING)
+    logging.getLogger("retry").setLevel(logging.WARNING)
+    logging.getLogger('scrapy').setLevel(logging.WARNING)
 
 
 def cors_config(app):

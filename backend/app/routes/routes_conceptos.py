@@ -9,7 +9,8 @@ from ..mongo.mongo_conceptos import (
     update_concepto,
     delete_concepto,
     add_descripcion_llm,
-    add_keywords_llm
+    add_keywords_llm,
+    get_conceptos_id_by_area_id
 )
 
 api_conceptos = Blueprint('api_conceptos', __name__)
@@ -212,3 +213,20 @@ def remove_keyword_from_concepto(concepto_id, keyword_id):
 
     except Exception as e:
         return jsonify({"error": f"Error al eliminar keyword del concepto: {str(e)}"}), 500
+
+# ---------------------------------------------------
+# Da los conceptos de un area
+
+@api_conceptos.route('/conceptos/area', methods=['GET'])
+def get_conceptos_in_area():
+    try:
+        area_id = request.args.get("area_id")
+        if not area_id or not ObjectId.is_valid(area_id):
+            return jsonify({"error": "ID de área no válido"}), 400
+
+        conceptos = get_conceptos_id_by_area_id(ObjectId(area_id))
+        return jsonify(conceptos), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error al obtener conceptos: {str(e)}"}), 500
+
