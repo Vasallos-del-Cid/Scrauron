@@ -87,10 +87,53 @@ def update_keyword(keyword_id, data):
 
 # --------------------------------------------------
 # Devuelve las keywords de un concepto
-def get_keywords_id_by_concepto_id(concepto_id):
+
+def get_keywords_by_concepto_id(concepto_id):
+    # Asegura que el ID sea un ObjectId
+    if not isinstance(concepto_id, ObjectId):
+        concepto_id = ObjectId(concepto_id)
+
     concepto = get_collection('conceptos_interes').find_one({"_id": concepto_id})
+    if not concepto:
+        return []
+
     keywords_oids = concepto.get('keywords_ids', [])
-    keywords_ids = []
+    keywords_dict = []
+
     for keyword_oid in keywords_oids:
-        keywords_ids.append(str(keyword_oid))
-    return keywords_ids
+        keyword = get_collection('keywords').find_one({"_id": keyword_oid})
+        if keyword:
+            # Serializa campos ObjectId a string para evitar errores
+            keyword["_id"] = str(keyword["_id"])
+            keywords_dict.append(keyword)
+
+    return keywords_dict
+
+
+def get_keywords_by_publicacion(publicacion_id):
+    try:
+        # Asegura que sea un ObjectId válido
+        if not ObjectId.is_valid(publicacion_id):
+            raise ValueError("ID de publicación no válido")
+
+        pub_oid = ObjectId(publicacion_id)
+        publicacion = get_collection("publicaciones").find_one({"_id": pub_oid})
+        if not publicacion:
+            return []
+
+        keyword_ids = publicacion.get("keywords_relacionadas_ids", [])
+        if not keyword_ids:
+            return []
+
+        # Buscar todas las keywords en una sola consulta
+        keywords = get_collection("keywords").find({"_id": {"$in": keyword_ids}})
+        result = []
+        for kw in keywords:
+            kw["_id"] = str(kw["_id"])  # Convierte ObjectId a string para JSON
+            result.append(kw)
+
+        return result
+
+    except Exception as e:
+        # Devuelve el error para el manejo adecuado
+        raise RuntimeError(f"Error al obtener keywords de la publicación: {e}")

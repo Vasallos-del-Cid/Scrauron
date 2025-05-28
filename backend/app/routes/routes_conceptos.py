@@ -10,7 +10,7 @@ from ..mongo.mongo_conceptos import (
     delete_concepto,
     add_descripcion_llm,
     add_keywords_llm,
-    get_conceptos_id_by_area_id
+    get_conceptos_by_area_id
 )
 
 api_conceptos = Blueprint('api_conceptos', __name__)
@@ -29,10 +29,10 @@ def _convert_objectid(doc):
 def get_conceptos_endpoint():
     try:
         conceptos = get_conceptos()
-        conceptos = [_convert_objectid(c) for c in conceptos]
         return jsonify(conceptos), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @api_conceptos.route('/conceptos/<concepto_id>', methods=['GET'])
 def get_concepto_endpoint(concepto_id):

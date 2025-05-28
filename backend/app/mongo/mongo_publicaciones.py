@@ -54,7 +54,13 @@ def create_publicacion(publicacion):
     #     logging.error(f"⚠️ Error al estimar el tono: {e}")
     #     publicacion.tono = None
 
-    data = publicacion.to_dict()
+    data = {
+        "_id": ObjectId(publicacion._id),
+        "titulo": publicacion.titulo,
+        "url": publicacion.url,
+        "fecha": publicacion.fecha,
+        "fuente_id": ObjectId(publicacion.fuente_id),
+    }
     data["url"] = url  # Asegura consistencia de formato de URL
 
     # Limpia el _id si viene vacío

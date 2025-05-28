@@ -74,7 +74,7 @@ class NoticiasSpider(scrapy.Spider):
                         meta={
                             'titulo': texto_limpio,
                             'url': url_completa,
-                            'fuente_id': str(self.fuente._id)
+                            'fuente_id': self.fuente._id
                         }
                     )
 
@@ -138,7 +138,7 @@ class NoticiasSpider(scrapy.Spider):
                 data={
                     "contenido": publicacion.contenido,
                     "tono": publicacion.tono,
-                    "keywords_relacionadas_ids": [str(kid) for kid in publicacion.keywords_relacionadas_ids]
+                    "keywords_relacionadas_ids": publicacion.keywords_relacionadas_ids
                 },
             )
         except DuplicateKeyError:

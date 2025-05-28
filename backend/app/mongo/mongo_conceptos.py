@@ -16,13 +16,14 @@ from ..llm.llm_utils import generar_descripcion_concepto, generar_keywords_descr
 # --------------------------------------------------------------------
 def get_conceptos():
     try:
-        conceptos_raw = list(get_collection("conceptos_interes").find())
+        conceptos_raw = get_collection("conceptos_interes").find()
         conceptos = []
         for c in conceptos_raw:
             c["_id"] = str(c["_id"])
+            c["keywords_ids"] = [str(kid) for kid in c.get("keywords_ids", [])]
             c["publicaciones_relacionadas_ids"] = [str(pid) for pid in c.get("publicaciones_relacionadas_ids", [])]
             conceptos.append(c)
-        return conceptos
+        return conceptos  # <-- devuelves los datos crudos
     except Exception as e:
         logging.error(f"Error al recuperar conceptos: {e}")
         return []
@@ -94,11 +95,18 @@ def delete_concepto(concepto_id):
 
 # --------------------------------------------------------------------
 def update_concepto(concepto: ConceptoInteres):
-    data = concepto.to_dict()
-    concepto_id = data.pop("_id", None)
-
+    concepto_id = concepto._id
     if not concepto_id:
         raise ValueError("El concepto no tiene _id. No se puede actualizar.")
+
+    # Construir manualmente el diccionario manteniendo los ObjectId
+    data = {
+        "_id": ObjectId(concepto._id),
+        "nombre": concepto.nombre,
+        "descripcion": concepto.descripcion,
+        "keywords_ids": concepto.keywords_ids,
+        "publicaciones_relacionadas_ids": concepto.publicaciones_relacionadas_ids,
+    }
 
     try:
         result = get_collection("conceptos_interes").update_one(
@@ -112,7 +120,6 @@ def update_concepto(concepto: ConceptoInteres):
     except Exception as e:
         logging.error(f"❌ Error actualizando el concepto: {e}")
         raise
-
 
 # --------------------------------------------------------------------
 def update_concepto_dict(concepto_dict: dict):
@@ -182,23 +189,25 @@ def add_keywords_aceptadas(concepto: ConceptoInteres):
 # --------------------------------------------------------------------
 
 
-def get_conceptos_id_by_area_id(area_id):
-
-    try:
-        area_oid = ObjectId(area_id)
-    except Exception:
-        return []
-    
-    area = get_collection('areas_de_trabajo').find_one({'_id':area_oid})
-   
+def get_conceptos_by_area_id(area_oid):
+    area = get_collection('areas_de_trabajo').find_one({'_id': area_oid})
     if not area:
         return []
 
-    conceptos_oids = area.get('conceptos_interes_ids')
-    conceptos_ids = []
+    conceptos_oids = area.get('conceptos_interes_ids', [])
+    conceptos = []
+
     for concepto_oid in conceptos_oids:
-        conceptos_ids.append(str(concepto_oid))
-    return conceptos_ids
+        concepto = get_collection('conceptos_interes').find_one({'_id': concepto_oid})
+        if concepto:
+            # Convertimos los ObjectId a string antes de devolver
+            concepto["_id"] = str(concepto["_id"])
+            concepto["keywords_ids"] = [str(k) for k in concepto.get("keywords_ids", [])]
+            concepto["publicaciones_relacionadas_ids"] = [str(p) for p in concepto.get("publicaciones_relacionadas_ids", [])]
+            conceptos.append(concepto)
+
+    return conceptos
+
 
 # --------------------------------------------------------------------
 
