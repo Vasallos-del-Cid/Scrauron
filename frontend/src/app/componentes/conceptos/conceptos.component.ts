@@ -1,25 +1,25 @@
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CrudGenericComponent } from '../../core/plantillas/crud-generic/crud-generic.component';
-import { InteresesService } from './intereses.service';
-import { Intereses } from './Intereses.model';
+import { ConceptosService } from './conceptos.service';
+import { Conceptos } from './Conceptos.model';
 import { ColumnConfig } from '../../core/plantillas/crud-generic/column.model';
 import { FormFieldConfig } from '../../core/plantillas/crud-generic/form-field.model';
 import { Validators } from '@angular/forms';
 import { DataService } from '../../core/services/data-service/data-service.service';
 
 @Component({
-  selector: 'app-intereses',
+  selector: 'app-conceptos',
   standalone: true,
   imports: [CommonModule,CrudGenericComponent],
-  templateUrl: './intereses.component.html',
-  styleUrls: ['./intereses.component.css']
+  templateUrl: './conceptos.component.html',
+  styleUrls: ['./conceptos.component.css']
 })
-export class InteresesComponent {
-  itemDefault: Partial<Intereses> = { };
-interesesService: InteresesService;
-  constructor(public servicio: InteresesService) {
-    this.interesesService = servicio;
+export class ConceptosComponent {
+  itemDefault: Partial<Conceptos> = { };
+conceptosService: ConceptosService;
+  constructor(public servicio: ConceptosService) {
+    this.conceptosService = servicio;
    }
   columns: ColumnConfig[] = [
     { field: 'nombre', headerText: 'Nombre', isPrimaryKey: true, width: 150 },

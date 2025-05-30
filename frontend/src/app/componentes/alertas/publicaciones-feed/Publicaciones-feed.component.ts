@@ -4,7 +4,7 @@ import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { FormsModule } from '@angular/forms';
-import { PublicacionesService } from './alertas-feed.service';
+import { PublicacionesService } from './publicaciones-feed.service';
 import { Publicacion } from './publicacion.model';
 
 @Component({
@@ -17,10 +17,10 @@ import { Publicacion } from './publicacion.model';
     DatePickerModule,
     TextBoxModule,
   ],
-  templateUrl: './alertas-feed.component.html',
-  styleUrls: ['./alertas-feed.component.css'],
+  templateUrl: './publicaciones-feed.component.html',
+  styleUrls: ['./publicaciones-feed.component.css'],
 })
-export class AlertasFeedComponent implements OnInit {
+export class PublicacionesFeedComponent implements OnInit {
   public alertas: Publicacion[] = [];
   public alertasFiltradas: Publicacion[] = [];
 

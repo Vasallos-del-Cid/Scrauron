@@ -24,14 +24,93 @@ Python con flask y MongoDB
     - Asegúrate de incluir las herramientas de compilación y los encabezados necesarios.
 - Postman (opcional)
 
+### Libreiras Principales
+#### Flask (API REST)
+
+```bash
+pip install flask
+```
+
+Comprobar instalación
+
+```bash
+python -m flask --version
+```
+
+Versión empleada: Flask==2.3.2 (en requirements.txt)
+
+Licencia BSD (Similar a MIT)
+
+#### Scrapy (webscraping)
+
+```bash
+pip install scrapy
+```
+
+Comprobar instalación
+
+```bash
+scrapy version
+```
+
+Versión empleada: Scrapy==2.11.0 (en requirements.txt)
+
+Licencia BSD (modificada, uso libre y sin atribución, solo restingido el uso de nombres de titulares sin su permiso)
+
+#### Pymongo (Cliente de mongoDB para python)
+
+```bash
+python -m pip install "pymongo[srv]"==3.10
+```
+
+#### Playwright
+
+Playwright permite renderizar páginas dinámicas con JavaScript dentro de Scrapy, haciendo posible el scraping de canales de Telegram en formato web público donde los mensajes están ocultos hasta que el contenido se carga completamente mediante scripts.
+
+```bash
+pip install scrapy-playwright
+playwright install
+```
+
+#### FAISS
+
+Permite realizar búsquedas eficientes de similitud entre vectores de alta dimensión, útil para tareas como recuperación semántica y clustering con grandes volúmenes de datos.
+
+```bash
+pip install faiss-cpu
+```
+
+#### NUMPY
+
+Proporciona estructuras de datos eficientes como arrays multidimensionales y funciones matemáticas de alto rendimiento para trabajar con ellos.
+
+```bash
+pip install numpy
+```
+
+#### SENTENCE-TRANSFORMERS
+
+Permite generar representaciones semánticas (embeddings) de textos usando modelos preentrenados basados en transformers. Es especialmente útil para tareas como búsqueda semántica, detección de similitud
+
+```bash
+pip install sentence-transformers
+```
+
+#### OPENAI
+
+Biblioteca oficial de OpenAI para Python, que te permite interactuar con sus modelos de lenguaje (como GPT-4) mediante su API.
+
+```bash
+pip install openai
+```
+
 ## Creacion de un entorno virtual
-un entorno virtual es una herramienta que ayuda a mantener las dependencias requeridas por diferentes proyectos en espacios separados. Si no se crea un entorno virtual, todas las dependencias se instalarán en el sistema globalmente.
+Un entorno virtual es una herramienta que ayuda a mantener las dependencias requeridas por diferentes proyectos en espacios separados. Si no se crea un entorno virtual, todas las dependencias se instalarán en el sistema globalmente, pudiendo generar conflictos entre dependencias, por lo que se recomienda encarecidamente su uso.
 - [Documentación de Python](https://docs.python.org/es/3/tutorial/venv.html)
 - Crear un entorno virtual:
   
   - ```bash
-    python -m venv venv
-    
+    # para crear un entorno de cero --> python -m venv venv
     # Para crearlo con una versión específica de Python(debe estar instalada):
     py -3.10 -m venv venv
     # comprobar versiones de python instaladas
@@ -77,7 +156,7 @@ un entorno virtual es una herramienta que ayuda a mantener las dependencias requ
 
 ```bash
 cd ./backend 
-## python -m venv venv # esto es opcional, pero se recomienda crear un entorno virtual sengun copilot
+## python -m venv venv # esto es opcional, pero se recomienda
 
 # python -m pip install --upgrade pip # (opcional) si da lgun fallo al instalar --> actualizar pip a la última versión
 pip install -r requirements.txt
@@ -109,7 +188,7 @@ Incluir el entorno virtual en el proyecto:
 
 Incluir una run configuration
 
-- Entorno de python
+- Entorno de python --> `C:/[raizDelProyecto]/backend/venv`
 - script --> `C:/[raizDelProyecto]/backend/run.py`
 - working directory: `C:/[raizDelProyecto]/backend/`
 - Interpreter: `C:/[raizDelProyecto]/backend/venv/Scripts/python.exe`
