@@ -38,15 +38,15 @@ export class HeaderComponent {
       header: '<i class="e-icons e-bookmark"></i> Gestión',
       content: '<div id="gestion_Items"></div>',
       subItems: [
-        { header: '<i class="e-icons e-bookmark"></i> Intereses' },
+        { header: '<i class="e-icons e-bookmark"></i> Conceptos' },
         { header: '<i class="e-icons e-eye"></i> Fuentes' },
         { header: '<i class="e-icons e-location"></i> Areas' },
       ],
     },
     {
-      header: '<i class="e-icons e-warning"></i> Alertas',
+      header: '<i class="e-icons e-border-shadow-1"></i> Publicaciones',
       content: '<div id="alertas_Items"></div>',
-      subItems: [{ header: '<i class="e-icons e-warning"></i> Ver alertas' }],
+      subItems: [{ header: '<i class="e-icons e-web-layout"></i> Ver publicaciones' }],
     },
     {
       header: '<i class="e-icons e-user"></i> Perfil',
@@ -86,8 +86,8 @@ export class HeaderComponent {
         this._router.navigate(['/']);
         this.sidebarObj?.hide();
         break;
-      case 'Intereses':
-        this._router.navigate(['/intereses']);
+      case 'Conceptos':
+        this._router.navigate(['/conceptos']);
         this.sidebarObj?.hide();
         break;
       case 'Fuentes':
@@ -98,8 +98,8 @@ export class HeaderComponent {
         this._router.navigate(['/areas']);
         this.sidebarObj?.hide();
         break;
-      case 'Ver alertas':
-        this._router.navigate(['/alertas']);
+      case 'Ver publicaciones':
+        this._router.navigate(['/publicaciones']);
         this.sidebarObj?.hide();
         break;
       case 'Mi perfil':

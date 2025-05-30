@@ -1,6 +1,6 @@
 import { Identificable } from "../../core/services/data-service/identificable.model";
 
-export interface Intereses extends Identificable {
+export interface Conceptos extends Identificable {
   nombre: string;
   descripcion?: string;
   keywords?: string[];
