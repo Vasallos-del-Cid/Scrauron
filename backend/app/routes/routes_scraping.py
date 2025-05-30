@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.jobs.scraping_job import ejecutar_scraping, iniciar_scheduler_en_segundo_plano, detener_scheduler
+from app.service.jobs.scraping_job import ejecutar_scraping, iniciar_scheduler_en_segundo_plano, detener_scheduler
 from app.models.fuente import Fuente
 from app.mongo.mongo_fuentes import get_fuente_by_id  
 

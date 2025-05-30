@@ -27,7 +27,7 @@ def ejecutar_scraping(fuente: Fuente):
 
     try:
         subprocess.run(
-            [sys.executable, "app/spiders/spider_executor.py", fuente_json],
+            [sys.executable, "app/service/spiders/spider_executor.py", fuente_json],
             env=os.environ.copy(),
             check=True,
             timeout=1200  # Si tarda más de 20 minutos, se aborta

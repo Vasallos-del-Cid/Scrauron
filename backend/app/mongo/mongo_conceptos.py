@@ -10,7 +10,7 @@ from bson import ObjectId
 
 from .mongo_utils import get_collection
 from ..models.concepto_interes import ConceptoInteres
-from ..llm.llm_utils import generar_descripcion_concepto, generar_keywords_descriptivos
+from ..service.llm.llm_utils import generar_descripcion_concepto, generar_keywords_descriptivos
 
 
 # --------------------------------------------------------------------

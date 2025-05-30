@@ -3,7 +3,7 @@ import os
 import logging
 
 from app.config import cors_config, logqing_config, imprimir_mensaje_inicio
-from app.jobs.scraping_job import iniciar_scheduler_en_segundo_plano
+from app.service.jobs.scraping_job import iniciar_scheduler_en_segundo_plano
 from app.mongo.mongo_utils import init_mongo
 from app.routes.routes_fuentes import api_fuentes
 from app.routes.routes_scraping import api_scraping
