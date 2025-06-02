@@ -5,12 +5,12 @@ import json
 from scrapy.crawler import CrawlerProcess
 
 # Añadir la ruta del proyecto al sys.path para importar módulos del proyecto
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
 
 # Importaciones internas
 from app.config import logqing_config
-from app.spiders.spider import NoticiasSpider
-from app.spiders.spider_telegram import TelegramSpider
+from app.service.spiders.spider import NoticiasSpider
+from app.service.spiders.spider_telegram import TelegramSpider
 from app.mongo.mongo_utils import init_mongo
 from app.models.fuente import Fuente
 

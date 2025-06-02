@@ -10,10 +10,11 @@ from bson import ObjectId
 
 from app.models.publicacion import Publicacion
 from app.models.fuente import Fuente
+from app.mongo.mongo_fuentes import get_fuente_by_id
 from app.mongo.mongo_publicaciones import create_publicacion, update_publicacion
 from app.mongo.mongo_utils import get_collection
-from app.similarity_search.similarity_search import buscar_y_enlazar_a_conceptos, obtener_keywords_relacionadas
-from app.llm.llm_utils import analizar_publicacion
+from app.service.similarity_search.similarity_search import buscar_y_enlazar_a_conceptos, obtener_keywords_relacionadas
+from app.service.llm.llm_utils import analizar_publicacion
 from pymongo.errors import DuplicateKeyError, WriteError, ConnectionFailure
 
 class NoticiasSpider(scrapy.Spider):
@@ -79,7 +80,7 @@ class NoticiasSpider(scrapy.Spider):
                     )
 
     def extraer_contenido_noticia_nueva(self, response):
-        delay = random.uniform(1, 5)
+        delay = random.uniform(1, 3)
         time.sleep(delay)
 
         logging.info(f"📰 Procesando noticia...")
@@ -104,13 +105,15 @@ class NoticiasSpider(scrapy.Spider):
             fuente_id=fuente_id
         )
 
+        fuente = get_fuente_by_id(fuente_id)
+
         try:
             logging.info(f"💾 Intentando guardar: {titulo[:60]}...")
             insert_result = create_publicacion(publicacion)
             publicacion._id = str(insert_result.inserted_id)
 
             self.total_guardados += 1
-            logging.info(f"✅ Artículo guardado: {titulo} | Fuente ID: {fuente_id}")
+            logging.info(f"✅ Artículo guardado: {titulo} | Fuente: {fuente.nombre}")
 
             # Enlazar conceptos
             conceptos_enlazados = buscar_y_enlazar_a_conceptos(publicacion)

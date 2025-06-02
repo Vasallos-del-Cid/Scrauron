@@ -7,7 +7,7 @@ import logging
 
 from bson import ObjectId
 from .mongo_utils import get_collection
-from app.llm.llm_utils import estimar_tono_publicacion
+from app.service.llm.llm_utils import estimar_tono_publicacion
 
 # --------------------------------------------------
 # Devuelve el objeto de colección Mongo para acceso directo (útil para spiders, por ejemplo)
