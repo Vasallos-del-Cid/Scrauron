@@ -1,0 +1,11 @@
+.main-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+  margin-top: 50px;  /* Espacio para el header fijo */
+  margin-bottom: var(--footer-height); /* Espacio para el footer fijo */
+  padding: 16px;
+  box-sizing: border-box;
+  height: calc(100vh - 84px); /* 100vh - altura header - altura footer */
+}

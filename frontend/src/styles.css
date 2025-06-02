@@ -15,3 +15,69 @@
 @import '../node_modules/@syncfusion/ej2-inputs/styles/material.css';
 @import '../node_modules/@syncfusion/ej2-angular-lists/styles/material.css';
 @import "../node_modules/@syncfusion/ej2-icons/styles/material.css";
+
+/* Variables de colores globales */
+:root {
+  /* Colores principales */
+  --primary-color: #23333c; /* Azul estilo material */
+  --primary-hover: #475157;
+  --secondary-color: #324854;
+  
+  /* Colores de fondo */
+  --background-white: #fbefd5;
+  --background-light: #cfcdbf;
+  --background-success: #e5ffe5;
+  --background-danger: #fadddd;
+  
+  /* Colores de texto */
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #444444;
+  --text-white: #ffffff;
+  --text-gold: #dbb96b; /* Dorado */
+  
+  /* Colores de borde */
+  --border-color: #cccccc;
+  --border-light: #e0e0e0;
+  
+  /* Sombras */
+  --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 2px 2px 6px rgba(0, 0, 0, 0.1);
+  --shadow-dark: 0 -2px 5px rgba(0, 0, 0, 0.2);
+  
+  /* Medidas */
+  --header-height: 50px;
+  --footer-height: 34px;
+  --border-radius: 4px;
+  --border-radius-large: 8px;
+}
+
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sobre escribiendo colores de material de sync*/
+/* las bolas de paginación */
+.e-pager .e-currentitem {
+  background: #325f22 !important;
+  color: var(--text-gold) !important;
+}
+
+.e-switch-wrapper .e-switch-on {
+  background-color: #547b46 !important;
+}
+
+.e-switch-wrapper .e-switch-handle.e-switch-active{
+  background-color: #325f22 !important;
+}

@@ -1,45 +1,60 @@
-
 .e-section-control {
-	/* margin-top: 150px; */
+    /* margin-top: 150px; */
 }
+
 body {
     margin: 0;
 }
 
 .header {
     width: 100%;
-    background-color: #3953f6;
+    background-color: var(--primary-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: var(--header-height);
+    box-shadow: var(--shadow-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+    box-sizing: border-box;
 }
 
 #default-sidebar,
 .header .content {
-    background-color: #3953f6;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--text-white);
     border: none;
 }
 
 .header .content {
-    font-size: 20px;
-    line-height: 50px;
+    font-size: 30px;
     text-align: center;
+    color: var(--text-gold);
+    flex: 1;
+    margin: 0 50px; /* Espacio para hamburger y logo */
 }
 
-
+.logo-header {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 4px;
+}
 
 #default-sidebar .close-btn:hover {
     color: rgba(0, 0, 0, .87);
-    background-color: #fafafa;
+    background-color: var(--background-light);
 }
 
 #hamburger.menu {
     font-size: 25px;
     cursor: pointer;
-    float: left;
-    line-height: 50px;
-    position: absolute;
-    z-index: 1000;
-    left: 25px;
-    color: white;
+    color: var(--text-gold);
+    position: relative; /* Cambiar de absolute a relative */
 }
 
 #hamburger.menu:before {
@@ -54,6 +69,7 @@ body {
     text-align: center;
     font-size: 18px;
     padding: 15px 15px 35px;
+    color: var(--text-gold)
 }
 
 .e-sidebar .title-header #close {

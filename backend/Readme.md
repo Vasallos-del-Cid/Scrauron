@@ -112,18 +112,18 @@ Un entorno virtual es una herramienta que ayuda a mantener las dependencias requ
   - ```bash
     # para crear un entorno de cero --> python -m venv venv
     # Para crearlo con una versión específica de Python(debe estar instalada):
-    py -3.10 -m venv venv
+    py -3.10 -m venv .venv
     # comprobar versiones de python instaladas
     py -0
     ```
 - Activar el entorno virtual __SE DEBE HACER SIEMPRE ANTES DE INCIAR LA APLICACION__:
   - En Windows:
     ```bash
-    venv\Scripts\activate
+    .venv\Scripts\activate
     ```
   - En Linux o macOS:
     ```bash
-    source venv/bin/activate
+    source .venv/bin/activate
     ```
   - En la consola de Linux o macOS, el prompt cambiará para indicar que el entorno virtual está activo. Por ejemplo, puede verse algo como esto:
     ```bash
