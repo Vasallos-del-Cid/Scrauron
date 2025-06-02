@@ -1,14 +1,16 @@
 .barra-filtros {
   position: sticky;
   top: 0;
-  background-color: #ffffff;
+  background-color: var(--text-white);
   padding: 10px;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 20px;
+  justify-content: center; /* Centra los filtros horizontalmente */
+  align-items: center;
   z-index: 10;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);}
+  box-shadow: var(--shadow-light);
+}
 
 .filtro-item {
   display: flex;
@@ -18,7 +20,7 @@ box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);}
 }
 
 .boton-reset {
-  background-color: #3953f6;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border: none;
@@ -26,12 +28,24 @@ box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);}
   cursor: pointer;
 }
 
+.header-text {
+  background-color: var(--secondary-color);
+  color: var(--text-gold);
+  padding: 12px 16px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 8px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
 .contenedor-cards {
   display: flex;
   flex-direction: column;
   gap: 15px;
   overflow-y: auto;
-  height: calc(100vh - 180px);
+  height: calc(100vh - 260px);
   padding: 10px;
 }
 
@@ -41,8 +55,8 @@ box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);}
   margin: 0 auto;
   padding: 15px;
   border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+  background: var(--text-white);
+  box-shadow: var(--shadow-light);
 }
 
 .alerta-card.verde {
@@ -130,13 +144,12 @@ box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);}
   font-size: 0.7rem;
 }
 
-.fuente a, .fuente select {
+.fuente a,
+.fuente select {
   font-size: 0.8rem;
-  color: #3953f6;
+  color: var(--primary-color);
   text-decoration: underline;
 }
-
-
 
 /* Para colapsar el contenido */
 /* Resumen: cuando está colapsado, solo una línea con puntos suspensivos */
@@ -163,7 +176,7 @@ box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);}
 .toggle-btn {
   background: transparent;
   border: none;
-  color: #3953f6;
+  color: var(--primary-color);
   font-size: 0.8rem;
   cursor: pointer;
   margin-top: 4px;

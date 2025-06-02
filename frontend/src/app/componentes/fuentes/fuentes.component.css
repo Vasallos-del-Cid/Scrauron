@@ -28,12 +28,12 @@ html, body {
 /* para el titulo */
 
 .crud-header {
-  background-color: #6270d0; /* Azul material */
-  color: white;
+  background-color: var(--secondary-color); /* Azul material */
+  color: var(--text-gold);
   padding: 12px 16px;
   font-size: 1.1rem;
   font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: var(--primary-color);
   margin-bottom: 8px;
 }
 

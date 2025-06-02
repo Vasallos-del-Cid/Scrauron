@@ -39,7 +39,7 @@ import {
 } from '@syncfusion/ej2-angular-navigations';
 
 import { HeaderComponent } from './core/estructura/header/header.component';
-import { BodyComponent } from './core/estructura/body/body.component';
+import { MainComponent } from './core/estructura/main/main.component';
 import { FooterComponent } from './core/estructura/footer/footer.component';
 import { RouterModule } from '@angular/router';
 
@@ -76,8 +76,9 @@ import { RouterModule } from '@angular/router';
     MenuModule,
     AppBarModule,
     StepperModule,
+    // estructura core del proyecto
     HeaderComponent,
-    BodyComponent,
+    MainComponent,
     FooterComponent,
     //RouterOutlet,
     RouterModule,
@@ -87,5 +88,5 @@ import { RouterModule } from '@angular/router';
   styleUrl: './app.component.css',
 })
 export class AppComponent {
-  title = 'Rodrigo';
+  title = 'Scrauron';
 }

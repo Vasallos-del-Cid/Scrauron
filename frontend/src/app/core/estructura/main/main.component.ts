@@ -3,11 +3,11 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
-  selector: 'app-body',
+  selector: 'app-main',
   imports: [ RouterOutlet],
-  templateUrl: './body.component.html',
-  styleUrl: './body.component.css',
+  templateUrl: './main.component.html',
+  styleUrl: './main.component.css',
 })
-export class BodyComponent {
+export class MainComponent {
  
 }
