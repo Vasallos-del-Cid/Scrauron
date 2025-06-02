@@ -80,7 +80,7 @@ class NoticiasSpider(scrapy.Spider):
                     )
 
     def extraer_contenido_noticia_nueva(self, response):
-        delay = random.uniform(1, 3)
+        delay = random.uniform(0.5, 2)
         time.sleep(delay)
 
         logging.info(f"📰 Procesando noticia...")

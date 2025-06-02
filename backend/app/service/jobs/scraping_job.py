@@ -22,9 +22,7 @@ def ejecutar_scraping(fuente: Fuente):
     Ejecuta el proceso de scraping para una instancia de Fuente.
     """
     logging.info(f" 🕷️ Ejecutando scraping para: {fuente.nombre} ({fuente.url})")
-    
     fuente_json = json.dumps(fuente.to_dict())
-
     try:
         subprocess.run(
             [sys.executable, "app/service/spiders/spider_executor.py", fuente_json],
@@ -45,13 +43,12 @@ def ejecutar_scraping(fuente: Fuente):
 # =========================
 def scraping_todas_las_fuentes():
     fuentes = list(get_collection("fuentes").find())
-    for fuente in fuentes:
+    for fuente_dict in fuentes:
         if detener_flag.is_set():
             logging.info("🛑 Detención solicitada. Cancelando scraping de fuentes.")
             break
-        url = fuente.get("url")
-        if url:
-            ejecutar_scraping(url)
+        fuente = Fuente.from_dict(fuente_dict)
+        ejecutar_scraping(fuente)
 
 # =========================
 # Bucle principal del scheduler: ejecuta el scraping cada X minutos con variación aleatoria
@@ -59,23 +56,19 @@ def scraping_todas_las_fuentes():
 def scheduler_loop():
     while not detener_flag.is_set():
         logging.info("🔁 Lanzando scraping de todas las fuentes...")
-
         scraping_todas_las_fuentes()
-
-        factor = random.uniform(0.8, 1.2)
-        espera_min = SCRAPING_FREQ_MIN * factor
+        # factor = random.uniform(0.8, 1.2)
+        # espera_min = SCRAPING_FREQ_MIN * factor
+        # espera_seg = espera_min * 40
+        espera_min = float(SCRAPING_FREQ_MIN)
         espera_seg = espera_min * 60
-
         hora_siguiente = datetime.now() + timedelta(seconds=espera_seg)
-
         logging.info(f"🕒 Esperando {espera_min:.2f} minutos para la siguiente ejecución...")
         logging.info(f"🕒 Próxima ejecución a las {hora_siguiente.strftime('%H:%M:%S')}")
-
         # Espera con interrupción controlada
         if detener_flag.wait(timeout=espera_seg):
             logging.info("🛑 Scheduler detenido durante la espera.")
             break
-
     logging.info("🎯 Scheduler finalizado.")
 
 # =========================
