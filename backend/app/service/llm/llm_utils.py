@@ -225,12 +225,18 @@ def analizar_publicacion(publicacion, max_tokens=600):
     titulo_limpio = re.sub(r'https?://\S+|www\.\S+', '', publicacion.titulo).strip()
 
     prompt = (
-        f"Título: \"{titulo_limpio}\"\n\n"
-        f"Contenido:\n{publicacion.contenido}\n\n"
-        "Primero, resume el artículo en un máximo de 5 líneas, reformulando con sinónimos para evitar copiar frases literales.\n"
-        "Después, valora el tono emocional implícito en el título del 1 (muy negativo) al 9 (muy positivo). Y 5 neutro.\n\n"
-        "Devuelve el resultado únicamente en formato JSON con las claves: { 'resumen': ..., 'tono': ... } . Dame únicamente las llaves y su contenido, no lo envuelvas con ```json y usa en el json comillas dobles"
-    )
+    f"Título: \"{titulo_limpio}\"\n\n"
+    f"Contenido:\n{publicacion.contenido}\n\n"
+    "Primero, resume el artículo en un máximo de 5 líneas, reformulando con sinónimos para evitar copiar frases literales.\n"
+    "Después, valora el tono emocional implícito en el título del 1 (muy negativo) al 9 (muy positivo). Y 5 neutro.\n\n"
+    "Devuelve el resultado únicamente en formato JSON como este:\n"
+    "{\n"
+    "  \"resumen\": \"...\",\n"
+    "  \"tono\": 5\n"
+    "}\n"
+    "Solo devuélveme el JSON. No lo envuelvas con ```json ni ningún otro texto."
+)
+
 
     messages = [
         {"role": "system", "content": "Eres un asistente experto en análisis de prensa, resumen profesional y valoración emocional del lenguaje."},

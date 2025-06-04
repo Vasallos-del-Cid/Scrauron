@@ -1,13 +1,17 @@
 from flask import Blueprint, request, jsonify
-from ..mongo.mongo_fuentes import get_fuentes, create_fuente, delete_fuente, update_fuente, get_fuente_by_id
+from ..mongo.mongo_fuentes import (
+    get_fuentes,
+    create_fuente,
+    delete_fuente,
+    update_fuente,
+    get_fuente_by_id
+)
 from ..models.fuente import Fuente
-from bson import ObjectId
 
 api_fuentes = Blueprint('api_fuentes', __name__)
 
-#Endpoints fuentes
-
-#GET Fuentes
+# --------------------------------------------------
+# GET: Obtener todas las fuentes
 @api_fuentes.route('/fuentes', methods=['GET'])
 def get_fuentes_endpoint():
     try:
@@ -16,7 +20,8 @@ def get_fuentes_endpoint():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-#GET Fuente
+# --------------------------------------------------
+# GET: Obtener una fuente por su ID
 @api_fuentes.route('/fuentes/<fuente_id>', methods=['GET'])
 def get_fuente_endpoint(fuente_id):
     try:
@@ -29,11 +34,12 @@ def get_fuente_endpoint(fuente_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# POST nueva fuente
+# --------------------------------------------------
+# POST: Crear una nueva fuente
 @api_fuentes.route('/fuentes', methods=['POST'])
 def create_fuente_endpoint():
-    data = request.get_json()
     try:
+        data = request.get_json()
         fuente = Fuente.from_dict(data)
         response, status_code = create_fuente(fuente)
 
@@ -47,7 +53,8 @@ def create_fuente_endpoint():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-#borrar fuente
+# --------------------------------------------------
+# DELETE: Eliminar una fuente por ID
 @api_fuentes.route('/fuentes/<fuente_id>', methods=['DELETE'])
 def delete_fuente_endpoint(fuente_id):
     try:
@@ -60,11 +67,12 @@ def delete_fuente_endpoint(fuente_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-#Actualizar fuente
+# --------------------------------------------------
+# PATCH: Actualizar campos parciales de una fuente
 @api_fuentes.route('/fuentes/<fuente_id>', methods=['PATCH'])
 def patch_fuente_endpoint(fuente_id):
-    data = request.get_json()
     try:
+        data = request.get_json()
         updated_fuente = update_fuente(fuente_id, data)
 
         if not updated_fuente:

@@ -36,6 +36,7 @@ class NoticiasSpider(scrapy.Spider):
 
         self.total_guardados = 0
         self.total_ignorados = 0
+        self.total_relacionados = 0
 
     def start_requests(self):
         for url in self.start_urls:
@@ -47,37 +48,37 @@ class NoticiasSpider(scrapy.Spider):
             "Gente", "Deportes", "20bits", "Ed. Impresa"
         }
 
-        for xpath in ["//h2/a", "//a[h2]", "//h1/a", "//a[h1]"]:
-            for noticia in response.xpath(xpath):
-                texto = noticia.xpath(".//text()").getall()
-                enlace = noticia.xpath("@href").get()
+      
+        for noticia in response.xpath(self.fuente.etiqueta_titulo):
+            texto = noticia.xpath(".//text()").getall()
+            enlace = noticia.xpath("@href").get()
 
-                if texto and enlace:
-                    texto_limpio = " ".join(t.strip() for t in texto if t.strip())
+            if texto and enlace:
+                texto_limpio = " ".join(t.strip() for t in texto if t.strip())
 
-                    if len(texto_limpio.split()) == 1 and texto_limpio.strip() in titulos_baneados:
-                        logging.info(f"⛔ Título ignorado: '{texto_limpio}'")
-                        continue
+                if len(texto_limpio.split()) == 1 and texto_limpio.strip() in titulos_baneados:
+                    logging.info(f"⛔ Título ignorado: '{texto_limpio}'")
+                    continue
 
-                    if "h1" in xpath and len(texto_limpio.split()) <= 3:
-                        continue
+                if "h1" in self.fuente.etiqueta_titulo and len(texto_limpio.split()) <= 3:
+                    continue
 
-                    url_completa = response.urljoin(enlace)
+                url_completa = response.urljoin(enlace)
 
-                    if get_collection("publicaciones").find_one({"url": url_completa}):
-                        logging.warning(f"⚠️ Ya existe en Mongo: {url_completa}")
-                        self.total_ignorados += 1
-                        continue
+                if get_collection("publicaciones").find_one({"url": url_completa}):
+                    logging.warning(f"⚠️ Ya existe en Mongo: {url_completa}")
+                    self.total_ignorados += 1
+                    continue
 
-                    yield scrapy.Request(
-                        url_completa,
-                        callback=self.extraer_contenido_noticia_nueva,
-                        meta={
-                            'titulo': texto_limpio,
-                            'url': url_completa,
-                            'fuente_id': self.fuente._id
-                        }
-                    )
+                yield scrapy.Request(
+                    url_completa,
+                    callback=self.extraer_contenido_noticia_nueva,
+                    meta={
+                        'titulo': texto_limpio,
+                        'url': url_completa,
+                        'fuente_id': self.fuente._id
+                    }
+                )
 
     def extraer_contenido_noticia_nueva(self, response):
         delay = random.uniform(0.5, 2)
@@ -90,7 +91,7 @@ class NoticiasSpider(scrapy.Spider):
         fuente_id = ObjectId(response.meta['fuente_id'])
 
         contenido = []
-        for p in response.xpath("//p"):
+        for p in response.xpath(self.fuente.etiqueta_contenido):
             texto = " ".join(p.xpath(".//text()").getall()).strip()
             if len(texto.split()) > 20:
                 contenido.append(texto)
@@ -133,6 +134,7 @@ class NoticiasSpider(scrapy.Spider):
             # Analizar el contenido si hay conceptos relacionados
             if conceptos_enlazados:
                 publicacion = analizar_publicacion(publicacion)
+                self.total_relacionados += 1
             else:
                 publicacion.contenido = ""
 
@@ -158,5 +160,6 @@ class NoticiasSpider(scrapy.Spider):
 
     def closed(self, reason):
         logging.info(f" 📦 Total guardados: {self.total_guardados}")
+        logging.info(f" 🧠 Total relacionados: {self.total_relacionados}")
         logging.info(f" 🚫 Total ignorados (ya existentes): {self.total_ignorados}")
         print("---------------------------------------------------------------------------------")
