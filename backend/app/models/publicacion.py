@@ -12,8 +12,8 @@ class Publicacion:
         fuente_id: ObjectId,
         tono: Optional[int] = None,
         keywords_relacionadas_ids: Optional[List[ObjectId]] = None,
-        ciudad_region = str,
-        pais = str,
+        ciudad_region: Optional[str] = None,
+        pais: Optional[str] = None,
         _id: Optional[str] = None
     ):
         self._id = _id
