@@ -35,6 +35,15 @@ export class HeaderComponent {
       subItems: [{ header: '<i class="e-icons e-home"></i> Home' }],
     },
     {
+      header: '<i class="e-icons e-bookmark"></i> Estadísticas',
+      content: '<div id="gestion_Items"></div>',
+      subItems: [
+        { header: '<i class="e-icons e-bookmark"></i> Evolucion Conceptos' },
+        { header: '<i class="e-icons e-eye"></i> Fuentes' },
+        { header: '<i class="e-icons e-location"></i> Areas' },
+      ],
+    },
+    {
       header: '<i class="e-icons e-bookmark"></i> Gestión',
       content: '<div id="gestion_Items"></div>',
       subItems: [
@@ -86,6 +95,11 @@ export class HeaderComponent {
         this._router.navigate(['/']);
         this.sidebarObj?.hide();
         break;
+      case 'Evolucion Conceptos':
+        this._router.navigate(['/multilinea']);
+        this.sidebarObj?.hide();
+        break;
+      
       case 'Conceptos':
         this._router.navigate(['/conceptos']);
         this.sidebarObj?.hide();

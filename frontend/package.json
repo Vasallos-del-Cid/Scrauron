@@ -30,6 +30,7 @@
     "@syncfusion/ej2-angular-splitbuttons": "^29.1.33",
     "@syncfusion/ej2-icons": "^29.1.33",
     "@syncfusion/ej2-material-theme": "~29.1.38",
+    "d3": "^7.9.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -38,6 +39,7 @@
     "@angular-devkit/build-angular": "^19.2.8",
     "@angular/cli": "^19.2.8",
     "@angular/compiler-cli": "^19.2.0",
+    "@types/d3": "^7.4.3",
     "@types/jasmine": "~5.1.0",
     "dotenv": "^16.5.0",
     "jasmine-core": "~5.6.0",

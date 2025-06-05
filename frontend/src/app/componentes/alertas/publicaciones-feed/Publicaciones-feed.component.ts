@@ -39,7 +39,7 @@ export class PublicacionesFeedComponent implements OnInit {
 
   ngOnInit(): void {
     // 1) Lanza la petición
-    this.servicio.getAll({ silent: true });
+    this.servicio.getAll();
 
     // 2) Suscríbete al BehaviorSubject y transforma fecha a Date
     this.servicio.items$.subscribe((list) => {
