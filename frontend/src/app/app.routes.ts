@@ -7,11 +7,15 @@ import { NotFoundComponent } from './core/not-found/not-found.component';
 import { PublicacionesFeedComponent } from './componentes/alertas/publicaciones-feed/Publicaciones-feed.component';
 import { HomeComponent } from './core/estructura/home/home.component';
 import { MultiLineaComponent } from './componentes/estadisticas/multi-linea/multi-linea.component';
+import { BarChartComponent } from './componentes/estadisticas/bar-chart/bar-chart.component';
+import { PlotChartComponent } from './componentes/estadisticas/plot-chart/plot-chart.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   { path: 'home', component: HomeComponent }, // Home
-  { path: 'multilinea', component: MultiLineaComponent }, // Ejemplo de ruta con componente
+  { path: 'multilinea', component: MultiLineaComponent },
+  { path: 'barchart', component: BarChartComponent },
+  { path: 'plotchart', component: PlotChartComponent }, // Asegúrate de que PlotChartComponent esté importado
   { path: 'conceptos', component: ConceptosComponent },
   { path: 'fuentes', component: FuentesComponent },
   { path: 'publicaciones', component: PublicacionesFeedComponent },
