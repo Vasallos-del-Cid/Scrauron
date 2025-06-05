@@ -227,11 +227,14 @@ def analizar_publicacion(publicacion, max_tokens=600):
     prompt = (
     f"Título: \"{titulo_limpio}\"\n\n"
     f"Contenido:\n{publicacion.contenido}\n\n"
-    "Primero, resume el artículo en un máximo de 5 líneas, reformulando con sinónimos para evitar copiar frases literales.\n"
-    "Después, valora el tono emocional implícito en el título del 1 (muy negativo) al 9 (muy positivo). Y 5 neutro.\n\n"
+    "Primero, resume el artículo en un mínimo de 7 lineas y un máximo de 10 líneas, reformulando con sinónimos para evitar copiar frases literales.\n"
+    "Después, valora el tono emocional implícito en el título del 1 (muy negativo) al 9 (muy positivo). Y 5 neutro.\n"
+    "A continuación, determina donde se producen los hechos de la publicación o si habla en relación a un lugar específico. Debes deteminar la ciudad o region en el campo ciudad_region y el pais en el campo pais. Si puedes deducir el pais pero no la ciudad_region, utiliza la capital del pais. Si no se puede deducir ninguno pon la palabra indeterminado en los dos campos.\n\n"
     "Devuelve el resultado únicamente en formato JSON como este:\n"
     "{\n"
     "  \"resumen\": \"...\",\n"
+    "  \"ciudad_region\": \"...\",\n"
+    "  \"pais\": \"...\",\n"
     "  \"tono\": 5\n"
     "}\n"
     "Solo devuélveme el JSON. No lo envuelvas con ```json ni ningún otro texto."
@@ -248,9 +251,13 @@ def analizar_publicacion(publicacion, max_tokens=600):
     try:
         resultado = json.loads(respuesta)
         publicacion.contenido = resultado['resumen']
-        publicacion.tono = int(resultado['tono'])  # Agregamos el atributo "tono"
+        publicacion.tono = int(resultado['tono']) 
+        publicacion.ciudad_region = str(resultado['ciudad_region'])
+        publicacion.pais = str(resultado['pais']) 
         logging.info(f"🎯 Tono estimado: {publicacion.tono}")
         logging.info(f"✅ Resumen creado: {publicacion.contenido}")
+        logging.info(f"🎯 Ciudad o región detectada: {publicacion.ciudad_region}")
+        logging.info(f"🎯 Pais: {publicacion.pais}")
         return publicacion
     except (json.JSONDecodeError, KeyError, ValueError):
         raise ValueError(f"Respuesta inesperada del modelo, se esperaba JSON con claves 'resumen' y 'tono': {respuesta}")
