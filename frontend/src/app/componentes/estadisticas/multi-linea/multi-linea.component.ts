@@ -5,18 +5,21 @@ import { PlotChartsService } from '../../../core/services/graficas/plot-charts.s
 import { PublicacionesService } from '../../alertas/publicaciones-feed/publicaciones-feed.service';
 import { FuenteService } from '../../fuentes/fuentes.service';
 import { MultiLineaChartService } from './multi-linea-chart.service';
+import { CommonModule } from '@angular/common';
+import { SpinnerComponent } from '../../../core/plantillas/spinner/spinner.component';
 
 @Component({
   selector: 'app-multi-linea',
-  imports: [],
+  imports: [SpinnerComponent,CommonModule],
   templateUrl: './multi-linea.component.html',
   styleUrl: './multi-linea.component.css',
 })
 export class MultiLineaComponent implements OnInit {
-  private fuentes: any[] = [];
-  private noticias: any[] = [];
+  
   private datos: { fecha: Date; fuente: string; total: number }[] = [];
-  private isViewInitialized = false;
+  
+  // <--- datos para la gráfica
+  loading = true;  // <--- flag de carga
 
   constructor(
     private publicacionesService: PublicacionesService,
@@ -29,6 +32,7 @@ export class MultiLineaComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loading = true; 
     combineLatest([
       this.fuentesService.items$,
       this.publicacionesService.items$,
@@ -43,6 +47,8 @@ export class MultiLineaComponent implements OnInit {
   }
 
   private dibujarGrafica() {
+    // uso setTimeout para esperar al next tick de Angular / DOM
+    setTimeout(() => {
     this.plotChartsService.createMultiLineChart({
       selector: '#multiChart',
       data: this.datos,
@@ -56,5 +62,7 @@ export class MultiLineaComponent implements OnInit {
       yAxisLabel: 'Noticias',
       legend: true,
     });
+      this.loading = false;                         // oculto la máscara
+    }, 1000);
   }
 }
