@@ -12,6 +12,8 @@ class Publicacion:
         fuente_id: ObjectId,
         tono: Optional[int] = None,
         keywords_relacionadas_ids: Optional[List[ObjectId]] = None,
+        ciudad_region: Optional[str] = None,
+        pais: Optional[str] = None,
         _id: Optional[str] = None
     ):
         self._id = _id
@@ -22,6 +24,8 @@ class Publicacion:
         self.fuente_id = fuente_id
         self.tono = tono
         self.keywords_relacionadas_ids = keywords_relacionadas_ids or []
+        self.ciudad_region = ciudad_region
+        self.pais = pais
 
     def to_dict(self):
         data = {
@@ -31,7 +35,9 @@ class Publicacion:
             "contenido": self.contenido,
             "fuente_id": str(self.fuente_id) if self.fuente_id else None,
             "tono": self.tono,
-            "keywords_relacionadas_ids": [str(kid) for kid in self.keywords_relacionadas_ids]
+            "keywords_relacionadas_ids": [str(kid) for kid in self.keywords_relacionadas_ids],
+            "ciudad_region": self.ciudad_region,
+            "pais": self.pais
         }
         if self._id:
             data["_id"] = str(self._id)
@@ -61,11 +67,13 @@ class Publicacion:
             fuente_id=fuente_oid,
             tono=data.get("tono"),
             keywords_relacionadas_ids=keywords_ids,
+            ciudad_region=data["ciudad_region"],
+            pais=data["pais"],
             _id=str(data.get("_id")) if data.get("_id") else None
         )
 
     def __repr__(self):
         return (
             f"Publicacion(_id='{self._id}', titulo='{self.titulo[:30]}', "
-            f"url='{self.url}', fuente_id='{self.fuente_id}')"
+            f"url='{self.url}', fuente_id='{self.fuente_id}', ciudad_region='{self.ciudad_region}', pais='{self.pais}')"
         )

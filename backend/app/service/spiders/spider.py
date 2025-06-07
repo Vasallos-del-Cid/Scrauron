@@ -143,6 +143,8 @@ class NoticiasSpider(scrapy.Spider):
                 data={
                     "contenido": publicacion.contenido,
                     "tono": publicacion.tono,
+                    "ciudad_region": str(publicacion.ciudad_region) if publicacion.ciudad_region else None,
+                    "pais": str(publicacion.pais) if publicacion.pais else None,
                     "keywords_relacionadas_ids": publicacion.keywords_relacionadas_ids
                 },
             )
