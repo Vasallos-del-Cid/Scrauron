@@ -95,7 +95,7 @@ def validar_url_fuente(fuente: dict, fuente_id: str = None):
                 if str(fuente_misma_url["_id"]) == str(id):
                     return None  # Es la misma fuente
                 else:
-                    return "Ya existe una fuente con esa URL"
+                    return {"error": "Ya existe una fuente con esa URL"}
             else:
-                return "Ya existe una fuente con esa URL"
+                return {"error": "Ya existe una fuente con esa URL"}
     return None

@@ -56,12 +56,12 @@ class Fuente:
                 tipo=data.get("tipo", "rss"),
                 activa=data.get("activa", True),
                 fecha_alta=data.get("fecha_alta", datetime.now().isoformat()),
-                etiqueta_titulo=data["etiqueta_titulo"],
-                etiqueta_contenido=data["etiqueta_contenido"],
+                etiqueta_titulo=data.get("etiqueta_titulo", ""),
+                etiqueta_contenido=data.get("etiqueta_contenido", ""),
                 _id=str(data.get("_id")) if data.get("_id") else None
             )
         except Exception as e:
-            logging.error("❌ Error al crear la fuente desde el diccionario")
+            logging.error("❌ Error al crear la fuente desde el diccionario", e)
             raise e
 
     def __repr__(self):

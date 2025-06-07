@@ -60,15 +60,15 @@ class Publicacion:
         keywords_ids = [ObjectId(k) for k in keywords_ids_raw]
 
         return cls(
-            titulo=data["titulo"],
-            url=data["url"],
+            titulo=data.get("titulo"),
+            url=data.get("url"),
             fecha=fecha_obj,
-            contenido=data["contenido"],
+            contenido=data.get("contenido"),
             fuente_id=fuente_oid,
             tono=data.get("tono"),
             keywords_relacionadas_ids=keywords_ids,
-            ciudad_region=data["ciudad_region"],
-            pais=data["pais"],
+            ciudad_region=data.get("ciudad_region"),
+            pais=data.get("pais"),
             _id=str(data.get("_id")) if data.get("_id") else None
         )
 
