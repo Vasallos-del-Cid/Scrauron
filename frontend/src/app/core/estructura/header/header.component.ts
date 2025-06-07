@@ -39,8 +39,8 @@ export class HeaderComponent {
       content: '<div id="gestion_Items"></div>',
       subItems: [
         { header: '<i class="e-icons e-bookmark"></i> Evolucion Conceptos' },
-        { header: '<i class="e-icons e-eye"></i> Fuentes' },
-        { header: '<i class="e-icons e-location"></i> Areas' },
+        { header: '<i class="e-icons e-eye"></i> Bar Chart' },
+        { header: '<i class="e-icons e-location"></i> Plot Chart' },
       ],
     },
     {
@@ -97,6 +97,14 @@ export class HeaderComponent {
         break;
       case 'Evolucion Conceptos':
         this._router.navigate(['/multilinea']);
+        this.sidebarObj?.hide();
+        break;
+      case 'Bar Chart':
+        this._router.navigate(['/barchart']);
+        this.sidebarObj?.hide();
+        break;
+      case 'Plot Chart':
+        this._router.navigate(['/plotchart']);
         this.sidebarObj?.hide();
         break;
       

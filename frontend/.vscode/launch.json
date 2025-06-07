@@ -15,7 +15,8 @@
       //"preLaunchTask": "ng-ng serve",
       "presentation": {
         "hidden": true
-      }
+      },
+      "preLaunchTask": "ng-ng serve"
     },
     {
       "name": "Frontend_Ng-Open Edge DevTools debug in VsCode",
