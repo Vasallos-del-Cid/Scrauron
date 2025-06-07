@@ -252,8 +252,8 @@ export abstract class DataService<T extends Identificable> {
               msg =
                 'Acceso denegado. No tienes permiso para realizar esta operación.';
             }
-            msg = msg + '\n' + `Codigo: ${error.status}\n` +  error.message || error.statusText || error.error.error || 'Error desconocido';
-            console.error('Error:', error);
+            msg = msg + '\n' + `Codigo: ${error.status}\n` +  error.error.error || error.message || error.statusText ||  'Error desconocido';
+            console.error('===Error===:', error);
 
             alert(`❌ ${msg}`);
           }

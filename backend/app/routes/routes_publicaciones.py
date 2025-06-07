@@ -1,4 +1,6 @@
 from flask import Blueprint, request, jsonify
+
+from ..models.modelUtils.serializerUtils import SerializeJson
 from ..models.publicacion import Publicacion
 from ..mongo.mongo_publicaciones import (
     get_publicaciones,
@@ -13,12 +15,13 @@ api_publicaciones = Blueprint('api_publicaciones', __name__)
 
 # GET todas las publicaciones
 @api_publicaciones.route('/publicaciones', methods=['GET'])
+@SerializeJson
 def get_publicaciones_endpoint():
     try:
         publicaciones = get_publicaciones()
-        return jsonify(publicaciones), 200
+        return publicaciones, 200
     except Exception as e:
-        return jsonify({"error": f"Error al obtener publicaciones: {str(e)}"}), 500
+        return {"error": f"Error al obtener publicaciones: {str(e)}"}, 500
 
 # GET una publicación por ID
 @api_publicaciones.route('/publicaciones/<pub_id>', methods=['GET'])
