@@ -4,10 +4,10 @@ import { combineLatest } from 'rxjs';
 import { PlotChartsService } from '../../../core/services/graficas/plot-charts.service';
 import { PublicacionesService } from '../../alertas/publicaciones-feed/publicaciones-feed.service';
 import { FuenteService } from '../../fuentes/fuentes.service';
-import { MultiLineaChartService } from './multi-linea-chart.service';
 import { CommonModule } from '@angular/common';
 import { SpinnerComponent } from '../../../core/plantillas/spinner/spinner.component';
 import { ConceptosService } from '../../conceptos/conceptos.service';
+import { DataTrasnformerService } from '../../../core/services/graficas/data-transformer.service';
 
 @Component({
   selector: 'app-multi-linea',
@@ -27,7 +27,7 @@ export class MultiLineaComponent implements OnInit {
     private fuentesService: FuenteService,
     private conceptosService: ConceptosService,
     private plotChartsService: PlotChartsService,
-    private multiLineaChartService: MultiLineaChartService
+    private dataTrasnformerService: DataTrasnformerService
   ) {
     this.fuentesService.getAll();
     this.publicacionesService.getAll();
@@ -41,7 +41,7 @@ export class MultiLineaComponent implements OnInit {
       this.publicacionesService.items$,
     ]).subscribe(([fuentes, noticias]) => {
       this.datosFuentes =
-        this.multiLineaChartService.transformarDatosRelacionadosTiempo(
+        this.dataTrasnformerService.transformarDatosRelacionadosTiempo(
           noticias,
           fuentes,
           'fuente_id', // campoRelacionId (directo en publicaciones)
@@ -55,7 +55,7 @@ export class MultiLineaComponent implements OnInit {
       this.conceptosService.items$,
     ]).subscribe(([publicaciones, conceptos]) => {
       this.datosConceptos =
-        this.multiLineaChartService.transformarDatosRelacionadosTiempo(
+        this.dataTrasnformerService.transformarDatosRelacionadosTiempo(
           publicaciones,
           conceptos,
           'publicaciones_relacionadas_ids', // campoRelacionId (directo en publicaciones)

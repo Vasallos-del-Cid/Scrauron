@@ -22,7 +22,11 @@ export class PlotChartsService {
       marginLeft: config.margin?.left ?? 50,
       marginBottom: config.margin?.bottom ?? 50,
       x: { label: config.xAxisLabel || config.xField },
-      y: { label: config.yAxisLabel || config.yField },
+      y: {
+        label: config.yAxisLabel || config.yField,
+        grid: true,
+        // si config.yDomain está definido lo usamos, si no auto        domain: config.yDomain ?? d3.extent(config.data, d => d[config.yField!]) as [number, number]
+      },
       style: {
         background: config.backgroundColor || 'white',
         fontSize: config.fontSize ? `${config.fontSize}px` : undefined,
@@ -116,7 +120,7 @@ export class PlotChartsService {
           'path[stroke], circle[stroke]'
         );
         targets.forEach((el: Element) => {
-          el.addEventListener('click', ev => {
+          el.addEventListener('click', (ev) => {
             ev.stopPropagation();
             const color = el.getAttribute('stroke');
             targets.forEach((e: Element) => {
