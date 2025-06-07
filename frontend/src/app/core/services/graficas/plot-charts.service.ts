@@ -56,7 +56,7 @@ export class PlotChartsService {
     this.renderChart(config.selector, chart, config.title);
   }
 
-  createMultiLineChart(config: ChartConfig): void {
+    createMultiLineChart(config: ChartConfig): void {
     const chart = Plot.plot({
       width: config.width,
       height: config.height,
@@ -65,22 +65,21 @@ export class PlotChartsService {
       x: {
         type: 'time',
         label: config.xAxisLabel || config.xField,
-        domain: d3.extent(config.data, (d) => d[config.xField!]) as [
-          Date,
-          Date
-        ],
+        domain: d3.extent(config.data, d => d[config.xField!]) as [Date, Date]
       },
       y: {
         label: config.yAxisLabel || config.yField,
-        grid: true,
+        grid: true
       },
       color: {
         legend: config.legend !== false,
+        type: 'categorical',
+        range: d3.schemeTableau10.concat(d3.schemeSet3).flat()
       },
       style: {
         background: config.backgroundColor || 'white',
         fontSize: config.fontSize ? `${config.fontSize}px` : undefined,
-        fontFamily: config.fontFamily || undefined,
+        fontFamily: config.fontFamily || undefined
       },
       marks: [
         Plot.ruleY([0]),
@@ -89,23 +88,17 @@ export class PlotChartsService {
           y: config.yField,
           stroke: config["seriesField"] || 'serie',
           strokeOpacity: 0.6,
-          title: (d: any) =>
-            `${d[config["seriesField"] || 'serie']}: ${
-              d[config.yField!]
-            } (${d3.timeFormat('%Y-%m-%d')(d[config.xField!])})`,
           strokeWidth: 2,
+          tip: true
         }),
         Plot.dot(config.data, {
           x: config.xField,
           y: config.yField,
           stroke: config["seriesField"] || 'serie',
           fill: config["seriesField"] || 'serie',
-          title: (d: any) =>
-            `${d[config["seriesField"] || 'serie']}: ${
-              d[config.yField!]
-            } (${d3.timeFormat('%Y-%m-%d')(d[config.xField!])})`,
-        }),
-      ],
+          tip: true
+        })
+      ]
     });
 
     this.renderChart(config.selector, chart, config.title);
