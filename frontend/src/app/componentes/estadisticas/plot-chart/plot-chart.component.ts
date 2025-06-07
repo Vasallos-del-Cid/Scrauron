@@ -32,6 +32,6 @@ export class PlotChartComponent implements AfterViewInit {
       { fecha: '2024-01-05', valor: 130 }
     ];
 
-    this.plotChartService.createLineChart('#lineChart', sampleData, 'fecha', 'valor');
+/*     this.plotChartService.createLineChart('#lineChart', sampleData, 'fecha', 'valor'); */
   }
 }
