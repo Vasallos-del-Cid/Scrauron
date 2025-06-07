@@ -1,6 +1,7 @@
 // === plot-chart.service.ts ===
 import { Injectable } from '@angular/core';
 import * as Plot from '@observablehq/plot';
+import * as d3 from 'd3';
 import { ChartConfig } from './chart-config.model';
 
 @Injectable({
@@ -52,6 +53,61 @@ export class PlotChartsService {
         fontFamily: config.fontFamily || undefined,
       },
     });
+    this.renderChart(config.selector, chart, config.title);
+  }
+
+  createMultiLineChart(config: ChartConfig): void {
+    const chart = Plot.plot({
+      width: config.width,
+      height: config.height,
+      marginLeft: config.margin?.left ?? 50,
+      marginBottom: config.margin?.bottom ?? 50,
+      x: {
+        type: 'time',
+        label: config.xAxisLabel || config.xField,
+        domain: d3.extent(config.data, (d) => d[config.xField!]) as [
+          Date,
+          Date
+        ],
+      },
+      y: {
+        label: config.yAxisLabel || config.yField,
+        grid: true,
+      },
+      color: {
+        legend: config.legend !== false,
+      },
+      style: {
+        background: config.backgroundColor || 'white',
+        fontSize: config.fontSize ? `${config.fontSize}px` : undefined,
+        fontFamily: config.fontFamily || undefined,
+      },
+      marks: [
+        Plot.ruleY([0]),
+        Plot.lineY(config.data, {
+          x: config.xField,
+          y: config.yField,
+          stroke: config["seriesField"] || 'serie',
+          strokeOpacity: 0.6,
+          title: (d: any) =>
+            `${d[config["seriesField"] || 'serie']}: ${
+              d[config.yField!]
+            } (${d3.timeFormat('%Y-%m-%d')(d[config.xField!])})`,
+          strokeWidth: 2,
+        }),
+        Plot.dot(config.data, {
+          x: config.xField,
+          y: config.yField,
+          stroke: config["seriesField"] || 'serie',
+          fill: config["seriesField"] || 'serie',
+          title: (d: any) =>
+            `${d[config["seriesField"] || 'serie']}: ${
+              d[config.yField!]
+            } (${d3.timeFormat('%Y-%m-%d')(d[config.xField!])})`,
+        }),
+      ],
+    });
+
     this.renderChart(config.selector, chart, config.title);
   }
 
