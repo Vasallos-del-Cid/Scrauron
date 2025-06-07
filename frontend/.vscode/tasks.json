@@ -37,6 +37,16 @@
           }
         }
       }
-    }
+    },
+    {
+      "label": "ng-ng serve",
+      "type": "shell",
+      "detail": "Arrancar el servidor de desarrollo de Angular\n\n~script\n if (Test-Path .\\frontend){cd .\\frontend\\ }; if (Test-Path .\\source){cd .\\source\\ };\nng serve",
+      "command": "if (Test-Path .\\frontend){cd .\\frontend\\}; if (Test-Path .\\source){cd .\\source\\}; ng serve",
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+    },
   ]
 }
