@@ -4,29 +4,58 @@ import { PublicacionesService } from '../../alertas/publicaciones-feed/publicaci
 import { FuenteService } from '../../fuentes/fuentes.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MultiLineaChartService {
-
   constructor() {}
 
-  transformarDatosPublicacionesPorFuente(publicaciones: any[], fuentes: any[]): { fecha: Date, fuente: string, total: number }[] {
-    const fuenteMap = new Map(fuentes.map(f => [f._id, f.nombre]));
-
-    const agregadas = d3.rollups(
-      publicaciones,
-      v => v.length,
-      d => d3.timeFormat('%Y-%m-%d')(new Date(d.fecha)),
-      d => fuenteMap.get(d.fuente_id) || d.fuente_id
+  transformarDatosRelacionadosTiempo(
+    entidadPrimera: any[],
+    entidadSegunda: any[],
+    campoRelacionId: string,
+    campoNombreEntidad: string,
+    etiquetaSerie: string
+  ): { fecha: Date; serie: string; total: number }[] {
+    const entidadMap = new Map(
+      entidadSegunda.map((e) => [e._id, e[campoNombreEntidad]])
     );
 
-    const resultado: { fecha: Date, fuente: string, total: number }[] = [];
-    agregadas.forEach(([fecha, fuentesInternas]) => {
-      fuentesInternas.forEach(([fuente, total]) => {
+    let entidadesConectadas: { fecha: string; serie: string }[] = [];
+
+    if (campoRelacionId === 'fuente_id') {
+      entidadesConectadas = entidadPrimera.map((pub) => ({
+        fecha: d3.timeFormat('%Y-%m-%d')(new Date(pub.fecha)),
+        serie: entidadMap.get(pub.fuente_id) || pub.fuente_id,
+      }));
+    } else {
+      // por ejemplo, conceptos
+      entidadSegunda.forEach((entidad) => {
+        entidad[campoRelacionId]?.forEach((pubId: string) => {
+          const pub = entidadPrimera.find((p) => p._id === pubId);
+          if (pub) {
+            entidadesConectadas.push({
+              fecha: d3.timeFormat('%Y-%m-%d')(new Date(pub.fecha)),
+              serie: entidad[campoNombreEntidad],
+            });
+          }
+        });
+      });
+    }
+
+    const agregadas = d3.rollups(
+      entidadesConectadas,
+      (v) => v.length,
+      (d) => d.fecha,
+      (d) => d.serie
+    );
+
+    const resultado: { fecha: Date; serie: string; total: number }[] = [];
+    agregadas.forEach(([fecha, seriesInternas]) => {
+      seriesInternas.forEach(([serie, total]) => {
         resultado.push({
           fecha: new Date(fecha),
-          fuente,
-          total
+          serie,
+          total,
         });
       });
     });
