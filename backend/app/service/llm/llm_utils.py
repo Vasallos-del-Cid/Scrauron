@@ -260,4 +260,4 @@ def analizar_publicacion(publicacion, max_tokens=600):
         logging.info(f"🎯 Pais: {publicacion.pais}")
         return publicacion
     except (json.JSONDecodeError, KeyError, ValueError):
-        raise ValueError(f"Respuesta inesperada del modelo, se esperaba JSON con claves 'resumen' y 'tono': {respuesta}")
+        raise ValueError(f"Respuesta inesperada del modelo, se esperaba JSON con claves 'resumen', 'tono', 'ciuda-region' y 'pais': {respuesta}")

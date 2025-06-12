@@ -7,6 +7,8 @@ from flask import jsonify
 import logging
 from datetime import datetime
 from bson import ObjectId
+import time
+from pymongo.errors import AutoReconnect, NetworkTimeout, ConnectionFailure
 
 from .mongo_utils import get_collection
 from ..models.concepto_interes import ConceptoInteres
@@ -122,23 +124,38 @@ def update_concepto(concepto: ConceptoInteres):
         raise
 
 # --------------------------------------------------------------------
-def update_concepto_dict(concepto_dict: dict):
+def update_concepto_dict(concepto_dict: dict, max_retries=3, backoff_base=2):
     concepto_id = concepto_dict.get("_id")
     if not concepto_id:
         raise ValueError("El concepto no tiene _id. No se puede actualizar.")
 
-    try:
-        result = get_collection("conceptos_interes").update_one(
-            {"_id": ObjectId(concepto_id)},
-            {"$set": concepto_dict}
-        )
-        if result.matched_count == 0:
-            logging.warning(f"⚠️ No se encontró el concepto con _id: {concepto_id}")
-        else:
-            logging.info(f"✅ Concepto actualizado desde dict: {concepto_dict.get('nombre')}")
-    except Exception as e:
-        logging.error(f"❌ Error actualizando concepto desde dict: {e}")
-        raise
+    # Validación simple de campos críticos
+    if "nombre" not in concepto_dict or not concepto_dict["nombre"]:
+        logging.warning("El concepto no tiene nombre definido. Revisión necesaria.")
+
+    attempt = 0
+    while attempt < max_retries:
+        try:
+            result = get_collection("conceptos_interes").update_one(
+                {"_id": ObjectId(concepto_id)},
+                {"$set": concepto_dict}
+            )
+            if result.matched_count == 0:
+                logging.warning(f"⚠️ No se encontró el concepto con _id: {concepto_id}")
+            else:
+                logging.info(f"✅ Concepto actualizado desde dict: {concepto_dict.get('nombre')}")
+            return result
+        except (AutoReconnect, NetworkTimeout, ConnectionFailure) as conn_err:
+            wait = backoff_base ** attempt
+            logging.warning(f"🔄 Reintentando actualización por fallo de red ({conn_err}), intento {attempt+1}/{max_retries}... Esperando {wait}s")
+            time.sleep(wait)
+            attempt += 1
+        except Exception as e:
+            logging.error(f"❌ Error inesperado actualizando concepto desde dict: {e}")
+            raise
+
+    logging.error(f"❌ Fallo persistente al actualizar concepto tras {max_retries} intentos.")
+    raise ConnectionError("No se pudo actualizar el concepto por errores de conexión.")
 
 
 # --------------------------------------------------------------------
