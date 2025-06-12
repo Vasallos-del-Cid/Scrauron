@@ -2,14 +2,21 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { D3ChartService } from '../../../core/services/graficas/d3-charts.service';
 import { ConceptosService } from '../../conceptos/conceptos.service';
 import { PlotChartsService } from '../../../core/services/graficas/plot-charts.service';
+import { CommonModule } from '@angular/common';
+import { SpinnerComponent } from '../../../core/plantillas/spinner/spinner.component';
 
 @Component({
   selector: 'app-bar-chart',
-  imports: [],
-  template: `<div id="barChartContainer"></div>`,
+  imports: [SpinnerComponent, CommonModule],
+  template: `<div class="chart-container">
+    <div id="barChartContainer">
+      <app-spinner *ngIf="loading" message="Cargando gráfico..."></app-spinner>
+    </div>
+  </div>`,
   styleUrl: './bar-chart.component.css',
 })
 export class BarChartComponent implements AfterViewInit, OnInit {
+  loading = true; // <--- flag de carga
   private data: any[] = [];
   private isViewInitialized = false;
 
@@ -40,19 +47,23 @@ export class BarChartComponent implements AfterViewInit, OnInit {
   }
 
   private dibujarGrafica() {
-    this.graficaService.createBarChart({
-      selector: '#barChartContainer',
-      data: this.data,
-      width: 600,
-      height: 400,
-      xField: 'label',
-      yField: 'value',
-      barColor: "#4062b9", // Color verde para las barras
-      xAxisLabel: 'Conceptos de interés',
-      yAxisLabel: 'Número de noticias',
-      title: 'Noticias relacionadas con cada concepto',
-      fontSize: 14,
-      fontFamily: 'Arial',
-    });
+    setTimeout(() => {
+      this.graficaService.createBarChart({
+        selector: '#barChartContainer',
+        data: this.data,
+        width: 600,
+        height: 400,
+        xField: 'label',
+        yField: 'value',
+        barColor: '#4062b9', // Color verde para las barras
+        xAxisLabel: 'Conceptos de interés',
+        yAxisLabel: 'Número de noticias',
+        title: 'Noticias relacionadas con cada concepto',
+        fontSize: 14,
+        fontFamily: 'Arial',
+      });
+
+      this.loading = false; // oculto la máscara
+    }, 500);
   }
 }

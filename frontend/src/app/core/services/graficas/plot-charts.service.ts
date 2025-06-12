@@ -22,7 +22,11 @@ export class PlotChartsService {
       marginLeft: config.margin?.left ?? 50,
       marginBottom: config.margin?.bottom ?? 50,
       x: { label: config.xAxisLabel || config.xField },
-      y: { label: config.yAxisLabel || config.yField },
+      y: {
+        label: config.yAxisLabel || config.yField,
+        grid: true,
+        // si config.yDomain está definido lo usamos, si no auto        domain: config.yDomain ?? d3.extent(config.data, d => d[config.yField!]) as [number, number]
+      },
       style: {
         background: config.backgroundColor || 'white',
         fontSize: config.fontSize ? `${config.fontSize}px` : undefined,
@@ -57,6 +61,8 @@ export class PlotChartsService {
   }
 
   createMultiLineChart(config: ChartConfig): void {
+    const seriesField = config['seriesField'] || 'serie';
+
     const chart = Plot.plot({
       width: config.width,
       height: config.height,
@@ -76,6 +82,8 @@ export class PlotChartsService {
       },
       color: {
         legend: config.legend !== false,
+        type: 'categorical',
+        range: d3.schemeTableau10.concat(d3.schemeSet3).flat(),
       },
       style: {
         background: config.backgroundColor || 'white',
@@ -87,28 +95,49 @@ export class PlotChartsService {
         Plot.lineY(config.data, {
           x: config.xField,
           y: config.yField,
-          stroke: config["seriesField"] || 'serie',
+          stroke: seriesField,
           strokeOpacity: 0.6,
-          title: (d: any) =>
-            `${d[config["seriesField"] || 'serie']}: ${
-              d[config.yField!]
-            } (${d3.timeFormat('%Y-%m-%d')(d[config.xField!])})`,
           strokeWidth: 2,
+          tip: true,
         }),
         Plot.dot(config.data, {
           x: config.xField,
           y: config.yField,
-          stroke: config["seriesField"] || 'serie',
-          fill: config["seriesField"] || 'serie',
-          title: (d: any) =>
-            `${d[config["seriesField"] || 'serie']}: ${
-              d[config.yField!]
-            } (${d3.timeFormat('%Y-%m-%d')(d[config.xField!])})`,
+          stroke: seriesField,
+          fill: seriesField,
+          tip: true,
         }),
       ],
     });
 
     this.renderChart(config.selector, chart, config.title);
+
+    // Interactividad: resaltar serie al hacer clic
+    setTimeout(() => {
+      const container = document.querySelector(config.selector);
+      if (container) {
+        const targets = container.querySelectorAll(
+          'path[stroke], circle[stroke]'
+        );
+        targets.forEach((el: Element) => {
+          el.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const color = el.getAttribute('stroke');
+            targets.forEach((e: Element) => {
+              const match = e.getAttribute('stroke') === color;
+              e.setAttribute('opacity', match ? '1' : '0.5');
+              e.setAttribute('stroke-width', match ? '3' : '1');
+            });
+          });
+        });
+        container.addEventListener('click', () => {
+          targets.forEach((e) => {
+            e.setAttribute('opacity', '1');
+            e.setAttribute('stroke-width', '2');
+          });
+        });
+      }
+    }, 0);
   }
 
   private renderChart(

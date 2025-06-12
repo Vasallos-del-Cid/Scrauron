@@ -39,4 +39,6 @@ export interface ChartConfig {
   responsive?: boolean;    // Soporte para adaptar a tamaño del contenedor
 
   [key: string]: any;      // Extensible para props específicas
+  
+  yDomain?: [number, number];
 }
