@@ -59,14 +59,14 @@
   box-shadow: var(--shadow-light);
 }
 
-.alerta-card.verde {
+/* .alerta-card.verde {
   background-color: #e5ffe5;
 }
 
 .alerta-card.rojo {
   background-color: #ffe5e5;
 }
-
+ */
 .card-contenido {
   display: flex;
   flex-direction: row;
@@ -147,8 +147,9 @@
 .fuente a,
 .fuente select {
   font-size: 0.8rem;
-  color: var(--primary-color);
+  color: var(--primary-color, #007bff);
   text-decoration: underline;
+  word-break: break-all; /* Para URLs largas */
 }
 
 /* Para colapsar el contenido */

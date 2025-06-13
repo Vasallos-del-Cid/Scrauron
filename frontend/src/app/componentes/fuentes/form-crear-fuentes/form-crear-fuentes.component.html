@@ -10,7 +10,11 @@
 
     <div class="form-group">
       <label>Tipo de Fuente:</label>
-      <input type="text" formControlName="tipo" />
+      <ejs-dropdownlist
+        formControlName="tipo"
+        [dataSource]="tiposFuente"
+        placeholder="Seleccione tipo de fuente"
+      ></ejs-dropdownlist>
     </div>
 
     <div class="form-group">

@@ -1,6 +1,6 @@
 <div class="header-text">
-    <span >Publicaciones de interés</span>
-  </div>
+  <span>Publicaciones de interés</span>
+</div>
 <div class="barra-filtros">
   <ejs-textbox
     placeholder="Buscar alerta..."
@@ -38,40 +38,40 @@
 </div>
 
 <div class="contenedor-cards">
+  <app-spinner *ngIf="loading" message="Cargando noticias..."></app-spinner>
   <div
     *ngFor="let alerta of alertasFiltradas"
     class="alerta-card"
-    [ngClass]="getColor(alerta.tono)"
+    [ngStyle]="{ 'background-color': getColor(alerta.tono) }"
   >
     <div class="card-texto">
       <!-- Header -->
       <div class="fila-header">
         <div class="titulo">{{ alerta.titulo }}</div>
-        <div class="fecha">{{ alerta.fecha | date: 'short' }}</div>
+        <div class="fecha">{{ alerta.fecha | date : "short" }}</div>
       </div>
 
-      <!-- Contenido colapsable -->
-      <div
-        class="resumen contenido"
-        [class.collapsed]="!isExpanded(alerta._id!)"
-        (click)="toggleExpand(alerta._id!)"
-      >
+      <!-- Contenido colapsable [class.collapsed]="!isExpanded(alerta._id!)" -->
+      <div class="resumen contenido" (click)="toggleExpand(alerta._id!)">
         {{ alerta.contenido }}
       </div>
-      <button
+      <!-- <button
         class="toggle-btn"
         (click)="toggleExpand(alerta._id!); $event.stopPropagation()"
       >
-        {{ isExpanded(alerta._id!) ? 'Mostrar menos' : 'Mostrar más' }}
-      </button>
+        {{ isExpanded(alerta._id!) ? "Mostrar menos" : "Mostrar más" }}
+      </button> -->
 
       <!-- Footer -->
       <div class="fila-footer">
         <div class="fuente">
-          <a [href]="alerta.url" target="_blank">{{ alerta.fuente }}</a>
+          <!--  TODO: Cambiar por el nombre de la fuente cuando se recupere desde back con join de alertas y fuentes
+          <a [href]="alerta.url" target="_blank">{{ alerta.fuente }}</a> 
+          -->
+          <a [href]="alerta.url" target="_blank">{{ alerta.url }}</a>
         </div>
+        <div class="fecha">Tono: {{ alerta.tono || "Sin calificar" }}</div>
       </div>
     </div>
   </div>
 </div>
-

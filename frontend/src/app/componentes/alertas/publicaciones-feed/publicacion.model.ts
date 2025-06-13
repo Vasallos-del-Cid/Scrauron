@@ -7,4 +7,6 @@ export interface Publicacion extends Identificable {
   contenido?: string;
   fuente?: string;
   tono?: number;
+  pais?: string;
+  ciudad_region?: string;
 }

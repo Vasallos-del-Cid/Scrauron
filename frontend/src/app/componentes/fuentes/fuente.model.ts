@@ -7,4 +7,6 @@ export interface Fuente extends Identificable {
   activa: boolean;
   fecha_alta: Date;
   url: string;
+  etiqueta_contenido: string;
+  etiqueta_titulo: string;
 }

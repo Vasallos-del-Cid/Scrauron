@@ -6,6 +6,8 @@ import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { FormsModule } from '@angular/forms';
 import { PublicacionesService } from './publicaciones-feed.service';
 import { Publicacion } from './publicacion.model';
+import { map } from 'rxjs';
+import { SpinnerComponent } from '../../../core/plantillas/spinner/spinner.component';
 
 @Component({
   selector: 'app-alertas-feed',
@@ -16,6 +18,7 @@ import { Publicacion } from './publicacion.model';
     DropDownListModule,
     DatePickerModule,
     TextBoxModule,
+    SpinnerComponent,
   ],
   templateUrl: './publicaciones-feed.component.html',
   styleUrls: ['./publicaciones-feed.component.css'],
@@ -34,6 +37,7 @@ export class PublicacionesFeedComponent implements OnInit {
   public fechaHasta?: Date;
 
   public expandidos = new Set<string>();
+  public loading = true;
 
   constructor(private servicio: PublicacionesService) {}
 
@@ -42,16 +46,35 @@ export class PublicacionesFeedComponent implements OnInit {
     this.servicio.getAll();
 
     // 2) Suscríbete al BehaviorSubject y transforma fecha a Date
-    this.servicio.items$.subscribe((list) => {
-      this.alertas = list.map((pub) => ({
-        ...pub,
-        fecha: pub.fecha ? new Date(pub.fecha) : undefined,
-      }));
-      // Extrae fuentes únicas para el filtro
-      const setFuentes = new Set(this.alertas.map((a) => a.fuente || ''));
-      this.fuentes = ['Todos', ...Array.from(setFuentes)];
-      this.aplicarFiltros();
-    });
+    this.servicio.items$
+      .pipe(
+        // 2.1) Filtra out los que no tienen contenido o tono vacío/undefined
+        map((list) =>
+          list.filter(
+            (pub) => pub.contenido?.trim().length! > 0 && pub.tono != null
+          )
+        ),
+        // 2.2) Convierte fecha a Date y lo que necesites
+        map((list) =>
+          list.map((pub) => ({
+            ...pub,
+            fecha: pub.fecha ? new Date(pub.fecha) : undefined,
+          }))
+        )
+      )
+      .subscribe((list) => {
+        this.alertas = list.map((pub) => ({
+          ...pub,
+          fecha: pub.fecha ? new Date(pub.fecha) : undefined,
+        }));
+        // Extrae fuentes únicas para el filtro
+        const setFuentes = new Set(this.alertas.map((a) => a.fuente || ''));
+        this.fuentes = ['Todos', ...Array.from(setFuentes)];
+        this.aplicarFiltros();
+        if (this.alertas.length > 0) { 
+          this.loading = false;
+        }
+      });
   }
 
   aplicarFiltros(): void {
@@ -92,9 +115,16 @@ export class PublicacionesFeedComponent implements OnInit {
 
   /** Mapea el tono numérico a una clase CSS */
   getColor(tono?: number): string {
-    if (tono === 1) return 'verde'; // positivo
-    if (tono === 3) return 'rojo'; // negativo
-    return ''; // neutro o sin tono
+    if (!tono || tono < 1 || tono > 10) {
+      // neutro / sin color
+      return 'transparent';
+    }
+    // normalizamos entre 0 y 1
+    const t = (tono - 1) / 9;
+    // mapeamos a hue (0 = rojo; 120 = verde)
+    const hue = Math.round(120 * t);
+    // saturación baja (50%), luminosidad alta (85%), alpha suave (0.3)
+    return `hsla(${hue}, 50%, 85%, 0.3)`;
   }
 
   /** Alterna el estado expandido de una alerta */

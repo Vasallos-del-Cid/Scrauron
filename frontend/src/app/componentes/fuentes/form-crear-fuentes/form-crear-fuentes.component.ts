@@ -12,14 +12,23 @@ import {
   FormBuilder,
   FormGroup,
   Validators,
+  FormsModule,
 } from '@angular/forms';
 import { SwitchModule } from '@syncfusion/ej2-angular-buttons';
 import { Fuente } from '../fuente.model';
+import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 
 @Component({
   selector: 'app-form-crear-fuentes',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SwitchModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    SwitchModule,
+    FormsModule,
+    ReactiveFormsModule,
+    DropDownListModule,
+  ],
   templateUrl: './form-crear-fuentes.component.html',
   styleUrls: ['./form-crear-fuentes.component.css'],
 })
@@ -30,6 +39,14 @@ export class FormCrearFuentesComponent implements OnChanges {
   @Input() fuente?: Fuente; // 👈 Recibimos la fuente a editar
 
   fuenteForm: FormGroup;
+
+  public tiposFuente: string[] = [
+    'Blog',
+    'Noticias',
+    'Investigación',
+    'Social',
+    'Otro',
+  ];
 
   constructor(private fb: FormBuilder) {
     this.fuenteForm = this.fb.group({
