@@ -77,3 +77,5 @@ class Publicacion:
             f"Publicacion(_id='{self._id}', titulo='{self.titulo[:30]}', "
             f"url='{self.url}', fuente_id='{self.fuente_id}', ciudad_region='{self.ciudad_region}', pais='{self.pais}')"
         )
+
+
