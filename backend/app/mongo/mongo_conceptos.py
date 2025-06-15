@@ -233,3 +233,26 @@ def serialize_concepto(doc):
     if "area_id" in doc:
         doc["area_id"] = str(doc["area_id"])
     return doc
+
+# --------------------------------------------------------------------
+
+def get_conceptos_by_area_id(area_oid):
+    area = get_collection('areas_de_trabajo').find_one({'_id': area_oid})
+    if not area:
+        return []
+
+    conceptos_oids = area.get('conceptos_interes_ids', [])
+    if not isinstance(conceptos_oids, list):
+        return []
+
+    conceptos = []
+    for concepto_oid in conceptos_oids:
+        concepto = get_collection('conceptos_interes').find_one({'_id': concepto_oid})
+        if concepto:
+            concepto["_id"] = str(concepto["_id"])
+            concepto["keywords_ids"] = [str(k) for k in concepto.get("keywords_ids", [])]
+            concepto["publicaciones_relacionadas_ids"] = [str(p) for p in concepto.get("publicaciones_relacionadas_ids", [])]
+            conceptos.append(concepto)
+
+    return conceptos
+

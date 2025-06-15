@@ -5,38 +5,56 @@
   <ejs-textbox
     placeholder="Buscar alerta..."
     [(ngModel)]="filtroBusqueda"
-    (input)="aplicarFiltros()"
   ></ejs-textbox>
 
   <ejs-dropdownlist
-    [dataSource]="fuentes"
-    [(ngModel)]="filtroFuente"
-    (change)="aplicarFiltros()"
-    placeholder="Fuente"
+  [dataSource]="fuentes"
+  [(ngModel)]="filtroFuente"
+  placeholder="Fuente"
+  [fields]="{ text: 'nombre', value: '_id' }"
+>
+  <ng-template #itemTemplate let-data>
+    {{ data.nombre }}
+  </ng-template>
+</ejs-dropdownlist>
+
+  <ejs-dropdownlist
+  [dataSource]="areas"
+  [(ngModel)]="filtroArea"
+  (ngModelChange)="onAreaChange($event)"
+  placeholder="Área"
+  [fields]="{ text: 'nombre', value: '_id' }"
   ></ejs-dropdownlist>
+
+  <ejs-dropdownlist
+  [dataSource]="conceptos"
+  [(ngModel)]="filtroConcepto"
+  placeholder="Concepto"
+  [fields]="{ text: 'nombre', value: '_id' }"
+></ejs-dropdownlist>
+
+
 
   <div class="filtro-item">
   <ejs-dropdownlist
     id="tono"
     [dataSource]="valoraciones"
     [(ngModel)]="filtroValoracion"
-    (change)="aplicarFiltros($event)"
         placeholder="Tono"
   ></ejs-dropdownlist>
 </div>
 
   <ejs-datepicker
     [(ngModel)]="fechaDesde"
-    (change)="aplicarFiltros()"
     placeholder="Desde"
   ></ejs-datepicker>
 
   <ejs-datepicker
     [(ngModel)]="fechaHasta"
-    (change)="aplicarFiltros()"
     placeholder="Hasta"
   ></ejs-datepicker>
 
+  <button class="boton-reset" (click)="aplicarFiltros()">Aplicar</button>
   <button class="boton-reset" (click)="resetFiltros()">Resetear</button>
 </div>
 

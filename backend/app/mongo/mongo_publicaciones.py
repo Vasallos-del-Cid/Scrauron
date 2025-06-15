@@ -157,15 +157,26 @@ def get_publicaciones_con_conceptos():
 
 
 
-def filtrar_publicaciones(fecha_inicio, fecha_fin, concepto_interes=None, tono=None, keywords_relacionadas=None, busqueda_palabras=None):
-
-    # Lista de condiciones a aplicar en la consulta
+def filtrar_publicaciones(
+    fecha_inicio,
+    fecha_fin,
+    fuente_id,
+    concepto_interes=None,
+    tono=None,
+    keywords_relacionadas=None,
+    busqueda_palabras=None,
+    area_id=None
+):
+    print(fuente_id)
     condiciones = [
         {"fecha": {"$gte": fecha_inicio, "$lte": fecha_fin}}
     ]
 
     if tono is not None:
         condiciones.append({"tono": tono})
+
+    if fuente_id:
+        condiciones.append({"fuente_id": ObjectId(fuente_id)})
 
     if keywords_relacionadas:
         condiciones.append({"keywords_relacionadas_ids": {"$all": keywords_relacionadas}})
@@ -178,29 +189,32 @@ def filtrar_publicaciones(fecha_inicio, fecha_fin, concepto_interes=None, tono=N
                 {"contenido": {"$regex": regex}}
             ]
         })
-
-    # Combina las condiciones con AND
+    print(condiciones)
     query = {"$and": condiciones} if len(condiciones) > 1 else condiciones[0]
-
-    # Consulta MongoDB
     publicaciones = list(get_collection("publicaciones").find(query).sort("fecha", DESCENDING))
 
-    # Filtro por concepto (post-procesado)
+    # Post-procesado por área
+    if area_id:
+        area = get_collection("areas_de_trabajo").find_one({"_id": ObjectId(area_id)})
+        if area:
+            conceptos_ids = set(area.get("conceptos_interes_ids", []))
+            publicaciones_rel_ids = set()
+            for cid in conceptos_ids:
+                concepto = get_collection("conceptos_interes").find_one({"_id": cid})
+                publicaciones_rel_ids.update(str(pid) for pid in concepto.get("publicaciones_relacionadas_ids", []))
+            publicaciones = [pub for pub in publicaciones if str(pub["_id"]) in publicaciones_rel_ids]
+
+    # Post-procesado por concepto
     if concepto_interes:
         concepto = get_collection("conceptos_interes").find_one({"_id": ObjectId(concepto_interes)})
         if not concepto:
             return []
-        publicaciones_relacionadas_ids = {str(pid) for pid in concepto.get("publicaciones_relacionadas_ids", [])}
-        publicaciones = [
-            pub for pub in publicaciones
-            if str(pub["_id"]) in publicaciones_relacionadas_ids
-        ]
+        publicaciones_rel_ids = {str(pid) for pid in concepto.get("publicaciones_relacionadas_ids", [])}
+        publicaciones = [pub for pub in publicaciones if str(pub["_id"]) in publicaciones_rel_ids]
 
-    # Normaliza para serialización
     for pub in publicaciones:
         pub["_id"] = str(pub["_id"])
         pub["fuente_id"] = str(pub["fuente_id"])
         pub["keywords_relacionadas_ids"] = [str(kid) for kid in pub.get("keywords_relacionadas_ids", [])]
 
     return publicaciones
-

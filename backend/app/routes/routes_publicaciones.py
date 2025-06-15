@@ -121,10 +121,12 @@ def publicaciones_filtradas_endpoint():
         # Extrae y convierte los parámetros de la consulta
         fecha_inicio_str = request.args.get("fechaInicio")
         fecha_fin_str = request.args.get("fechaFin")
-        concepto_id_str = request.args.get("conceptoInteres")
+        concepto_id_str = request.args.get("concepto_interes")
+        area_id_str = request.args.get("area_id")
+        fuente_id_str = request.args.get("fuente_id")
         tono_str = request.args.get("tono")
         keywords_str = request.args.getlist("keywordsRelacionadas")
-        busqueda_palabras = request.args.get("busqueda_palabras") 
+        busqueda_palabras = request.args.get("busqueda_palabras")
 
         if not fecha_inicio_str or not fecha_fin_str:
             return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
@@ -135,10 +137,10 @@ def publicaciones_filtradas_endpoint():
 
         # Convierte opcionales
         concepto_id = ObjectId(concepto_id_str) if concepto_id_str else None
+        area_id = ObjectId(area_id_str) if area_id_str else None
+        fuente_id = ObjectId(fuente_id_str) if fuente_id_str else None
         tono = int(tono_str) if tono_str else None
         keywords = [ObjectId(k) for k in keywords_str] if keywords_str else None
-
-        print(">>> Parámetro busqueda_palabras recibido:", busqueda_palabras)  # Diagnóstico
 
         # Llama a la función de filtrado
         publicaciones = filtrar_publicaciones(
@@ -147,7 +149,9 @@ def publicaciones_filtradas_endpoint():
             concepto_interes=concepto_id,
             tono=tono,
             keywords_relacionadas=keywords,
-            busqueda_palabras=busqueda_palabras 
+            busqueda_palabras=busqueda_palabras,
+            area_id=area_id,
+            fuente_id=fuente_id
         )
 
         return publicaciones, 200

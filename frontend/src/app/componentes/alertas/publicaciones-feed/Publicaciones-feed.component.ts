@@ -6,7 +6,6 @@ import { NumericTextBoxModule, TextBoxModule } from '@syncfusion/ej2-angular-inp
 import { FormsModule } from '@angular/forms';
 import { PublicacionesService } from './publicaciones-feed.service';
 import { Publicacion } from './publicacion.model';
-import { map } from 'rxjs';
 import { SpinnerComponent } from '../../../core/plantillas/spinner/spinner.component';
 
 @Component({
@@ -24,110 +23,99 @@ import { SpinnerComponent } from '../../../core/plantillas/spinner/spinner.compo
   styleUrls: ['./publicaciones-feed.component.css'],
 })
 export class PublicacionesFeedComponent implements OnInit {
-  public alertas: Publicacion[] = [];
   public alertasFiltradas: Publicacion[] = [];
-
-  public fuentes: string[] = ['Todos'];
-  public valoraciones: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
+  public valoraciones: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  public conceptos: any[] = [];
+  public areas: any[] = [];
+  public fuentes: any[] = [];
   public filtroBusqueda = '';
-  public filtroFuente = 'Todos';
-  public filtroValoracion:number|null = null;
-  public fechaDesde?: Date;
-  public fechaHasta?: Date;
-
+  public filtroFuente: string | null = null;
+  public filtroValoracion: number | null = null;
+  public filtroArea: string | null = null;
+  public filtroConcepto: string | null = null;
+  public fechaDesde: Date = new Date(new Date().setDate(new Date().getDate() - 1));
+  public fechaHasta: Date = new Date();
   public expandidos = new Set<string>();
   public loading = true;
 
-  constructor(private servicio: PublicacionesService) {}
+  constructor(private servicio: PublicacionesService) { }
 
   ngOnInit(): void {
-    // 1) Lanza la petición
-    this.servicio.getAll();
+    this.servicio.getAreas().subscribe({
+      next: (areas) => {
+        this.areas = areas;
+      },
+      error: (err) => {
+        console.error('Error al cargar áreas:', err);
+      }
+    });
+    this.servicio.getFuentes().subscribe({
+      next: (fuentes) => {
+        this.fuentes = fuentes;
+      },
+      error: (err) => {
+        console.error('Error al cargar fuentes:', err);
+      }
+    });
 
-    // 2) Suscríbete al BehaviorSubject y transforma fecha a Date
-    this.servicio.items$
-      .pipe(
-        // 2.1) Filtra out los que no tienen contenido o tono vacío/undefined
-        map((list) =>
-          list.filter(
-            (pub) => pub.contenido?.trim().length! > 0 && pub.tono != null
-          )
-        ),
-        // 2.2) Convierte fecha a Date y lo que necesites
-        map((list) =>
-          list.map((pub) => ({
-            ...pub,
-            fecha: pub.fecha ? new Date(pub.fecha) : undefined,
-          }))
-        )
-      )
-      .subscribe((list) => {
-        this.alertas = list.map((pub) => ({
-          ...pub,
-          fecha: pub.fecha ? new Date(pub.fecha) : undefined,
-        }));
-        // Extrae fuentes únicas para el filtro
-        const setFuentes = new Set(this.alertas.map((a) => a.fuente || ''));
-        this.fuentes = ['Todos', ...Array.from(setFuentes)];
-        this.aplicarFiltros();
-        if (this.alertas.length > 0) { 
-          this.loading = false;
-        }
-      });
+    this.aplicarFiltros();
   }
 
+
   aplicarFiltros(e?: ChangeEventArgs) {
-    this.alertasFiltradas = this.alertas.filter((a) => {
-      const titulo = a.titulo.toLowerCase();
-      const contenido = (a.contenido || '').toLowerCase();
-      const texto = this.filtroBusqueda.toLowerCase();
+    if (!this.fechaDesde || !this.fechaHasta) return;
 
-      const okBusqueda =
-        !this.filtroBusqueda ||
-        titulo.includes(texto) ||
-        contenido.includes(texto);
+    this.loading = true;
 
-      const okFuente =
-        this.filtroFuente === 'Todos' || a.fuente === this.filtroFuente;
+    const filtros: any = {
+      fechaDesde: this.fechaDesde,
+      fechaHasta: this.fechaHasta,
+      tono: this.filtroValoracion || undefined,
+      busqueda_palabras: this.filtroBusqueda || undefined,
+      concepto_interes: this.filtroConcepto || undefined,
+      fuente_id: this.filtroFuente || undefined
+    };
 
-      const okValoracion =
-        this.filtroValoracion == null || a.tono == this.filtroValoracion;
+    if (!filtros.concepto_interes && this.filtroArea) {
+      filtros.area_id = this.filtroArea;
+    }
 
-      const okDesde =
-        !this.fechaDesde || (a.fecha != null && a.fecha >= this.fechaDesde);
+    this.servicio.getFiltradas(filtros).subscribe({
+      next: (resultado) => {
+        this.alertasFiltradas = resultado.map((pub) => ({
+          ...pub,
+          fecha: pub.fecha ? new Date(pub.fecha) : undefined
 
-      const okHasta =
-        !this.fechaHasta || (a.fecha != null && a.fecha <= this.fechaHasta);
-
-      return okBusqueda && okFuente && okValoracion && okDesde && okHasta;
+        }));
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar publicaciones filtradas:', err);
+        this.loading = false;
+      }
     });
   }
 
   resetFiltros(): void {
     this.filtroBusqueda = '';
-    this.filtroFuente = 'Todos';
-    this.filtroValoracion = 0;
-    this.fechaDesde = undefined;
-    this.fechaHasta = undefined;
+    this.filtroFuente = null;
+    this.filtroValoracion = null;
+    this.filtroArea = null;
+    this.filtroConcepto = null;
+    this.fechaDesde = new Date(new Date().setDate(new Date().getDate() - 7));
+    this.fechaHasta = new Date();
     this.aplicarFiltros();
   }
 
-  /** Mapea el tono numérico a una clase CSS */
   getColor(tono?: number): string {
     if (!tono || tono < 1 || tono > 10) {
-      // neutro / sin color
       return 'transparent';
     }
-    // normalizamos entre 0 y 1
     const t = (tono - 1) / 9;
-    // mapeamos a hue (0 = rojo; 120 = verde)
     const hue = Math.round(120 * t);
-    // saturación baja (50%), luminosidad alta (85%), alpha suave (0.3)
     return `hsla(${hue}, 50%, 85%, 0.3)`;
   }
 
-  /** Alterna el estado expandido de una alerta */
   toggleExpand(id: string): void {
     if (this.expandidos.has(id)) {
       this.expandidos.delete(id);
@@ -136,8 +124,27 @@ export class PublicacionesFeedComponent implements OnInit {
     }
   }
 
-  /** Consulta si está expandida */
   isExpanded(id: string): boolean {
     return this.expandidos.has(id);
   }
+
+  onAreaChange(areaId: string): void {
+    this.filtroArea = areaId;
+    this.servicio.getConceptosArea(areaId).subscribe({
+      next: (conceptos) => {
+        this.conceptos = conceptos;
+      },
+      error: (err) => {
+        console.error('Error al cargar conceptos del área:', err);
+      }
+    });
+  }
+
+  onConceptoChange(conceptoId: string): void {
+    this.filtroConcepto = conceptoId;
+    this.aplicarFiltros();
+  }
+
+
+
 }
