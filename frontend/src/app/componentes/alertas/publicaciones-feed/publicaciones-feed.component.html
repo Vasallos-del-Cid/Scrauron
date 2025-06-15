@@ -15,12 +15,15 @@
     placeholder="Fuente"
   ></ejs-dropdownlist>
 
+  <div class="filtro-item">
   <ejs-dropdownlist
+    id="tono"
     [dataSource]="valoraciones"
     [(ngModel)]="filtroValoracion"
-    (change)="aplicarFiltros()"
-    placeholder="Valoración"
+    (change)="aplicarFiltros($event)"
+        placeholder="Tono"
   ></ejs-dropdownlist>
+</div>
 
   <ejs-datepicker
     [(ngModel)]="fechaDesde"

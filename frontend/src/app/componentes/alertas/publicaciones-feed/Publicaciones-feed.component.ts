@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
+import { ChangeEventArgs, DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
-import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
+import { NumericTextBoxModule, TextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { FormsModule } from '@angular/forms';
 import { PublicacionesService } from './publicaciones-feed.service';
 import { Publicacion } from './publicacion.model';
@@ -28,11 +28,11 @@ export class PublicacionesFeedComponent implements OnInit {
   public alertasFiltradas: Publicacion[] = [];
 
   public fuentes: string[] = ['Todos'];
-  public valoraciones: number[] = [0, 1, 2, 3];
+  public valoraciones: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   public filtroBusqueda = '';
   public filtroFuente = 'Todos';
-  public filtroValoracion = 0;
+  public filtroValoracion:number|null = null;
   public fechaDesde?: Date;
   public fechaHasta?: Date;
 
@@ -77,7 +77,7 @@ export class PublicacionesFeedComponent implements OnInit {
       });
   }
 
-  aplicarFiltros(): void {
+  aplicarFiltros(e?: ChangeEventArgs) {
     this.alertasFiltradas = this.alertas.filter((a) => {
       const titulo = a.titulo.toLowerCase();
       const contenido = (a.contenido || '').toLowerCase();
@@ -92,7 +92,7 @@ export class PublicacionesFeedComponent implements OnInit {
         this.filtroFuente === 'Todos' || a.fuente === this.filtroFuente;
 
       const okValoracion =
-        this.filtroValoracion === 0 || a.tono === this.filtroValoracion;
+        this.filtroValoracion == null || a.tono == this.filtroValoracion;
 
       const okDesde =
         !this.fechaDesde || (a.fecha != null && a.fecha >= this.fechaDesde);

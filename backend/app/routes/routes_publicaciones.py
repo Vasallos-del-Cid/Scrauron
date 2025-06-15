@@ -8,7 +8,7 @@ from ..mongo.mongo_publicaciones import (
     create_publicacion,
     update_publicacion,
     delete_publicacion,
-    delete_all_publicaciones
+    delete_all_publicaciones, get_publicaciones_con_conceptos
 )
 
 api_publicaciones = Blueprint('api_publicaciones', __name__)
@@ -101,3 +101,12 @@ def delete_all_publicaciones_endpoint():
     except Exception as e:
         return {"error": str(e)}, 500
 
+# GET una publicación por ID
+@api_publicaciones.route('/publicacionesconceptos', methods=['GET'])
+@SerializeJson
+def publicaciones_con_conceptos():
+    try:
+        publicaciones = get_publicaciones_con_conceptos()
+        return publicaciones, 200
+    except Exception as e:
+        return {"error": f"Error al obtener publicaciones: {str(e)}"}, 500

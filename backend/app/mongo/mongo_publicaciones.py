@@ -107,3 +107,48 @@ def update_publicacion(pub_id, data):
     updated = get_collection("publicaciones").find_one({"_id": ObjectId(pub_id)})
     updated["_id"] = str(updated["_id"])
     return updated
+
+
+def get_publicaciones_con_conceptos():
+    publicaciones_raw = list(get_collection("publicaciones").find())
+    conceptos_raw = list(get_collection("conceptos_interes").find())
+
+    # 1. Mapa de concepto_id a sus datos
+    conceptos_por_id = {}
+    for concepto in conceptos_raw:
+        concepto_id = str(concepto["_id"])
+        conceptos_por_id[concepto_id] = {
+            "_id": concepto_id,
+            "nombre": concepto.get("nombre"),
+            "descripcion": concepto.get("descripcion"),
+            "keywords_ids": [str(kid) for kid in concepto.get("keywords_ids", [])]
+        }
+
+    # 2. Mapa inverso: publicacion_id (str) -> lista de concepto_id (str)
+    publicacion_to_conceptos_map = {}
+    for concepto in conceptos_raw:
+        concepto_id = str(concepto["_id"])
+        for pub_id in concepto.get("publicaciones_relacionadas_ids", []):
+            if pub_id:
+                str_pub_id = str(pub_id)
+                publicacion_to_conceptos_map.setdefault(str_pub_id, []).append(concepto_id)
+
+    # 3. Recorrer publicaciones y embeber solo si tienen conceptos
+    publicaciones_resultado = []
+
+    for pub in publicaciones_raw:
+        pub_id = str(pub["_id"])
+        pub["_id"] = pub_id
+        pub["keywords_relacionadas_ids"] = [str(kid) for kid in pub.get("keywords_relacionadas_ids", [])]
+
+        if pub_id in publicacion_to_conceptos_map:
+            conceptos_embebidos = [
+                conceptos_por_id[cid]
+                for cid in publicacion_to_conceptos_map[pub_id]
+                if cid in conceptos_por_id
+            ]
+            if conceptos_embebidos:
+                pub["conceptos_relacionados"] = conceptos_embebidos
+                publicaciones_resultado.append(pub)
+
+    return publicaciones_resultado
