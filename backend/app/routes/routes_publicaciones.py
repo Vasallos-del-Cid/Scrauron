@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 
 from ..models.modelUtils.SerializeJson import SerializeJson
+from datetime import datetime
+from bson import ObjectId
 from ..models.publicacion import Publicacion
 from ..mongo.mongo_publicaciones import (
     get_publicaciones,
@@ -8,7 +10,8 @@ from ..mongo.mongo_publicaciones import (
     create_publicacion,
     update_publicacion,
     delete_publicacion,
-    delete_all_publicaciones, get_publicaciones_con_conceptos
+    delete_all_publicaciones, get_publicaciones_con_conceptos,
+    filtrar_publicaciones
 )
 
 api_publicaciones = Blueprint('api_publicaciones', __name__)
@@ -110,3 +113,46 @@ def publicaciones_con_conceptos():
         return publicaciones, 200
     except Exception as e:
         return {"error": f"Error al obtener publicaciones: {str(e)}"}, 500
+
+@api_publicaciones.route('/publicaciones_filtradas', methods=['GET'])
+@SerializeJson
+def publicaciones_filtradas_endpoint():
+    try:
+        # Extrae y convierte los parámetros de la consulta
+        fecha_inicio_str = request.args.get("fechaInicio")
+        fecha_fin_str = request.args.get("fechaFin")
+        concepto_id_str = request.args.get("conceptoInteres")
+        tono_str = request.args.get("tono")
+        keywords_str = request.args.getlist("keywordsRelacionadas")
+        busqueda_palabras = request.args.get("busqueda_palabras") 
+
+        if not fecha_inicio_str or not fecha_fin_str:
+            return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
+
+        # Convierte fechas
+        fecha_inicio = datetime.fromisoformat(fecha_inicio_str)
+        fecha_fin = datetime.fromisoformat(fecha_fin_str)
+
+        # Convierte opcionales
+        concepto_id = ObjectId(concepto_id_str) if concepto_id_str else None
+        tono = int(tono_str) if tono_str else None
+        keywords = [ObjectId(k) for k in keywords_str] if keywords_str else None
+
+        print(">>> Parámetro busqueda_palabras recibido:", busqueda_palabras)  # Diagnóstico
+
+        # Llama a la función de filtrado
+        publicaciones = filtrar_publicaciones(
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            concepto_interes=concepto_id,
+            tono=tono,
+            keywords_relacionadas=keywords,
+            busqueda_palabras=busqueda_palabras 
+        )
+
+        return publicaciones, 200
+
+    except ValueError as ve:
+        return {"error": f"Parámetro inválido: {str(ve)}"}, 400
+    except Exception as e:
+        return {"error": f"Error inesperado: {str(e)}"}, 500

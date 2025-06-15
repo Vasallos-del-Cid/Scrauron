@@ -1,6 +1,5 @@
-# Rodrigo
+# Scrauron
 
-Rodrigo Diaz de Vivar, el Cid Campeador
 
 ## Frontend
 
