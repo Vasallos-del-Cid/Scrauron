@@ -9,6 +9,6 @@ import { Publicacion } from './publicacion.model';
 })
 export class PublicacionesService extends DataService<Publicacion> {
   constructor(http: HttpClient) {
-    super(http, 'publicaciones');
+    super(http, 'publicacionesconceptos');
   }
 }

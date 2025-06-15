@@ -6,8 +6,13 @@ import { NumericTextBoxModule, TextBoxModule } from '@syncfusion/ej2-angular-inp
 import { FormsModule } from '@angular/forms';
 import { PublicacionesService } from './publicaciones-feed.service';
 import { Publicacion } from './publicacion.model';
+
 import { map } from 'rxjs';
 import { SpinnerComponent } from '../../../core/plantillas/spinner/spinner.component';
+import { FuenteService } from '../../fuentes/fuentes.service';
+import { ConceptosService } from '../../conceptos/conceptos.service';
+import { Fuente } from '../../fuentes/fuente.model';
+import { Conceptos } from '../../conceptos/Conceptos.model';
 
 @Component({
   selector: 'app-alertas-feed',
@@ -27,34 +32,65 @@ export class PublicacionesFeedComponent implements OnInit {
   public alertas: Publicacion[] = [];
   public alertasFiltradas: Publicacion[] = [];
 
-  public fuentes: string[] = ['Todos'];
-  public valoraciones: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  // dropdowns vacíos hasta cargar del back
+  public fuentesOpts: { id: string|null; nombre: string }[] = [];
+  public conceptosOpts: { id: string|null; nombre: string }[] = [];
+
+
+  public valoraciones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   public filtroBusqueda = '';
-  public filtroFuente = 'Todos';
-  public filtroValoracion:number|null = null;
+  public filtroFuenteId: string|null = null;
+  public filtroConceptoId: string|null = null;
+  public filtroValoracion: number | null = null;
   public fechaDesde?: Date;
   public fechaHasta?: Date;
 
   public expandidos = new Set<string>();
   public loading = true;
 
-  constructor(private servicio: PublicacionesService) {}
+  constructor(
+    private servicio: PublicacionesService,
+    private fuenteService: FuenteService,
+    private conceptoService: ConceptosService
+  ) {}
 
   ngOnInit(): void {
-    // 1) Lanza la petición
-    this.servicio.getAll();
+    // 1) Cargo los maestros
+    this.fuenteService.getAll();
+    this.conceptoService.getAll();
 
-    // 2) Suscríbete al BehaviorSubject y transforma fecha a Date
+    // 2) Suscribo fuentes para llenar el dropdown
+     this.fuenteService.items$
+      .pipe(
+        map(list => [
+          { id: null, nombre: 'Todos' },
+          ...list.map(f => ({ id: f._id!, nombre: f.nombre }))
+        ])
+      )
+      .subscribe(opts => (this.fuentesOpts = opts));
+
+    // 3️⃣ Mapea conceptos igual
+    this.conceptoService.items$
+      .pipe(
+        map(list => [
+          { id: null, nombre: 'Todos' },
+          ...list.map(c => ({ id: c._id!, nombre: c.nombre }))
+        ])
+      )
+      .subscribe(opts => (this.conceptosOpts = opts));
+
+    // 4) Cargo y filtro publicaciones
+    this.servicio.getAll();
     this.servicio.items$
       .pipe(
-        // 2.1) Filtra out los que no tienen contenido o tono vacío/undefined
+        // filtrado previo de contenido/tono
         map((list) =>
           list.filter(
             (pub) => pub.contenido?.trim().length! > 0 && pub.tono != null
           )
         ),
-        // 2.2) Convierte fecha a Date y lo que necesites
+        // parseo fecha
         map((list) =>
           list.map((pub) => ({
             ...pub,
@@ -63,50 +99,58 @@ export class PublicacionesFeedComponent implements OnInit {
         )
       )
       .subscribe((list) => {
-        this.alertas = list.map((pub) => ({
-          ...pub,
-          fecha: pub.fecha ? new Date(pub.fecha) : undefined,
-        }));
-        // Extrae fuentes únicas para el filtro
-        const setFuentes = new Set(this.alertas.map((a) => a.fuente || ''));
-        this.fuentes = ['Todos', ...Array.from(setFuentes)];
+        this.alertas = list;
         this.aplicarFiltros();
-        if (this.alertas.length > 0) { 
-          this.loading = false;
-        }
+        this.loading = false;
       });
   }
 
-  aplicarFiltros(e?: ChangeEventArgs) {
-    this.alertasFiltradas = this.alertas.filter((a) => {
-      const titulo = a.titulo.toLowerCase();
-      const contenido = (a.contenido || '').toLowerCase();
-      const texto = this.filtroBusqueda.toLowerCase();
+  onFuenteChange(e: ChangeEventArgs) {
+    this.filtroFuenteId = e.value as string|null;
+    this.aplicarFiltros();
+  }
 
+  /** Lectura manual del dropdown de conceptos */
+  onConceptoChange(e: ChangeEventArgs) {
+    this.filtroConceptoId = e.value as string|null;
+    this.aplicarFiltros();
+  }
+
+  aplicarFiltros(): void {
+    this.alertasFiltradas = this.alertas.filter((a) => {
+      const texto = this.filtroBusqueda.toLowerCase();
       const okBusqueda =
         !this.filtroBusqueda ||
-        titulo.includes(texto) ||
-        contenido.includes(texto);
-
+        a.titulo.toLowerCase().includes(texto) ||
+        (a.contenido?.toLowerCase().includes(texto) ?? false);
       const okFuente =
-        this.filtroFuente === 'Todos' || a.fuente === this.filtroFuente;
-
+        this.filtroFuenteId === null ||
+        a.fuente?._id === this.filtroFuenteId;
+      const okConcepto =
+        this.filtroConceptoId === null ||
+        a.conceptos_relacionados.some(c => c._id === this.filtroConceptoId);
       const okValoracion =
-        this.filtroValoracion == null || a.tono == this.filtroValoracion;
-
+        this.filtroValoracion == null || a.tono === this.filtroValoracion;
       const okDesde =
-        !this.fechaDesde || (a.fecha != null && a.fecha >= this.fechaDesde);
-
+        !this.fechaDesde || (a.fecha && a.fecha >= this.fechaDesde);
       const okHasta =
-        !this.fechaHasta || (a.fecha != null && a.fecha <= this.fechaHasta);
+        !this.fechaHasta || (a.fecha && a.fecha <= this.fechaHasta);
 
-      return okBusqueda && okFuente && okValoracion && okDesde && okHasta;
+      return (
+        okBusqueda &&
+        okFuente &&
+        okConcepto &&
+        okValoracion &&
+        okDesde &&
+        okHasta
+      );
     });
   }
 
   resetFiltros(): void {
     this.filtroBusqueda = '';
-    this.filtroFuente = 'Todos';
+    this.filtroFuenteId = null;
+    this.filtroConceptoId = null;
     this.filtroValoracion = 0;
     this.fechaDesde = undefined;
     this.fechaHasta = undefined;

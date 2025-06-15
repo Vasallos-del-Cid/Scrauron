@@ -6,6 +6,10 @@ import logging
 # la publicación utilizando un modelo LLM antes de guardarla.
 
 from bson import ObjectId
+
+from .mongo_conceptos import get_conceptos
+from .mongo_fuentes import get_fuentes
+from .mongo_keywords import get_keywords
 from .mongo_utils import get_collection
 from app.service.llm.llm_utils import estimar_tono_publicacion
 
@@ -110,11 +114,21 @@ def update_publicacion(pub_id, data):
 
 
 def get_publicaciones_con_conceptos():
-    publicaciones_raw = list(get_collection("publicaciones").find())
-    conceptos_raw = list(get_collection("conceptos_interes").find())
+    publicaciones_raw = get_publicaciones()
+    conceptos_raw = get_conceptos()
+    fuentes_raw = get_fuentes()
+    keywords_raw = get_keywords()
 
-    # 1. Mapa de concepto_id a sus datos
+    # 1. Mapa de fuentes por _id
+    fuentes_por_id = {f["_id"]: f for f in fuentes_raw}
+
+    # 2. Mapa de keywords por _id
+    keywords_por_id = {kw["_id"]: kw for kw in keywords_raw}
+
+    # 3. Mapa de conceptos por _id
     conceptos_por_id = {}
+    publicacion_to_conceptos_map = {}
+
     for concepto in conceptos_raw:
         concepto_id = str(concepto["_id"])
         conceptos_por_id[concepto_id] = {
@@ -124,31 +138,38 @@ def get_publicaciones_con_conceptos():
             "keywords_ids": [str(kid) for kid in concepto.get("keywords_ids", [])]
         }
 
-    # 2. Mapa inverso: publicacion_id (str) -> lista de concepto_id (str)
-    publicacion_to_conceptos_map = {}
-    for concepto in conceptos_raw:
-        concepto_id = str(concepto["_id"])
         for pub_id in concepto.get("publicaciones_relacionadas_ids", []):
             if pub_id:
                 str_pub_id = str(pub_id)
                 publicacion_to_conceptos_map.setdefault(str_pub_id, []).append(concepto_id)
 
-    # 3. Recorrer publicaciones y embeber solo si tienen conceptos
+    # 4. Procesar publicaciones con conceptos, fuente y keywords
     publicaciones_resultado = []
 
     for pub in publicaciones_raw:
         pub_id = str(pub["_id"])
         pub["_id"] = pub_id
-        pub["keywords_relacionadas_ids"] = [str(kid) for kid in pub.get("keywords_relacionadas_ids", [])]
 
-        if pub_id in publicacion_to_conceptos_map:
-            conceptos_embebidos = [
-                conceptos_por_id[cid]
-                for cid in publicacion_to_conceptos_map[pub_id]
-                if cid in conceptos_por_id
-            ]
-            if conceptos_embebidos:
-                pub["conceptos_relacionados"] = conceptos_embebidos
-                publicaciones_resultado.append(pub)
+        # --- Solo incluir si tiene al menos un concepto relacionado
+        if pub_id not in publicacion_to_conceptos_map:
+            continue
+
+        # --- Reemplazar fuente
+        fuente_id = str(pub.get("fuente_id"))
+        pub["fuente"] = fuentes_por_id.get(fuente_id, None)
+
+        # --- Reemplazar keywords por objetos completos
+        keywords_ids = pub.get("keywords_relacionadas_ids", [])
+        pub["keywords"] = [keywords_por_id.get(str(kid)) for kid in keywords_ids if str(kid) in keywords_por_id]
+        pub.pop("keywords_relacionadas_ids", None)
+
+        # --- Reemplazar conceptos relacionados
+        conceptos_embebidos = []
+        for concepto_id in publicacion_to_conceptos_map[pub_id]:
+            if concepto_id in conceptos_por_id:
+                conceptos_embebidos.append(conceptos_por_id[concepto_id])
+        pub["conceptos_relacionados"] = conceptos_embebidos
+
+        publicaciones_resultado.append(pub)
 
     return publicaciones_resultado

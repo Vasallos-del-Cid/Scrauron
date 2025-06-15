@@ -130,18 +130,27 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.8rem;
 }
 
 .tags {
   display: flex;
   gap: 5px;
+ margin: 0 auto;
+ 
 }
 
 .badge {
-  background: #ccc;
+  background: var(--secondary-color);
   padding: 3px 8px;
   border-radius: 12px;
-  font-size: 0.7rem;
+  color: var(--text-gold);
+}
+
+.tono{
+  text-align: right;
+  color: var(--primary-color);
+  margin-top: 4px;
 }
 
 .fuente a,

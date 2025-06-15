@@ -9,21 +9,32 @@
   ></ejs-textbox>
 
   <ejs-dropdownlist
-    [dataSource]="fuentes"
-    [(ngModel)]="filtroFuente"
-    (change)="aplicarFiltros()"
+    [dataSource]="conceptosOpts"
+    [(ngModel)]="filtroConceptoId"
+    [fields]="{ text: 'nombre', value: 'id' }"
+    [value]="filtroConceptoId"
+    (change)="onConceptoChange($event)"
+    placeholder="Concepto"
+  ></ejs-dropdownlist>
+
+  <ejs-dropdownlist
+    [dataSource]="fuentesOpts"
+    [(ngModel)]="filtroFuenteId"
+    [fields]="{ text: 'nombre', value: 'id' }"
+    [value]="filtroFuenteId"
+    (change)="onFuenteChange($event)"
     placeholder="Fuente"
   ></ejs-dropdownlist>
 
   <div class="filtro-item">
-  <ejs-dropdownlist
-    id="tono"
-    [dataSource]="valoraciones"
-    [(ngModel)]="filtroValoracion"
-    (change)="aplicarFiltros($event)"
-        placeholder="Tono"
-  ></ejs-dropdownlist>
-</div>
+    <ejs-dropdownlist
+      id="tono"
+      [dataSource]="valoraciones"
+      [(ngModel)]="filtroValoracion"
+      (change)="aplicarFiltros()"
+      placeholder="Tono"
+    ></ejs-dropdownlist>
+  </div>
 
   <ejs-datepicker
     [(ngModel)]="fechaDesde"
@@ -71,9 +82,17 @@
           <!--  TODO: Cambiar por el nombre de la fuente cuando se recupere desde back con join de alertas y fuentes
           <a [href]="alerta.url" target="_blank">{{ alerta.fuente }}</a> 
           -->
-          <a [href]="alerta.url" target="_blank">{{ alerta.url }}</a>
+          <a [href]="alerta.url" target="_blank">{{ alerta.fuente?.nombre }}</a>
         </div>
-        <div class="fecha">Tono: {{ alerta.tono || "Sin calificar" }}</div>
+        <div class="tags">
+          <span
+            *ngFor="let concepto of alerta.conceptos_relacionados"
+            class="badge"
+          >
+            {{ concepto.nombre }}
+          </span>
+        </div>
+        <div class="tono">Tono: {{ alerta.tono || "Sin calificar" }}</div>
       </div>
     </div>
   </div>
