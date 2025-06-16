@@ -1,8 +1,7 @@
 from flask import Blueprint, request, jsonify
-
-from ..models.modelUtils.SerializeJson import SerializeJson
 from datetime import datetime
 from bson import ObjectId
+from ..models.modelUtils.SerializeJson import SerializeJson
 from ..models.publicacion import Publicacion
 from ..mongo.mongo_publicaciones import (
     get_publicaciones,
@@ -10,10 +9,12 @@ from ..mongo.mongo_publicaciones import (
     create_publicacion,
     update_publicacion,
     delete_publicacion,
-    delete_all_publicaciones, get_publicaciones_con_conceptos,
+    delete_all_publicaciones,
+    get_publicaciones_con_conceptos,
     filtrar_publicaciones
 )
-from ..mongo.mongo_fuentes import get_fuente_by_id
+from ..mongo.mongo_fuentes import get_fuente_by_id, get_collection, get_fuentes_dict
+from ..mongo.mongo_conceptos import get_collection as get_conceptos_collection
 
 api_publicaciones = Blueprint('api_publicaciones', __name__)
 
@@ -49,7 +50,6 @@ def create_publicacion_endpoint():
         data = request.get_json()
         publicacion = Publicacion.from_dict(data)
 
-        # Asegurar que no haya un _id manual que cause conflicto
         pub_dict = publicacion.to_dict()
         if "_id" in pub_dict and pub_dict["_id"] is None:
             del pub_dict["_id"]
@@ -105,7 +105,6 @@ def delete_all_publicaciones_endpoint():
     except Exception as e:
         return {"error": str(e)}, 500
 
-# GET una publicación por ID
 @api_publicaciones.route('/publicacionesconceptos', methods=['GET'])
 @SerializeJson
 def publicaciones_con_conceptos():
@@ -115,41 +114,30 @@ def publicaciones_con_conceptos():
     except Exception as e:
         return {"error": f"Error al obtener publicaciones: {str(e)}"}, 500
 
-from flask import Blueprint, request, jsonify
-from ..models.modelUtils.SerializeJson import SerializeJson
-from datetime import datetime
-from bson import ObjectId
-from ..models.publicacion import Publicacion
-from ..mongo.mongo_publicaciones import filtrar_publicaciones
-from ..mongo.mongo_fuentes import get_fuentes_dict
-from ..mongo.mongo_conceptos import get_conceptos_dict
-
-api_publicaciones = Blueprint('api_publicaciones', __name__)
-
 @api_publicaciones.route('/publicaciones_filtradas', methods=['GET'])
 @SerializeJson
 def publicaciones_filtradas_endpoint():
     try:
         fecha_inicio_str = request.args.get("fechaInicio")
-        fecha_fin_str    = request.args.get("fechaFin")
-        concepto_id_str  = request.args.get("concepto_interes")
-        area_id_str      = request.args.get("area_id")
-        fuente_id_str    = request.args.get("fuente_id")
-        tono_str         = request.args.get("tono")
-        keywords_str     = request.args.getlist("keywordsRelacionadas")
-        busqueda_palabras= request.args.get("busqueda_palabras")
+        fecha_fin_str = request.args.get("fechaFin")
+        concepto_id_str = request.args.get("concepto_interes")
+        area_id_str = request.args.get("area_id")
+        fuente_id_str = request.args.get("fuente_id")
+        tono_str = request.args.get("tono")
+        keywords_str = request.args.getlist("keywordsRelacionadas")
+        busqueda_palabras = request.args.get("busqueda_palabras")
 
         if not fecha_inicio_str or not fecha_fin_str:
             return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
 
         fecha_inicio = datetime.fromisoformat(fecha_inicio_str)
-        fecha_fin    = datetime.fromisoformat(fecha_fin_str)
+        fecha_fin = datetime.fromisoformat(fecha_fin_str)
 
-        concepto_id  = ObjectId(concepto_id_str) if concepto_id_str else None
-        area_id      = ObjectId(area_id_str) if area_id_str else None
-        fuente_id    = ObjectId(fuente_id_str) if fuente_id_str else None
-        tono         = int(tono_str) if tono_str else None
-        keywords     = [ObjectId(k) for k in keywords_str] if keywords_str else None
+        concepto_id = ObjectId(concepto_id_str) if concepto_id_str else None
+        area_id = ObjectId(area_id_str) if area_id_str else None
+        fuente_id = ObjectId(fuente_id_str) if fuente_id_str else None
+        tono = int(tono_str) if tono_str else None
+        keywords = [ObjectId(k) for k in keywords_str] if keywords_str else None
 
         publicaciones = filtrar_publicaciones(
             fecha_inicio=fecha_inicio,
@@ -162,24 +150,26 @@ def publicaciones_filtradas_endpoint():
             fuente_id=fuente_id
         )
 
-        # -- Join con fuentes completas
-        fuentes_dict = { str(f["_id"]): f for f in get_fuentes_dict() }
+        # --- Obtener fuentes y convertir _id a str para coincidencia
+        fuentes_dict = {str(f["_id"]): f for f in get_fuentes_dict()}
 
-        # -- Join con conceptos completos
-        conceptos_dict = { str(c["_id"]): c for c in get_conceptos_dict() }
-
+        # --- Obtener conceptos de Mongo
+        all_concept_ids = set()
         for pub in publicaciones:
-            # Añadir fuente completa
+            for cid in pub.get("conceptos_relacionados_ids", []):
+                all_concept_ids.add(cid)
+        conceptos_cursor = get_conceptos_collection("conceptos_interes").find({"_id": {"$in": list(all_concept_ids)}})
+        conceptos_dict = {str(c["_id"]): c for c in conceptos_cursor}
+
+        # --- Asignar objetos completos a cada publicación
+        for pub in publicaciones:
             f_id = str(pub.get("fuente_id"))
             pub["fuente"] = fuentes_dict.get(f_id)
 
-            # Mapear conceptos relacionados desde IDs
-            cr_ids = pub.get("conceptos_relacionados_ids", [])
+            cr_ids = [str(cid) for cid in pub.get("conceptos_relacionados_ids", [])]
             pub["conceptos_relacionados"] = [
                 conceptos_dict[cid] for cid in cr_ids if cid in conceptos_dict
             ]
-
-            # Opcional: eliminar campos redundantes
             pub.pop("conceptos_relacionados_ids", None)
 
         return publicaciones, 200
@@ -188,4 +178,3 @@ def publicaciones_filtradas_endpoint():
         return {"error": f"Parámetro inválido: {str(ve)}"}, 400
     except Exception as e:
         return {"error": f"Error inesperado: {str(e)}"}, 500
-

@@ -44,7 +44,7 @@ export class PublicacionesFeedComponent implements OnInit {
   public fechaHasta?: Date;
 
   public expandidos = new Set<string>();
-  public loading = true;
+  public loading = false;
 
   public alertas: {
     fecha: Date | undefined;
@@ -90,40 +90,46 @@ export class PublicacionesFeedComponent implements OnInit {
   }
 
   aplicarFiltros(): void {
-    if (!this.fechaDesde || !this.fechaHasta) {
-      this.alertasFiltradas = [];
-      return;
-    }
-
-    this.loading = true;
-
-    this.servicio.getFiltradas({
-      fechaDesde: this.fechaDesde,
-      fechaHasta: this.fechaHasta,
-      tono: this.filtroValoracion ?? undefined,
-      busqueda_palabras: this.filtroBusqueda || undefined,
-      fuente_id: this.filtroFuenteId || undefined,
-      concepto_interes: this.filtroConceptoId || undefined,
-    }).subscribe({
-      next: (result: Publicacion[]) => {
-        this.alertas = result.map(pub => ({
-          ...pub,
-          fecha: pub.fecha ? new Date(pub.fecha) : undefined,
-          fuente: pub.fuente ?? undefined,
-          conceptos_relacionados: pub.conceptos_relacionados || []
-        }));
-
-        this.alertasFiltradas = [...this.alertas];
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error("Error al obtener publicaciones filtradas", err);
-        this.alertas = [];
-        this.alertasFiltradas = [];
-        this.loading = false;
-      }
-    });
+  if (!this.fechaDesde || !this.fechaHasta) {
+    this.alertasFiltradas = [];
+    return;
   }
+
+  // Ajustar fechas seleccionadas sumando 2 horas
+  const desde = new Date(this.fechaDesde);
+  desde.setHours(2, 1, 0, 0); // 00:01 + 2h = 02:01
+
+  const hasta = new Date(this.fechaHasta);
+  hasta.setHours(25, 59, 0, 0); // 23:59 + 2h = 01:59 del día siguiente
+
+  this.loading = true;
+
+  this.servicio.getFiltradas({
+    fechaDesde: desde,
+    fechaHasta: hasta,
+    tono: this.filtroValoracion ?? undefined,
+    busqueda_palabras: this.filtroBusqueda || undefined,
+    fuente_id: this.filtroFuenteId || undefined,
+    concepto_interes: this.filtroConceptoId || undefined,
+  }).subscribe({
+    next: (result: Publicacion[]) => {
+      this.alertas = result.map(pub => ({
+        ...pub,
+        fecha: pub.fecha ? new Date(pub.fecha) : undefined, // no se toca la fecha del backend
+        fuente: pub.fuente ?? undefined,
+        conceptos_relacionados: pub.conceptos_relacionados || []
+      }));
+      this.alertasFiltradas = [...this.alertas];
+      this.loading = false;
+    },
+    error: (err) => {
+      console.error("Error al obtener publicaciones filtradas", err);
+      this.alertas = [];
+      this.alertasFiltradas = [];
+      this.loading = false;
+    }
+  });
+}
 
   resetFiltros(): void {
     this.filtroBusqueda = '';
