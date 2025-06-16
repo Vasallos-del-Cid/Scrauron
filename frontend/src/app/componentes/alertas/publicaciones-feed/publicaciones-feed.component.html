@@ -12,7 +12,6 @@
     [(ngModel)]="filtroConceptoId"
     [fields]="{ text: 'nombre', value: 'id' }"
     [value]="filtroConceptoId"
-    (change)="onConceptoChange($event)"
     placeholder="Concepto"
   ></ejs-dropdownlist>
 
@@ -21,17 +20,8 @@
     [(ngModel)]="filtroFuenteId"
     [fields]="{ text: 'nombre', value: 'id' }"
     [value]="filtroFuenteId"
-    (change)="onFuenteChange($event)"
     placeholder="Fuente"
   ></ejs-dropdownlist>
-
-  <ejs-dropdownlist
-  [dataSource]="conceptos"
-  [(ngModel)]="filtroConcepto"
-  placeholder="Concepto"
-  [fields]="{ text: 'nombre', value: '_id' }"
-></ejs-dropdownlist>
-
 
 
   <div class="filtro-item">
@@ -39,7 +29,6 @@
       id="tono"
       [dataSource]="valoraciones"
       [(ngModel)]="filtroValoracion"
-      (change)="aplicarFiltros()"
       placeholder="Tono"
     ></ejs-dropdownlist>
   </div>

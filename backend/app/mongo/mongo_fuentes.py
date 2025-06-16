@@ -13,6 +13,14 @@ def get_fuentes():
         f["_id"] = str(f["_id"])  # Convertir ObjectId para JSON
     return fuentes
 
+
+def get_fuentes_dict():
+    """
+    Devuelve una lista de documentos fuente como diccionarios.
+    """
+    return list(get_collection("fuentes").find())
+
+
 # --------------------------------------------------
 def get_fuente_by_id(fuente_id: str):
     if not ObjectId.is_valid(fuente_id):

@@ -100,8 +100,6 @@ class NoticiasSpider(scrapy.Spider):
 
         contenido_unido = " ".join(contenido)
 
-        print(contenido_unido)
-
         publicacion = Publicacion(
             titulo=titulo,
             url=url,
