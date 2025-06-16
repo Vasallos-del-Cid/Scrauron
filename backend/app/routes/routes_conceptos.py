@@ -22,10 +22,9 @@ def _convert_objectid(doc):
         doc = dict(doc)
     if "_id" in doc and isinstance(doc["_id"], object):
         doc["_id"] = str(doc["_id"])
-    if "publicaciones_relacionadas_ids" in doc:
-        doc["publicaciones_relacionadas_ids"] = [str(pid) for pid in doc["publicaciones_relacionadas_ids"]]
     return doc
 
+# Obtiene todos los conceptos registrados
 @api_conceptos.route('/conceptos', methods=['GET'])
 @SerializeJson
 def get_conceptos_endpoint():
@@ -35,7 +34,7 @@ def get_conceptos_endpoint():
     except Exception as e:
         return {"error": str(e)},500
 
-
+# Obtiene un concepto por su ID
 @api_conceptos.route('/conceptos/<concepto_id>', methods=['GET'])
 @SerializeJson
 def get_concepto_endpoint(concepto_id):
@@ -47,6 +46,7 @@ def get_concepto_endpoint(concepto_id):
     except ValueError as ve:
         return {"error": str(ve)},400
 
+# Crea un nuevo concepto
 @api_conceptos.route('/conceptos', methods=['POST'])
 @SerializeJson
 def create_concepto_endpoint():
@@ -63,6 +63,7 @@ def create_concepto_endpoint():
     except Exception as e:
         return {"error": str(e)},400
 
+# Actualiza parcialmente un concepto
 @api_conceptos.route('/conceptos/<concepto_id>', methods=['PATCH'])
 @SerializeJson
 def patch_concepto_endpoint(concepto_id):
@@ -77,6 +78,7 @@ def patch_concepto_endpoint(concepto_id):
     except Exception as e:
         return {"error": str(e)},500
 
+# Elimina un concepto por su ID
 @api_conceptos.route('/conceptos/<concepto_id>', methods=['DELETE'])
 @SerializeJson
 def delete_concepto_endpoint(concepto_id):
@@ -88,7 +90,7 @@ def delete_concepto_endpoint(concepto_id):
     except ValueError as ve:
         return {"error": str(ve)},400
 
-# PATCH /conceptos/<id>/generar_descripcion → Genera descripción y devuelve el concepto actualizado
+# Genera una descripción para el concepto utilizando LLM
 @api_conceptos.route('/conceptos/<concepto_id>/generar_descripcion', methods=['PATCH'])
 @SerializeJson
 def generar_descripcion_concepto(concepto_id):
@@ -100,7 +102,7 @@ def generar_descripcion_concepto(concepto_id):
 
     return concepto.to_dict(),200
 
-# PATCH /conceptos/<id>/generar_keywords → Actualiza descripción y genera keywords
+# Genera keywords para un concepto con base en una nueva descripción
 @api_conceptos.route('/conceptos/<concepto_id>/generar_keywords', methods=['PATCH'])
 @SerializeJson
 def generar_keywords_concepto(concepto_id):
@@ -115,10 +117,7 @@ def generar_keywords_concepto(concepto_id):
         if not concepto:
             return {"error": "Concepto no encontrado"},404
 
-        # Actualizar la descripción recibida
         concepto.descripcion = nueva_descripcion
-
-        # Generar keywords con el LLM y actualizar el concepto
         add_keywords_llm(concepto)
 
         return concepto.to_dict(),200
@@ -126,7 +125,7 @@ def generar_keywords_concepto(concepto_id):
     except Exception as e:
         return {"error": f"Error al generar keywords para el concepto: {str(e)}"},500
 
-# PATCH /conceptos/<id>/keywords_aceptadas → Actualiza keywords y agrega concepto a area
+# Actualiza las keywords de un concepto y lo vincula a un área
 @api_conceptos.route('/conceptos/<area_id>/keywords_aceptadas', methods=['PATCH'])
 @SerializeJson
 def update_keywords_ids_en_area_endpoint(area_id):
@@ -135,7 +134,6 @@ def update_keywords_ids_en_area_endpoint(area_id):
             return {"error": "ID de área no válido."},400
 
         data = request.get_json()
-        # Obtener y validar el objeto concepto
         concepto_id = data.get("_id")
         if not concepto_id:
             return {"error": "El concepto debe contener _id."},400
@@ -147,7 +145,6 @@ def update_keywords_ids_en_area_endpoint(area_id):
         if not concepto:
             return {"error": "Concepto no encontrado"},404
 
-        # Obtener y validar keywords_ids
         keywords_ids_raw = data.get("keywords_ids", [])
         if not isinstance(keywords_ids_raw, list):
             return {"error": "keywords_ids debe ser una lista."},400
@@ -158,11 +155,9 @@ def update_keywords_ids_en_area_endpoint(area_id):
                 return {"error": f"ID de keyword no válido: {kid}"},400
             keywords_ids.append(ObjectId(str(kid)))
 
-        # Actualiza el concepto
         concepto.keywords_ids = keywords_ids
         update_concepto(concepto)
 
-        # Agrega el concepto al área usando tu función
         agregar_concepto_a_area(area_id, concepto._id)
 
         return concepto.to_dict(),200
@@ -170,12 +165,7 @@ def update_keywords_ids_en_area_endpoint(area_id):
     except Exception as e:
         return {"error": f"Error al actualizar keywords y vincular área: {str(e)}"},500
 
-
-    except Exception as e:
-        return {"error": f"Error al actualizar keywords y vincular área: {str(e)}"},500
-
-    
-    # Agrega una keyword al concepto (si no está ya)
+# Añade una keyword a un concepto
 @api_conceptos.route('/conceptos/<concepto_id>/keywords', methods=['POST'])
 @SerializeJson
 def add_keyword_to_concepto(concepto_id):
@@ -201,8 +191,7 @@ def add_keyword_to_concepto(concepto_id):
     except Exception as e:
         return {"error": f"Error al agregar keyword al concepto: {str(e)}"},500
 
-# ---------------------------------------------------
-# Elimina una keyword del concepto
+# Elimina una keyword de un concepto
 @api_conceptos.route('/conceptos/<concepto_id>/keywords/<keyword_id>', methods=['DELETE'])
 @SerializeJson
 def remove_keyword_from_concepto(concepto_id, keyword_id):
@@ -225,9 +214,7 @@ def remove_keyword_from_concepto(concepto_id, keyword_id):
     except Exception as e:
         return {"error": f"Error al eliminar keyword del concepto: {str(e)}"},500
 
-# ---------------------------------------------------
-# Da los conceptos de un area
-
+# Devuelve los conceptos asociados a un área
 @api_conceptos.route('/conceptos/area', methods=['GET'])
 @SerializeJson
 def get_conceptos_in_area():
@@ -241,4 +228,3 @@ def get_conceptos_in_area():
 
     except Exception as e:
         return {"error": f"Error al obtener conceptos: {str(e)}"},500
-

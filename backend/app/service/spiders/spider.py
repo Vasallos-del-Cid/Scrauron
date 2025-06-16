@@ -30,7 +30,6 @@ class NoticiasSpider(scrapy.Spider):
         if not fuente_json:
             raise ValueError("Se requiere el parámetro 'fuente_json' con los datos de la fuente.")
 
-        # Carga y deserializa la fuente
         self.fuente = Fuente.from_dict(json.loads(fuente_json))
         self.start_urls = [self.fuente.url]
 
@@ -44,8 +43,8 @@ class NoticiasSpider(scrapy.Spider):
 
     def extraer_titular_noticias(self, response):
         titulos_baneados = {
-         "Nacional", "Internacional", "Economía", "Opinión", "Tele",
-         "Gente", "Deportes", "20bits", "Ed. Impresa"
+            "Nacional", "Internacional", "Economía", "Opinión", "Tele",
+            "Gente", "Deportes", "20bits", "Ed. Impresa"
         }
 
         for noticia in response.xpath(self.fuente.etiqueta_titulo):
@@ -55,30 +54,24 @@ class NoticiasSpider(scrapy.Spider):
             if texto and enlace:
                 texto_limpio = " ".join(t.strip() for t in texto if t.strip())
 
-                # Ignorar secciones genéricas
                 if len(texto_limpio.split()) == 1 and texto_limpio.strip() in titulos_baneados:
                     logging.info(f"⛔ Título ignorado: '{texto_limpio}'")
                     continue
 
-                # Ignorar títulos h1 demasiado cortos
                 if "h1" in self.fuente.etiqueta_titulo and len(texto_limpio.split()) <= 3:
                     continue
 
-                # Generar URL absoluta
                 url_completa = response.urljoin(enlace)
 
-                # Validar que pertenece al dominio base
                 if not url_completa.startswith(self.fuente.url):
                     logging.info(f"⛔ Ignorada URL fuera de dominio: {url_completa}")
                     continue
 
-                # Verificar si ya existe en Mongo
                 if get_collection("publicaciones").find_one({"url": url_completa}):
                     logging.warning(f"⚠️ Ya existe en Mongo: {url_completa}")
                     self.total_ignorados += 1
                     continue
 
-                # Crear solicitud para extraer contenido
                 yield scrapy.Request(
                     url_completa,
                     callback=self.extraer_contenido_noticia_nueva,
@@ -88,7 +81,6 @@ class NoticiasSpider(scrapy.Spider):
                         'fuente_id': self.fuente._id
                     }
                 )
-
 
     def extraer_contenido_noticia_nueva(self, response):
         delay = random.uniform(0.5, 2)
@@ -108,6 +100,8 @@ class NoticiasSpider(scrapy.Spider):
 
         contenido_unido = " ".join(contenido)
 
+        print(contenido_unido)
+
         publicacion = Publicacion(
             titulo=titulo,
             url=url,
@@ -126,10 +120,8 @@ class NoticiasSpider(scrapy.Spider):
             self.total_guardados += 1
             logging.info(f"✅ Artículo guardado: {titulo} | Fuente: {fuente.nombre}")
 
-            # Enlazar conceptos
-            conceptos_enlazados = buscar_y_enlazar_a_conceptos(publicacion)
+            conceptos_enlazados_ids = buscar_y_enlazar_a_conceptos(publicacion)
 
-            # Enlazar keywords
             keywords_relacionadas = obtener_keywords_relacionadas(publicacion)
             if keywords_relacionadas:
                 logging.info(f"🔗 Keywords relacionadas encontradas ({len(keywords_relacionadas)}):")
@@ -138,11 +130,10 @@ class NoticiasSpider(scrapy.Spider):
             else:
                 logging.info("📭 No se encontraron keywords relacionadas con la publicación.")
 
-            # Extraer los ObjectId de las keywords
             publicacion.keywords_relacionadas_ids = [ObjectId(k["keyword_id"]) for k in keywords_relacionadas]
 
-            # Analizar el contenido si hay conceptos relacionados
-            if conceptos_enlazados:
+            if conceptos_enlazados_ids:
+                publicacion.conceptos_relacionados_ids = conceptos_enlazados_ids
                 publicacion = analizar_publicacion(publicacion)
                 self.total_relacionados += 1
             else:
@@ -155,7 +146,8 @@ class NoticiasSpider(scrapy.Spider):
                     "tono": publicacion.tono,
                     "ciudad_region": str(publicacion.ciudad_region) if publicacion.ciudad_region else None,
                     "pais": str(publicacion.pais) if publicacion.pais else None,
-                    "keywords_relacionadas_ids": publicacion.keywords_relacionadas_ids
+                    "keywords_relacionadas_ids": publicacion.keywords_relacionadas_ids,
+                    "conceptos_relacionados_ids": publicacion.conceptos_relacionados_ids
                 },
             )
         except DuplicateKeyError:
@@ -168,7 +160,6 @@ class NoticiasSpider(scrapy.Spider):
             logging.error(f" ❌ Error inesperado: {e}")
 
         print("---------------------------------------------------------------------------------")
-
 
     def closed(self, reason):
         logging.info(f" 📦 Total guardados: {self.total_guardados}")

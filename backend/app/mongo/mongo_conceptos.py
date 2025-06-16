@@ -14,8 +14,8 @@ from .mongo_utils import get_collection
 from ..models.concepto_interes import ConceptoInteres
 from ..service.llm.llm_utils import generar_descripcion_concepto, generar_keywords_descriptivos
 
-
 # --------------------------------------------------------------------
+# Recupera todos los conceptos desde la colección "conceptos_interes"
 def get_conceptos():
     try:
         conceptos_raw = get_collection("conceptos_interes").find()
@@ -23,31 +23,27 @@ def get_conceptos():
         for c in conceptos_raw:
             c["_id"] = str(c["_id"])
             c["keywords_ids"] = [str(kid) for kid in c.get("keywords_ids", [])]
-            c["publicaciones_relacionadas_ids"] = [str(pid) for pid in c.get("publicaciones_relacionadas_ids", [])]
             conceptos.append(c)
-        return conceptos  # <-- devuelves los datos crudos
+        return conceptos
     except Exception as e:
         logging.error(f"Error al recuperar conceptos: {e}")
         return []
 
-
 # --------------------------------------------------------------------
+# Devuelve los documentos de conceptos en bruto sin formatear
 def get_conceptos_dict():
     try:
         conceptos_raw = list(get_collection("conceptos_interes").find())
         conceptos = []
         for c in conceptos_raw:
-            c.setdefault("publicaciones_relacionadas_ids", [])
-            if not isinstance(c["publicaciones_relacionadas_ids"], list):
-                c["publicaciones_relacionadas_ids"] = []
             conceptos.append(c)
         return conceptos
     except Exception as e:
         logging.error(f"Error al recuperar conceptos en bruto: {e}")
         return []
 
-
 # --------------------------------------------------------------------
+# Busca un concepto por su ID
 def get_concepto_by_id(concepto_id: str):
     if not ObjectId.is_valid(concepto_id):
         logging.warning(f"ID no válido: {concepto_id}")
@@ -59,8 +55,8 @@ def get_concepto_by_id(concepto_id: str):
         logging.error(f"Error al buscar concepto por ID: {e}")
         return None
 
-
 # --------------------------------------------------------------------
+# Devuelve una lista de conceptos a partir de una lista de IDs
 def get_conceptos_ids(ids):
     try:
         return list(get_collection("conceptos_interes").find({"_id": {"$in": ids}}))
@@ -68,8 +64,8 @@ def get_conceptos_ids(ids):
         logging.error(f"Error al obtener conceptos por IDs: {e}")
         return []
 
-
 # --------------------------------------------------------------------
+# Inserta un nuevo concepto en la base de datos
 def create_concepto(concepto):
     try:
         data = concepto.to_dict()
@@ -82,8 +78,8 @@ def create_concepto(concepto):
         logging.error(f"❌ Error creando concepto: {e}")
         return None
 
-
 # --------------------------------------------------------------------
+# Elimina un concepto por su ID
 def delete_concepto(concepto_id):
     if not ObjectId.is_valid(concepto_id):
         raise ValueError("ID no válido")
@@ -94,20 +90,18 @@ def delete_concepto(concepto_id):
         logging.error(f"Error al eliminar concepto: {e}")
         return 0
 
-
 # --------------------------------------------------------------------
+# Actualiza un concepto dado un objeto ConceptoInteres
 def update_concepto(concepto: ConceptoInteres):
     concepto_id = concepto._id
     if not concepto_id:
         raise ValueError("El concepto no tiene _id. No se puede actualizar.")
 
-    # Construir manualmente el diccionario manteniendo los ObjectId
     data = {
         "_id": ObjectId(concepto._id),
         "nombre": concepto.nombre,
         "descripcion": concepto.descripcion,
         "keywords_ids": concepto.keywords_ids,
-        "publicaciones_relacionadas_ids": concepto.publicaciones_relacionadas_ids,
     }
 
     try:
@@ -124,12 +118,12 @@ def update_concepto(concepto: ConceptoInteres):
         raise
 
 # --------------------------------------------------------------------
+# Actualiza un concepto a partir de un diccionario, con reintentos si hay errores de red
 def update_concepto_dict(concepto_dict: dict, max_retries=3, backoff_base=2):
     concepto_id = concepto_dict.get("_id")
     if not concepto_id:
         raise ValueError("El concepto no tiene _id. No se puede actualizar.")
 
-    # Validación simple de campos críticos
     if "nombre" not in concepto_dict or not concepto_dict["nombre"]:
         logging.warning("El concepto no tiene nombre definido. Revisión necesaria.")
 
@@ -157,8 +151,8 @@ def update_concepto_dict(concepto_dict: dict, max_retries=3, backoff_base=2):
     logging.error(f"❌ Fallo persistente al actualizar concepto tras {max_retries} intentos.")
     raise ConnectionError("No se pudo actualizar el concepto por errores de conexión.")
 
-
 # --------------------------------------------------------------------
+# Genera y añade una descripción automática con LLM al concepto
 def add_descripcion_llm(concepto: ConceptoInteres):
     try:
         descripcion = generar_descripcion_concepto(concepto.nombre)
@@ -169,73 +163,32 @@ def add_descripcion_llm(concepto: ConceptoInteres):
         logging.error(f"Error generando descripción con LLM: {e}")
         return None
 
-
 # --------------------------------------------------------------------
+# Genera keywords automáticas con LLM y las añade al concepto
 def add_keywords_llm(concepto: ConceptoInteres):
     try:
-        # Generar y guardar keywords como objetos con _id
         keywords = generar_keywords_descriptivos(concepto.descripcion)
-
-        # Asignar solo los ObjectId de las keywords al concepto
         concepto.keywords_ids = [ObjectId(k._id) for k in keywords if k._id]
-
-        # Guardar el concepto actualizado en Mongo
         update_concepto(concepto)
-
         return keywords
-
     except Exception as e:
         logging.error(f"❌ Error generando keywords con LLM: {e}")
         return []
 
 # --------------------------------------------------------------------
+# Añade keywords aceptadas manualmente al concepto y actualiza
 def add_keywords_aceptadas(concepto: ConceptoInteres):
     try:
-        # Sobrescribe completamente las keywords anteriores (ya deben estar en concepto.keywords_ids)
-        concepto.keywords_ids = list(set(concepto.keywords_ids))  # elimina duplicados por si acaso
-
+        concepto.keywords_ids = list(set(concepto.keywords_ids))
         update_concepto(concepto)
-
         return jsonify(concepto.to_dict()), 200
-
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         return jsonify({"error": f"Error al guardar keywords en el concepto: {str(e)}"}), 500
 
 # --------------------------------------------------------------------
-
-
-def get_conceptos_by_area_id(area_oid):
-    area = get_collection('areas_de_trabajo').find_one({'_id': area_oid})
-    if not area:
-        return []
-
-    conceptos_oids = area.get('conceptos_interes_ids', [])
-    conceptos = []
-
-    for concepto_oid in conceptos_oids:
-        concepto = get_collection('conceptos_interes').find_one({'_id': concepto_oid})
-        if concepto:
-            # Convertimos los ObjectId a string antes de devolver
-            concepto["_id"] = str(concepto["_id"])
-            concepto["keywords_ids"] = [str(k) for k in concepto.get("keywords_ids", [])]
-            concepto["publicaciones_relacionadas_ids"] = [str(p) for p in concepto.get("publicaciones_relacionadas_ids", [])]
-            conceptos.append(concepto)
-
-    return conceptos
-
-
-# --------------------------------------------------------------------
-
-def serialize_concepto(doc):
-    doc["_id"] = str(doc["_id"])
-    if "area_id" in doc:
-        doc["area_id"] = str(doc["area_id"])
-    return doc
-
-# --------------------------------------------------------------------
-
+# Recupera los conceptos de una determinada área por su ID
 def get_conceptos_by_area_id(area_oid):
     area = get_collection('areas_de_trabajo').find_one({'_id': area_oid})
     if not area:
@@ -251,8 +204,14 @@ def get_conceptos_by_area_id(area_oid):
         if concepto:
             concepto["_id"] = str(concepto["_id"])
             concepto["keywords_ids"] = [str(k) for k in concepto.get("keywords_ids", [])]
-            concepto["publicaciones_relacionadas_ids"] = [str(p) for p in concepto.get("publicaciones_relacionadas_ids", [])]
             conceptos.append(concepto)
 
     return conceptos
 
+# --------------------------------------------------------------------
+# Serializa un documento de concepto para que sea compatible con JSON
+def serialize_concepto(doc):
+    doc["_id"] = str(doc["_id"])
+    if "area_id" in doc:
+        doc["area_id"] = str(doc["area_id"])
+    return doc

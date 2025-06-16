@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify
-
 from ..models.modelUtils.SerializeJson import SerializeJson
 from datetime import datetime
 from bson import ObjectId
@@ -10,13 +9,14 @@ from ..mongo.mongo_publicaciones import (
     create_publicacion,
     update_publicacion,
     delete_publicacion,
-    delete_all_publicaciones, get_publicaciones_con_conceptos,
+    delete_all_publicaciones,
+    get_publicaciones_con_conceptos,
     filtrar_publicaciones
 )
 
 api_publicaciones = Blueprint('api_publicaciones', __name__)
 
-# GET todas las publicaciones
+# Obtiene todas las publicaciones
 @api_publicaciones.route('/publicaciones', methods=['GET'])
 @SerializeJson
 def get_publicaciones_endpoint():
@@ -26,7 +26,7 @@ def get_publicaciones_endpoint():
     except Exception as e:
         return {"error": f"Error al obtener publicaciones: {str(e)}"}, 500
 
-# GET una publicación por ID
+# Obtiene una publicación por su ID
 @api_publicaciones.route('/publicaciones/<pub_id>', methods=['GET'])
 @SerializeJson
 def get_publicacion_endpoint(pub_id):
@@ -40,7 +40,7 @@ def get_publicacion_endpoint(pub_id):
     except Exception as e:
         return {"error": f"Error inesperado: {str(e)}"}, 500
 
-# POST crear publicación
+# Crea una nueva publicación
 @api_publicaciones.route('/publicaciones', methods=['POST'])
 @SerializeJson
 def create_publicacion_endpoint():
@@ -48,7 +48,6 @@ def create_publicacion_endpoint():
         data = request.get_json()
         publicacion = Publicacion.from_dict(data)
 
-        # Asegurar que no haya un _id manual que cause conflicto
         pub_dict = publicacion.to_dict()
         if "_id" in pub_dict and pub_dict["_id"] is None:
             del pub_dict["_id"]
@@ -66,7 +65,7 @@ def create_publicacion_endpoint():
     except Exception as e:
         return {"error": f"Error al crear publicación: {str(e)}"}, 500
 
-# PATCH actualizar publicación parcial
+# Actualiza parcialmente una publicación
 @api_publicaciones.route('/publicaciones/<pub_id>', methods=['PATCH'])
 @SerializeJson
 def patch_publicacion_endpoint(pub_id):
@@ -81,7 +80,7 @@ def patch_publicacion_endpoint(pub_id):
     except Exception as e:
         return {"error": f"Error al actualizar publicación: {str(e)}"}, 500
 
-# DELETE eliminar publicación
+# Elimina una publicación por ID
 @api_publicaciones.route('/publicaciones/<pub_id>', methods=['DELETE'])
 @SerializeJson
 def delete_publicacion_endpoint(pub_id):
@@ -95,6 +94,7 @@ def delete_publicacion_endpoint(pub_id):
     except Exception as e:
         return {"error": f"Error al eliminar publicación: {str(e)}"}, 500
 
+# Elimina todas las publicaciones
 @api_publicaciones.route('/publicaciones', methods=['DELETE'])
 @SerializeJson
 def delete_all_publicaciones_endpoint():
@@ -104,7 +104,7 @@ def delete_all_publicaciones_endpoint():
     except Exception as e:
         return {"error": str(e)}, 500
 
-# GET una publicación por ID
+# Obtiene publicaciones enriquecidas con conceptos relacionados
 @api_publicaciones.route('/publicacionesconceptos', methods=['GET'])
 @SerializeJson
 def publicaciones_con_conceptos():
@@ -114,11 +114,11 @@ def publicaciones_con_conceptos():
     except Exception as e:
         return {"error": f"Error al obtener publicaciones: {str(e)}"}, 500
 
+# Filtra publicaciones según diversos parámetros
 @api_publicaciones.route('/publicaciones_filtradas', methods=['GET'])
 @SerializeJson
 def publicaciones_filtradas_endpoint():
     try:
-        # Extrae y convierte los parámetros de la consulta
         fecha_inicio_str = request.args.get("fechaInicio")
         fecha_fin_str = request.args.get("fechaFin")
         concepto_id_str = request.args.get("concepto_interes")
@@ -131,18 +131,15 @@ def publicaciones_filtradas_endpoint():
         if not fecha_inicio_str or not fecha_fin_str:
             return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
 
-        # Convierte fechas
         fecha_inicio = datetime.fromisoformat(fecha_inicio_str)
         fecha_fin = datetime.fromisoformat(fecha_fin_str)
 
-        # Convierte opcionales
         concepto_id = ObjectId(concepto_id_str) if concepto_id_str else None
         area_id = ObjectId(area_id_str) if area_id_str else None
         fuente_id = ObjectId(fuente_id_str) if fuente_id_str else None
         tono = int(tono_str) if tono_str else None
         keywords = [ObjectId(k) for k in keywords_str] if keywords_str else None
 
-        # Llama a la función de filtrado
         publicaciones = filtrar_publicaciones(
             fecha_inicio=fecha_inicio,
             fecha_fin=fecha_fin,

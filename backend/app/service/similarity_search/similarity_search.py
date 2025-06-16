@@ -68,8 +68,7 @@ def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_simi
 
     D, I = index.search(np.array([emb_pub]), top_k)
 
-    conceptos_actualizados = []
-    pub_oid = ObjectId(publicacion._id)
+    conceptos_enlazados_ids = []
 
     for i, score in zip(I[0], D[0]):
         if i == -1:
@@ -80,24 +79,13 @@ def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_simi
         logging.info(f"🔎 Evaluando '{concepto['nombre']}' (similitud: {similitud:.4f})")
 
         if similitud >= umbral_similitud:
-            relacionados = concepto.get("publicaciones_relacionadas_ids", [])
-            if pub_oid in relacionados:
-                logging.error(f"🛑 Ya relacionada con '{concepto['nombre']}'")
-                continue
-
-            relacionados.append(pub_oid)
-            concepto["publicaciones_relacionadas_ids"] = relacionados
-
-            try:
-                update_concepto_dict(concepto)
-                conceptos_actualizados.append((concepto["nombre"], similitud))
-                logging.info(f" ✅ Relacionada con '{concepto['nombre']}' (similitud: {similitud:.2f})")
-            except Exception as e:
-                logging.error(f"❌ Error al actualizar concepto: {e}")
+            conceptos_enlazados_ids.append(ObjectId(concepto["_id"]))
+            logging.info(f" ✅ Relacionada con '{concepto['nombre']}' (similitud: {similitud:.2f})")
         else:
             logging.info(f"📉 Similitud insuficiente con '{concepto['nombre']}': {similitud:.2f}")
 
-    return conceptos_actualizados
+    return conceptos_enlazados_ids
+
 
 def obtener_keywords_relacionadas(publicacion, umbral_keyword=0.8, top_k=10):
     texto = normalizar_texto(f"{publicacion.titulo}. {publicacion.contenido}")

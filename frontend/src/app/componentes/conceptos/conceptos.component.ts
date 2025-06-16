@@ -22,9 +22,9 @@ export class ConceptosComponent {
     this.conceptosService = servicio;
   }
   columns: ColumnConfig[] = [
-    { field: 'nombre', headerText: 'Nombre', isPrimaryKey: true, width: 150 },
-    { field: 'descripcion', headerText: 'Descripción', width: 250 },
-    { field: 'keywords', headerText: 'Keywords', width: 150 },
+    { field: 'nombre', headerText: 'Nombre', isPrimaryKey: true, width: 250 },
+    { field: 'descripcion', headerText: 'Descripción' },
+    /* { field: 'keywords', headerText: 'Keywords', width: 150 },
     {
       field: 'publicaciones_relacionadas_ids',
       headerText: 'Nº Pub Rel.',
@@ -32,7 +32,7 @@ export class ConceptosComponent {
       textAlign: 'Center',
     },
 
-    /*   TODO: estos campos se deben agregar en back
+      TODO: estos campos se deben agregar en back
     { field: 'activa', headerText: 'Activa', type: 'boolean', width: 80, textAlign: 'Center' },
     { field: 'num_menciones', headerText: 'Menciones', textAlign: 'Right' },
     { field: 'usuario_creador', headerText: 'Creador' },
@@ -45,20 +45,21 @@ export class ConceptosComponent {
       name: 'nombre',
       label: 'Nombre',
       type: 'text',
+      placeholder: '',
       validators: [Validators.required],
     },
-    { name: 'descripcion', label: 'Descripción', type: 'text' },
+    { name: 'descripcion', label: 'Descripción', type: 'text',placeholder: '' },
     {
       name: 'keywords',
       label: 'Keywords',
       type: 'text',
-      placeholder: 'sepáralas por comas',
+      placeholder: 'sepáralos por comas',
     },
-    {
+    /* {
       name: 'publicaciones_relacionadas_ids',
       label: 'Publicaciones Relacionadas',
       type: 'select',
       options: [{ value: 'twiter', label: 'Twitter' }], // si quieres cargarlas dinámicamente
-    },
+    }, */
   ];
 }

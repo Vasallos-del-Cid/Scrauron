@@ -9,7 +9,7 @@ import { Observable, forkJoin } from 'rxjs';
 })
 export class PublicacionesService extends DataService<Publicacion> {
   constructor(http: HttpClient) {
-    super(http, 'publicaciones');
+    super(http, 'publicacionesconceptos');
   }
 
  getFiltradas(filtros: {
