@@ -118,63 +118,68 @@ def publicaciones_con_conceptos():
 @SerializeJson
 def publicaciones_filtradas_endpoint():
     try:
-        fecha_inicio_str = request.args.get("fechaInicio")
-        fecha_fin_str = request.args.get("fechaFin")
-        concepto_id_str = request.args.get("concepto_interes")
-        area_id_str = request.args.get("area_id")
-        fuente_id_str = request.args.get("fuente_id")
-        tono_str = request.args.get("tono")
-        keywords_str = request.args.getlist("keywordsRelacionadas")
-        busqueda_palabras = request.args.get("busqueda_palabras")
+        # Parámetros
+        fi = request.args.get("fechaInicio")
+        ff = request.args.get("fechaFin")
+        ci = request.args.get("concepto_interes")
+        ai = request.args.get("area_id")
+        fiu = request.args.get("fuente_id")
+        tone = request.args.get("tono")
+        kws = request.args.getlist("keywordsRelacionadas")
+        busq = request.args.get("busqueda_palabras")
 
-        if not fecha_inicio_str or not fecha_fin_str:
+        if not fi or not ff:
             return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
 
-        fecha_inicio = datetime.fromisoformat(fecha_inicio_str)
-        fecha_fin = datetime.fromisoformat(fecha_fin_str)
+        fecha_inicio = datetime.fromisoformat(fi)
+        fecha_fin = datetime.fromisoformat(ff)
 
-        concepto_id = ObjectId(concepto_id_str) if concepto_id_str else None
-        area_id = ObjectId(area_id_str) if area_id_str else None
-        fuente_id = ObjectId(fuente_id_str) if fuente_id_str else None
-        tono = int(tono_str) if tono_str else None
-        keywords = [ObjectId(k) for k in keywords_str] if keywords_str else None
+        concepto_oid = ObjectId(ci) if ci else None
+        area_id = ObjectId(ai) if ai else None
+        fuente_id = ObjectId(fiu) if fiu else None
+        tono = int(tone) if tone else None
+        keywords = [ObjectId(k) for k in kws] if kws else None
 
         publicaciones = filtrar_publicaciones(
             fecha_inicio=fecha_inicio,
             fecha_fin=fecha_fin,
-            concepto_interes=concepto_id,
             tono=tono,
             keywords_relacionadas=keywords,
-            busqueda_palabras=busqueda_palabras,
+            busqueda_palabras=busq,
             area_id=area_id,
             fuente_id=fuente_id
         )
 
-        # --- Obtener fuentes y convertir _id a str para coincidencia
-        fuentes_dict = {str(f["_id"]): f for f in get_fuentes_dict()}
+        if concepto_oid:
+            publicaciones = [
+                pub for pub in publicaciones
+                if concepto_oid in pub.get("conceptos_relacionados_ids", [])
+            ]
 
-        # --- Obtener conceptos de Mongo
-        all_concept_ids = set()
+        # --- Obtener fuentes y conceptos completos
+        fuentes_map = {str(f["_id"]): f for f in get_fuentes_dict()}
+        all_concepts = set()
         for pub in publicaciones:
-            for cid in pub.get("conceptos_relacionados_ids", []):
-                all_concept_ids.add(cid)
-        conceptos_cursor = get_conceptos_collection("conceptos_interes").find({"_id": {"$in": list(all_concept_ids)}})
-        conceptos_dict = {str(c["_id"]): c for c in conceptos_cursor}
+            all_concepts.update(pub.get("conceptos_relacionados_ids", []))
+        conceptos_map = {
+            str(c["_id"]): c
+            for c in get_conceptos_collection("conceptos_interes").find(
+                {"_id": {"$in": list(all_concepts)}}
+            )
+        }
 
-        # --- Asignar objetos completos a cada publicación
+        # Enriquecer publicaciones con objetos fuente y conceptos
         for pub in publicaciones:
             f_id = str(pub.get("fuente_id"))
-            pub["fuente"] = fuentes_dict.get(f_id)
+            pub["fuente"] = fuentes_map.get(f_id)
 
             cr_ids = [str(cid) for cid in pub.get("conceptos_relacionados_ids", [])]
-            pub["conceptos_relacionados"] = [
-                conceptos_dict[cid] for cid in cr_ids if cid in conceptos_dict
-            ]
+            pub["conceptos_relacionados"] = [conceptos_map[cid] for cid in cr_ids if cid in conceptos_map]
             pub.pop("conceptos_relacionados_ids", None)
 
         return publicaciones, 200
 
     except ValueError as ve:
-        return {"error": f"Parámetro inválido: {str(ve)}"}, 400
+        return {"error": f"Parámetro inválido: {ve}"}, 400
     except Exception as e:
-        return {"error": f"Error inesperado: {str(e)}"}, 500
+        return {"error": f"Error inesperado: {e}"}, 500

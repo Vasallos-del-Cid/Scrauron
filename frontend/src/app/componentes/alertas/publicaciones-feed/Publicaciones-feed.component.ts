@@ -34,7 +34,7 @@ export class PublicacionesFeedComponent implements OnInit {
   public fuentesOpts: { id: string | null; nombre: string }[] = [];
   public conceptosOpts: { id: string | null; nombre: string }[] = [];
 
-  public valoraciones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  public valoraciones = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   public filtroBusqueda = '';
   public filtroFuenteId: string | null = null;
@@ -135,7 +135,7 @@ export class PublicacionesFeedComponent implements OnInit {
     this.filtroBusqueda = '';
     this.filtroFuenteId = null;
     this.filtroConceptoId = null;
-    this.filtroValoracion = 0;
+    this.filtroValoracion = null;
     this.fechaDesde = undefined;
     this.fechaHasta = undefined;
     this.aplicarFiltros();
