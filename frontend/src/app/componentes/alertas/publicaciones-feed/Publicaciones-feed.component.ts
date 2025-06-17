@@ -33,8 +33,10 @@ export class PublicacionesFeedComponent implements OnInit {
   public alertasFiltradas: Publicacion[] = [];
   public fuentesOpts: { id: string | null; nombre: string }[] = [];
   public conceptosOpts: { id: string | null; nombre: string }[] = [];
-  public valoraciones = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
+  public valoraciones = [
+    { valor: null, nombre: 'Todos' },
+    ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ valor: n, nombre: n.toString() }))
+  ];
   public filtroBusqueda = '';
   public filtroFuenteId: string | null = null;
   public filtroConceptoId: string | null = null;
@@ -51,7 +53,7 @@ export class PublicacionesFeedComponent implements OnInit {
     private servicio: PublicacionesService,
     private fuenteService: FuenteService,
     private conceptoService: ConceptosService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.fuenteService.getAll();
@@ -64,6 +66,8 @@ export class PublicacionesFeedComponent implements OnInit {
     this.conceptoService.items$
       .pipe(map(list => [{ id: null, nombre: 'Todos' }, ...list.map(c => ({ id: c._id!, nombre: c.nombre }))]))
       .subscribe(opts => (this.conceptosOpts = opts));
+
+
   }
 
   aplicarFiltros(): void {

@@ -13,12 +13,14 @@
 
   <div class="filtro-item">
     <ejs-dropdownlist id="tono" [dataSource]="valoraciones" [(ngModel)]="filtroValoracion"
-      placeholder="Tono"></ejs-dropdownlist>
+      [fields]="{ text: 'nombre', value: 'valor' }" placeholder="Tono">
+    </ejs-dropdownlist>
   </div>
 
-  <ejs-datepicker [(ngModel)]="fechaDesde" placeholder="Desde"></ejs-datepicker>
 
-  <ejs-datepicker [(ngModel)]="fechaHasta" placeholder="Hasta"></ejs-datepicker>
+  <ejs-datepicker [(ngModel)]="fechaDesde" [format]="'dd/MM/yyyy'" placeholder="Desde"></ejs-datepicker>
+
+  <ejs-datepicker [(ngModel)]="fechaHasta" [format]="'dd/MM/yyyy'" placeholder="Hasta"></ejs-datepicker>
 
   <button class="boton-reset" (click)="aplicarFiltros()">Aplicar</button>
   <button class="boton-reset" (click)="resetFiltros()">Resetear</button>
