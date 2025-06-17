@@ -229,7 +229,7 @@ def analizar_publicacion(publicacion, max_tokens=600):
     f"Contenido:\n{publicacion.contenido}\n\n"
     "Primero, resume el artículo en un mínimo de 7 lineas y un máximo de 10 líneas, reformulando con sinónimos para evitar copiar frases literales.\n"
     "Después, valora el tono emocional implícito en el título del 1 (muy negativo) al 9 (muy positivo). Y 5 neutro.\n"
-    "A continuación, determina donde se producen los hechos de la publicación o si habla en relación a un lugar específico. Debes deteminar la ciudad o region en el campo ciudad_region y el pais en el campo pais. Si puedes deducir el pais pero no la ciudad_region, utiliza la capital del pais. Si no se puede deducir ninguno pon la palabra indeterminado en los dos campos.\n\n"
+    "A continuación, determina donde se producen los hechos de la publicación o si habla en relación a un lugar específico. Debes deteminar la ciudad o region en el campo ciudad_region y el pais en el campo pais. Si puedes deducir el pais pero no la ciudad_region, utiliza la capital del pais. Si no se puede deducir ninguno pon la palabra indeterminado en los dos campos. El pais debe estar en formato ISO3.\n\n"
     "Devuelve el resultado únicamente en formato JSON como este:\n"
     "{\n"
     "  \"resumen\": \"...\",\n"

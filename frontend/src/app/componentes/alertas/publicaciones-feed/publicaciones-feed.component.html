@@ -2,58 +2,35 @@
   <span>Publicaciones de interés</span>
 </div>
 <div class="barra-filtros">
-  <ejs-textbox
-    placeholder="Buscar alerta..."
-    [(ngModel)]="filtroBusqueda"
-  ></ejs-textbox>
+  <ejs-textbox placeholder="Buscar alerta..." [(ngModel)]="filtroBusqueda"></ejs-textbox>
 
-  <ejs-dropdownlist
-    [dataSource]="conceptosOpts"
-    [(ngModel)]="filtroConceptoId"
-    [fields]="{ text: 'nombre', value: 'id' }"
-    [value]="filtroConceptoId"
-    placeholder="Concepto"
-  ></ejs-dropdownlist>
+  <ejs-dropdownlist [dataSource]="conceptosOpts" [(ngModel)]="filtroConceptoId"
+    [fields]="{ text: 'nombre', value: 'id' }" [value]="filtroConceptoId" placeholder="Concepto"></ejs-dropdownlist>
 
-  <ejs-dropdownlist
-    [dataSource]="fuentesOpts"
-    [(ngModel)]="filtroFuenteId"
-    [fields]="{ text: 'nombre', value: 'id' }"
-    [value]="filtroFuenteId"
-    placeholder="Fuente"
-  ></ejs-dropdownlist>
+  <ejs-dropdownlist [dataSource]="fuentesOpts" [(ngModel)]="filtroFuenteId" [fields]="{ text: 'nombre', value: 'id' }"
+    [value]="filtroFuenteId" placeholder="Fuente"></ejs-dropdownlist>
 
 
   <div class="filtro-item">
-    <ejs-dropdownlist
-      id="tono"
-      [dataSource]="valoraciones"
-      [(ngModel)]="filtroValoracion"
-      placeholder="Tono"
-    ></ejs-dropdownlist>
+    <ejs-dropdownlist id="tono" [dataSource]="valoraciones" [(ngModel)]="filtroValoracion"
+      placeholder="Tono"></ejs-dropdownlist>
   </div>
 
-  <ejs-datepicker
-    [(ngModel)]="fechaDesde"
-    placeholder="Desde"
-  ></ejs-datepicker>
+  <ejs-datepicker [(ngModel)]="fechaDesde" placeholder="Desde"></ejs-datepicker>
 
-  <ejs-datepicker
-    [(ngModel)]="fechaHasta"
-    placeholder="Hasta"
-  ></ejs-datepicker>
+  <ejs-datepicker [(ngModel)]="fechaHasta" placeholder="Hasta"></ejs-datepicker>
 
   <button class="boton-reset" (click)="aplicarFiltros()">Aplicar</button>
   <button class="boton-reset" (click)="resetFiltros()">Resetear</button>
 </div>
 
+<!-- Mapa D3.js -->
+<app-mapa-mundial [dataPorPais]="datosMapa"></app-mapa-mundial>
+
 <div class="contenedor-cards">
   <app-spinner *ngIf="loading" message="Cargando noticias..."></app-spinner>
-  <div
-    *ngFor="let alerta of alertasFiltradas"
-    class="alerta-card"
-    [ngStyle]="{ 'background-color': getColor(alerta.tono) }"
-  >
+  <div *ngFor="let alerta of alertasFiltradas" class="alerta-card"
+    [ngStyle]="{ 'background-color': getColor(alerta.tono) }">
     <div class="card-texto">
       <!-- Header -->
       <div class="fila-header">
@@ -81,10 +58,7 @@
           <a [href]="alerta.url" target="_blank">{{ alerta.fuente?.nombre }}</a>
         </div>
         <div class="tags">
-          <span
-            *ngFor="let concepto of alerta.conceptos_relacionados"
-            class="badge"
-          >
+          <span *ngFor="let concepto of alerta.conceptos_relacionados" class="badge">
             {{ concepto.nombre }}
           </span>
         </div>

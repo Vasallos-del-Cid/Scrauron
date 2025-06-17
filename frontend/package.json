@@ -33,6 +33,7 @@
     "@syncfusion/ej2-material-theme": "~29.1.38",
     "d3": "^7.9.0",
     "rxjs": "~7.8.0",
+    "topojson-client": "^3.1.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
@@ -42,6 +43,7 @@
     "@angular/compiler-cli": "^19.2.0",
     "@types/d3": "^7.4.3",
     "@types/jasmine": "~5.1.0",
+    "@types/topojson-client": "^3.1.5",
     "dotenv": "^16.5.0",
     "jasmine-core": "~5.6.0",
     "karma": "~6.4.0",

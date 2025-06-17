@@ -50,9 +50,10 @@ export class PublicacionesService extends DataService<Publicacion> {
       params = params.append('keywordsRelacionadas', k)
     );
   }
-
+  
   return this.http.get<Publicacion[]>(`${this.baseUrl}/publicaciones_filtradas`, { params });
 }
+
 
   getConceptosArea(areaId: string): Observable<any[]> {
     const params = new HttpParams().set('area_id', areaId);
@@ -73,4 +74,5 @@ export class PublicacionesService extends DataService<Publicacion> {
       conceptos: this.getConceptosArea(areaId)
     });
   }
+   
 } 
