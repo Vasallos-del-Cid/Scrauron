@@ -193,11 +193,35 @@
   padding: 0;
 }
 
-.contenedor-mapa {
+.contenedor-mapa-grafico {
+  position: relative;
   width: 100%;
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
+  height: auto;
 }
 
+.mapa {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-left: -15%;
+}
+
+.grafico-sobrepuesto {
+  position: absolute;
+  bottom: 10px;
+  right: 20%;
+  width: 20%;       
+  height: 45%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
+  max-height: 50%;   /* Para evitar que crezca demasiado en pantallas grandes */
+  background: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  padding: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.grafico-sobrepuesto svg {
+  width: 50%;
+  height: auto;
+}
 

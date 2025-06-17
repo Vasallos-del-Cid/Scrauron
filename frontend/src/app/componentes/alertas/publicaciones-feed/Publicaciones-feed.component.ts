@@ -7,10 +7,14 @@ import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { PublicacionesService } from './publicaciones-feed.service';
 import { Publicacion } from './publicacion.model';
 import { MapaMundialComponent } from '../../mapa-mundial/mapa-mundial';
+import { PlotChartComponent } from '../../estadisticas/plot-chart/plot-chart.component';
 import { SpinnerComponent } from '../../../core/plantillas/spinner/spinner.component';
 import { FuenteService } from '../../fuentes/fuentes.service';
 import { ConceptosService } from '../../conceptos/conceptos.service';
 import { map } from 'rxjs';
+import { GraficoBarrasComponent } from '../../estadisticas/plot-chart-pub/plot-chart-pub.component';
+
+
 
 @Component({
   selector: 'app-alertas-feed',
@@ -22,11 +26,13 @@ import { map } from 'rxjs';
     DatePickerModule,
     TextBoxModule,
     SpinnerComponent,
-    MapaMundialComponent
+    MapaMundialComponent,
+    GraficoBarrasComponent
   ],
   templateUrl: './publicaciones-feed.component.html',
   styleUrls: ['./publicaciones-feed.component.css'],
 })
+
 export class PublicacionesFeedComponent implements OnInit {
   @ViewChild(MapaMundialComponent) mapaComponent!: MapaMundialComponent;
 
@@ -48,6 +54,8 @@ export class PublicacionesFeedComponent implements OnInit {
   public expandidos = new Set<string>();
   public loading = false;
   public alertas: any[] = [];
+  public datosPublicacionesDia: { fecha: string; publicaciones: number }[] = [];
+
 
   constructor(
     private servicio: PublicacionesService,
@@ -65,9 +73,7 @@ export class PublicacionesFeedComponent implements OnInit {
 
     this.conceptoService.items$
       .pipe(map(list => [{ id: null, nombre: 'Todos' }, ...list.map(c => ({ id: c._id!, nombre: c.nombre }))]))
-      .subscribe(opts => (this.conceptosOpts = opts));
-
-
+      .subscribe(opts => (this.conceptosOpts = opts))
   }
 
   aplicarFiltros(): void {
@@ -106,6 +112,18 @@ export class PublicacionesFeedComponent implements OnInit {
             this.datosMapa[alerta.pais] = (this.datosMapa[alerta.pais] || 0) + 1;
           }
         }
+        const conteoPorFecha: Record<string, number> = {};
+        for (const alerta of this.alertasFiltradas) {
+          if (alerta.fecha) {
+            const fechaStr = alerta.fecha.toISOString().slice(0, 10); // YYYY-MM-DD
+            conteoPorFecha[fechaStr] = (conteoPorFecha[fechaStr] || 0) + 1;
+          }
+        }
+
+        // Ordenar por fecha
+        this.datosPublicacionesDia = Object.entries(conteoPorFecha)
+          .map(([fecha, publicaciones]) => ({ fecha, publicaciones }))
+          .sort((a, b) => a.fecha.localeCompare(b.fecha));
 
         this.loading = false;
 

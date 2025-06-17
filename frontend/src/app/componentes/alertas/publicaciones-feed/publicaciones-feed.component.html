@@ -27,7 +27,15 @@
 </div>
 
 <!-- Mapa D3.js -->
-<app-mapa-mundial [dataPorPais]="datosMapa"></app-mapa-mundial>
+<div class="contenedor-mapa-grafico">
+  <app-mapa-mundial [dataPorPais]="datosMapa" class="mapa"></app-mapa-mundial>
+  <div class="grafico-sobrepuesto">
+    <app-grafico-barras [datosPublicacionesDia]="datosPublicacionesDia"></app-grafico-barras>
+  </div>
+</div>
+
+
+
 
 <div class="contenedor-cards">
   <app-spinner *ngIf="loading" message="Cargando noticias..."></app-spinner>
