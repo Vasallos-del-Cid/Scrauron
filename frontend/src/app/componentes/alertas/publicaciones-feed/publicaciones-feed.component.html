@@ -30,7 +30,10 @@
 <div class="contenedor-mapa-grafico">
   <app-mapa-mundial [dataPorPais]="datosMapa" class="mapa"></app-mapa-mundial>
   <div class="grafico-sobrepuesto">
-    <app-grafico-barras [datosPublicacionesDia]="datosPublicacionesDia"></app-grafico-barras>
+    <app-grafico-barras [datosGrafico]="datosPublicacionesDia" [tituloGrafico]="tituloGraficoPublicacionesDia" [ejeX]="ejeXPublicacionesDia" [ejeY]="ejeYPublicacionesDia"></app-grafico-barras>
+  </div>
+  <div class="grafico-sobrepuesto-2">
+    <app-grafico-barras [datosGrafico]="datosPublicacionesPais" [tituloGrafico]="tituloGraficoPublicacionesPais" [ejeX]="ejeXPublicacionesPais" [ejeY]="ejeYPublicacionesPais"></app-grafico-barras>
   </div>
 </div>
 

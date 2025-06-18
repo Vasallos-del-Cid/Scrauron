@@ -94,8 +94,11 @@ export class MapaMundialComponent implements OnInit, OnChanges {
         d3.select("#mapa-d3 svg").remove();
 
         const svg = d3.select("#mapa-d3").append("svg")
-            .attr("width", 960)
-            .attr("height", 500);
+            .attr("viewBox", "0 0 960 500")
+            .attr("preserveAspectRatio", "xMidYMid meet")
+            .style("width", "100%")
+            .style("height", "auto");
+
 
         const projection = d3.geoNaturalEarth1().fitSize([960, 500], { type: "Sphere" });
         const path = d3.geoPath(projection);

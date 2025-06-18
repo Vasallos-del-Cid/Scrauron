@@ -54,8 +54,15 @@ export class PublicacionesFeedComponent implements OnInit {
   public expandidos = new Set<string>();
   public loading = false;
   public alertas: any[] = [];
-  public datosPublicacionesDia: { fecha: string; publicaciones: number }[] = [];
+  public datosPublicacionesDia: { datoX: string; datoY: number }[] = []; //X fecha e Y numero de publicaciones
+  public tituloGraficoPublicacionesDia = "Publicaciones por dia"
+  public ejeXPublicacionesDia = "Dia"
+  public ejeYPublicacionesDia = "Publicaciones"
 
+  public datosPublicacionesPais: { datoX: string; datoY: number }[] = []; //X pais e Y numero de publicaciones
+  public tituloGraficoPublicacionesPais = "Publicaciones por país"
+  public ejeXPublicacionesPais = "País"
+  public ejeYPublicacionesPais = "Publicaciones"
 
   constructor(
     private servicio: PublicacionesService,
@@ -77,18 +84,21 @@ export class PublicacionesFeedComponent implements OnInit {
   }
 
   aplicarFiltros(): void {
+    // Verifica que las fechas de filtro estén definidas
     if (!this.fechaDesde || !this.fechaHasta) {
       this.alertasFiltradas = [];
       return;
     }
 
+    // Normaliza la hora de las fechas (esto ayuda a incluir el día completo)
     const desde = new Date(this.fechaDesde);
     desde.setHours(2, 1, 0, 0);
     const hasta = new Date(this.fechaHasta);
-    hasta.setHours(25, 59, 0, 0);
+    hasta.setHours(25, 59, 0, 0); // 25h para asegurar cobertura completa del último día
 
-    this.loading = true;
+    this.loading = true; // Activa el spinner
 
+    // Llama al servicio para obtener las publicaciones filtradas según los criterios
     this.servicio.getFiltradas({
       fechaDesde: desde,
       fechaHasta: hasta,
@@ -98,20 +108,41 @@ export class PublicacionesFeedComponent implements OnInit {
       concepto_interes: this.filtroConceptoId || undefined,
     }).subscribe({
       next: (result: Publicacion[]) => {
+        // Mapea cada publicación ajustando estructuras necesarias
         this.alertas = result.map(pub => ({
           ...pub,
           fecha: pub.fecha ? new Date(pub.fecha) : undefined,
           fuente: pub.fuente ?? undefined,
           conceptos_relacionados: pub.conceptos_relacionados || []
         }));
+
+        // Copia de trabajo para filtrado
         this.alertasFiltradas = [...this.alertas];
 
-        this.datosMapa = {};
+        // ===============================
+        // PUBLICACIONES POR PAÍS (para el mapa y gráfico)
+        // ===============================
+        this.datosMapa = {}; // Mapa: clave = país, valor = cantidad
         for (const alerta of this.alertasFiltradas) {
-          if (alerta.pais && alerta.pais.length === 3) {
+          if (alerta.pais && alerta.pais.length === 3) { // Solo códigos ISO válidos
             this.datosMapa[alerta.pais] = (this.datosMapa[alerta.pais] || 0) + 1;
           }
         }
+
+        // También generar datos para gráfico por país
+        const conteoPorPais: Record<string, number> = {};
+        for (const alerta of this.alertasFiltradas) {
+          if (alerta.pais) {
+            conteoPorPais[alerta.pais] = (conteoPorPais[alerta.pais] || 0) + 1;
+          }
+        }
+        this.datosPublicacionesPais = Object.entries(conteoPorPais)
+          .map(([datoX, datoY]) => ({ datoX, datoY })) // Transformar en array de objetos
+          .sort((a, b) => a.datoX.localeCompare(b.datoX)); // Orden alfabético por país
+
+        // ===============================
+        // PUBLICACIONES POR DÍA (para gráfico de barras)
+        // ===============================
         const conteoPorFecha: Record<string, number> = {};
         for (const alerta of this.alertasFiltradas) {
           if (alerta.fecha) {
@@ -119,14 +150,14 @@ export class PublicacionesFeedComponent implements OnInit {
             conteoPorFecha[fechaStr] = (conteoPorFecha[fechaStr] || 0) + 1;
           }
         }
-
-        // Ordenar por fecha
         this.datosPublicacionesDia = Object.entries(conteoPorFecha)
-          .map(([fecha, publicaciones]) => ({ fecha, publicaciones }))
-          .sort((a, b) => a.fecha.localeCompare(b.fecha));
+          .map(([datoX, datoY]) => ({ datoX, datoY })) // Fecha y cantidad
+          .sort((a, b) => a.datoX.localeCompare(b.datoX)); // Orden cronológico
 
+        // Fin de la carga
         this.loading = false;
 
+        // Actualiza el componente de mapa con los datos nuevos
         setTimeout(() => {
           if (this.mapaComponent) {
             this.mapaComponent.dataPorPais = { ...this.datosMapa };
@@ -134,6 +165,7 @@ export class PublicacionesFeedComponent implements OnInit {
         }, 0);
       },
       error: (err) => {
+        // Manejo de errores: limpia todo y apaga el spinner
         console.error("Error al obtener publicaciones filtradas", err);
         this.alertas = [];
         this.alertasFiltradas = [];
@@ -141,6 +173,7 @@ export class PublicacionesFeedComponent implements OnInit {
       }
     });
   }
+
 
   resetFiltros(): void {
     this.filtroBusqueda = '';
