@@ -97,6 +97,7 @@ export class MapaMundialComponent implements OnInit, OnChanges {
             .attr("viewBox", "0 0 960 500")
             .attr("preserveAspectRatio", "xMidYMid meet")
             .style("width", "100%")
+            .style("margin-top", "5%")
             .style("height", "auto");
 
 

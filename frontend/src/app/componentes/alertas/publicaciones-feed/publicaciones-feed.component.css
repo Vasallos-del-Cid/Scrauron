@@ -200,11 +200,50 @@
   margin-top: 1%;
 }
 
+.grafico-1 {
+  position: absolute;
+  bottom: 0px;
+  right: 73%;
+  width: 25%;       
+  height: 49%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
+  max-height: 45%;   /* Para evitar que crezca demasiado en pantallas grandes */
+  background: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  padding: 10px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.grafico-1 svg {
+  width: 100%;
+  height: 100%;
+}
+
+
+.grafico-2 {
+  position: absolute;
+  bottom: 50%;
+  right: 73%;
+  width: 25%;       
+  height: 50%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
+  max-height: 50%;   /* Para evitar que crezca demasiado en pantallas grandes */
+  background: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  padding: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.grafico-2 svg {
+  width: 50%;
+  height: auto;
+}
+
 .mapa {
-  width: 48%;
+  width: 40%;
   height: 25vw;
   display: block;
-  margin-left: 5%;
+  margin-left: 28%;
   padding: 1%;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
 }
@@ -213,7 +252,7 @@
   position: absolute;
   bottom: 0px;
   right: 4%;
-  width: 40%;       
+  width: 25%;       
   height: 49%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
   max-height: 45%;   /* Para evitar que crezca demasiado en pantallas grandes */
   background: white;
@@ -232,7 +271,7 @@
   position: absolute;
   bottom: 50%;
   right: 4%;
-  width: 40%;       
+  width: 25%;       
   height: 50%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
   max-height: 50%;   /* Para evitar que crezca demasiado en pantallas grandes */
   background: white;
