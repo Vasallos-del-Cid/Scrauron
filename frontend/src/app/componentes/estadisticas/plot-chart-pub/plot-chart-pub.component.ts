@@ -6,8 +6,6 @@ import * as d3 from 'd3';
   templateUrl: './plot-chart-pub.component.html',
   styleUrls: ['./plot-chart-pub.component.css']
 })
-
-// Recibe una lista de datos con pares string y number, un titulo del grafico, y el nombre de los ejes
 export class GraficoBarrasComponent implements OnChanges {
   @Input() datosGrafico: { datoX: string; datoY: number }[] = [];
   @Input() tituloGrafico: string = "";
@@ -29,6 +27,8 @@ export class GraficoBarrasComponent implements OnChanges {
     const margin = { top: 30, right: 30, bottom: 100, left: 50 };
     const width = 800 - margin.left - margin.right;
     const height = 350 - margin.top - margin.bottom;
+
+    const self = this;
 
     const svgBase = d3.select(element)
       .append('svg')
@@ -64,12 +64,25 @@ export class GraficoBarrasComponent implements OnChanges {
       .selectAll('text')
       .attr('transform', 'rotate(-45)')
       .style('text-anchor', 'end')
-      .style('font-size', '20px'); // ⬅️ Tamaño de texto del eje X
+      .style('font-size', '20px');
 
     svg.append('g')
       .call(d3.axisLeft(y))
       .selectAll('text')
-      .style('font-size', '20px'); // ⬅️ Tamaño de texto del eje Y
+      .style('font-size', '20px');
+
+    // Crear tooltip
+    const tooltip = d3.select(element)
+      .append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("background", "#fff")
+      .style("padding", "8px")
+      .style("border", "1px solid #ccc")
+      .style("border-radius", "4px")
+      .style("pointer-events", "none")
+      .style("font-size", "14px")
+      .style("display", "none");
 
 
     svg.selectAll('.bar')
@@ -80,6 +93,18 @@ export class GraficoBarrasComponent implements OnChanges {
       .attr('y', d => y(d.datoY))
       .attr('width', x.bandwidth())
       .attr('height', d => height - y(d.datoY))
-      .attr('fill', 'steelblue');
+      .attr('fill', 'steelblue')
+      .on('mouseover', function (event, d) {
+        tooltip.style('display', 'block')
+          .html(`${self.ejeX}: ${d.datoX}<br>${self.ejeY}: ${d.datoY}`);
+      })
+      .on('mousemove', function (event) {
+        tooltip.style('left', (event.offsetX + 10) + 'px')
+          .style('top', (event.offsetY - 28) + 'px');
+      })
+      .on('mouseout', function () {
+        tooltip.style('display', 'none');
+      });
+
   }
 }

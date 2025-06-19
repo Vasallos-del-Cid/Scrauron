@@ -13,6 +13,12 @@ import { ConceptosService } from '../../conceptos/conceptos.service';
 import { map } from 'rxjs';
 import { GraficoBarrasComponent } from '../../estadisticas/plot-chart-pub/plot-chart-pub.component';
 
+interface EquivalenciaPais {
+  iso3: string;
+  ingles: string;
+  espanol: string;
+}
+
 @Component({
   selector: 'app-alertas-feed',
   standalone: true,
@@ -50,7 +56,6 @@ export class PublicacionesFeedComponent implements OnInit {
   public loading = false;
   public alertas: any[] = [];
 
-  // Publicaciones por día y tono medio
   public datosPublicacionesDia: { datoX:string; datoY:number }[] = [];
   public datosTonoDia: { datoX:string; datoY:number }[] = [];
   public tituloGraficoPublicacionesDia = "Publicaciones por día";
@@ -60,7 +65,6 @@ export class PublicacionesFeedComponent implements OnInit {
   public ejeXTonoDia = "Día";
   public ejeYTonoDia = "Tono";
 
-  // Publicaciones por país y tono medio
   public datosPublicacionesPais: { datoX:string; datoY:number }[] = [];
   public datosTonoPais: { datoX:string; datoY:number }[] = [];
   public tituloGraficoPublicacionesPais = "Publicaciones por país";
@@ -69,6 +73,258 @@ export class PublicacionesFeedComponent implements OnInit {
   public tituloGraficoTonoPais = "Tono medio por país";
   public ejeXTonoPais = "País";
   public ejeYTonoPais = "Tono";
+
+  private paisesEquivalentes: { iso3: string; ingles: string; espanol: string }[] = [
+  { iso3: "AFG", ingles: "Afghanistan", espanol: "Afganistán" },
+  { iso3: "ALB", ingles: "Albania", espanol: "Albania" },
+  { iso3: "DZA", ingles: "Algeria", espanol: "Argelia" },
+  { iso3: "ASM", ingles: "American Samoa", espanol: "Samoa Americana" },
+  { iso3: "AND", ingles: "Andorra", espanol: "Andorra" },
+  { iso3: "AGO", ingles: "Angola", espanol: "Angola" },
+  { iso3: "AIA", ingles: "Anguilla", espanol: "Anguila" },
+  { iso3: "ATA", ingles: "Antarctica", espanol: "Antártida" },
+  { iso3: "ATG", ingles: "Antigua and Barbuda", espanol: "Antigua y Barbuda" },
+  { iso3: "ARG", ingles: "Argentina", espanol: "Argentina" },
+  { iso3: "ARM", ingles: "Armenia", espanol: "Armenia" },
+  { iso3: "ABW", ingles: "Aruba", espanol: "Aruba" },
+  { iso3: "AUS", ingles: "Australia", espanol: "Australia" },
+  { iso3: "AUT", ingles: "Austria", espanol: "Austria" },
+  { iso3: "AZE", ingles: "Azerbaijan", espanol: "Azerbaiyán" },
+  { iso3: "BHS", ingles: "Bahamas", espanol: "Bahamas" },
+  { iso3: "BHR", ingles: "Bahrain", espanol: "Baréin" },
+  { iso3: "BGD", ingles: "Bangladesh", espanol: "Bangladés" },
+  { iso3: "BRB", ingles: "Barbados", espanol: "Barbados" },
+  { iso3: "BLR", ingles: "Belarus", espanol: "Bielorrusia" },
+  { iso3: "BEL", ingles: "Belgium", espanol: "Bélgica" },
+  { iso3: "BLZ", ingles: "Belize", espanol: "Belice" },
+  { iso3: "BEN", ingles: "Benin", espanol: "Benín" },
+  { iso3: "BMU", ingles: "Bermuda", espanol: "Bermudas" },
+  { iso3: "BTN", ingles: "Bhutan", espanol: "Bután" },
+  { iso3: "BOL", ingles: "Bolivia", espanol: "Bolivia" },
+  { iso3: "BES", ingles: "Bonaire, Sint Eustatius and Saba", espanol: "Bonaire, San Eustaquio y Saba" },
+  { iso3: "BIH", ingles: "Bosnia and Herzegovina", espanol: "Bosnia y Herzegovina" },
+  { iso3: "BWA", ingles: "Botswana", espanol: "Botsuana" },
+  { iso3: "BVT", ingles: "Bouvet Island", espanol: "Isla Bouvet" },
+  { iso3: "BRA", ingles: "Brazil", espanol: "Brasil" },
+  { iso3: "IOT", ingles: "British Indian Ocean Territory", espanol: "Territorio Británico del Océano Índico" },
+  { iso3: "BRN", ingles: "Brunei Darussalam", espanol: "Brunéi" },
+  { iso3: "BGR", ingles: "Bulgaria", espanol: "Bulgaria" },
+  { iso3: "BFA", ingles: "Burkina Faso", espanol: "Burkina Faso" },
+  { iso3: "BDI", ingles: "Burundi", espanol: "Burundi" },
+  { iso3: "KHM", ingles: "Cambodia", espanol: "Camboya" },
+  { iso3: "CMR", ingles: "Cameroon", espanol: "Camerún" },
+  { iso3: "CAN", ingles: "Canada", espanol: "Canadá" },
+  { iso3: "CPV", ingles: "Cabo Verde", espanol: "Cabo Verde" },
+  { iso3: "CYM", ingles: "Cayman Islands", espanol: "Islas Caimán" },
+  { iso3: "CAF", ingles: "Central African Republic", espanol: "República Centroafricana" },
+  { iso3: "TCD", ingles: "Chad", espanol: "Chad" },
+  { iso3: "CHL", ingles: "Chile", espanol: "Chile" },
+  { iso3: "CHN", ingles: "China", espanol: "China" },
+  { iso3: "CXR", ingles: "Christmas Island", espanol: "Isla de Navidad" },
+  { iso3: "CCK", ingles: "Cocos (Keeling) Islands", espanol: "Islas Cocos" },
+  { iso3: "COL", ingles: "Colombia", espanol: "Colombia" },
+  { iso3: "COM", ingles: "Comoros", espanol: "Comoras" },
+  { iso3: "COG", ingles: "Congo", espanol: "República del Congo" },
+  { iso3: "COD", ingles: "Congo, Democratic Republic of the", espanol: "República Democrática del Congo" },
+  { iso3: "COK", ingles: "Cook Islands", espanol: "Islas Cook" },
+  { iso3: "CRI", ingles: "Costa Rica", espanol: "Costa Rica" },
+  { iso3: "CIV", ingles: "Côte d'Ivoire", espanol: "Costa de Marfil" },
+  { iso3: "HRV", ingles: "Croatia", espanol: "Croacia" },
+  { iso3: "CUB", ingles: "Cuba", espanol: "Cuba" },
+  { iso3: "CUW", ingles: "Curaçao", espanol: "Curaçao" },
+  { iso3: "CYP", ingles: "Cyprus", espanol: "Chipre" },
+  { iso3: "CZE", ingles: "Czechia", espanol: "Chequia" },
+  { iso3: "DNK", ingles: "Denmark", espanol: "Dinamarca" },
+  { iso3: "DJI", ingles: "Djibouti", espanol: "Yibuti" },
+  { iso3: "DMA", ingles: "Dominica", espanol: "Dominica" },
+  { iso3: "DOM", ingles: "Dominican Republic", espanol: "República Dominicana" },
+  { iso3: "ECU", ingles: "Ecuador", espanol: "Ecuador" },
+  { iso3: "EGY", ingles: "Egypt", espanol: "Egipto" },
+  { iso3: "SLV", ingles: "El Salvador", espanol: "El Salvador" },
+  { iso3: "GNQ", ingles: "Equatorial Guinea", espanol: "Guinea Ecuatorial" },
+  { iso3: "ERI", ingles: "Eritrea", espanol: "Eritrea" },
+  { iso3: "EST", ingles: "Estonia", espanol: "Estonia" },
+  { iso3: "SWZ", ingles: "Eswatini", espanol: "Suazilandia" },
+  { iso3: "ETH", ingles: "Ethiopia", espanol: "Etiopía" },
+  { iso3: "FLK", ingles: "Falkland Islands [Malvinas]", espanol: "Islas Malvinas" },
+  { iso3: "FRO", ingles: "Faroe Islands", espanol: "Islas Faroe" },
+  { iso3: "FJI", ingles: "Fiji", espanol: "Fiyi" },
+  { iso3: "FIN", ingles: "Finland", espanol: "Finlandia" },
+  { iso3: "FRA", ingles: "France", espanol: "Francia" },
+  { iso3: "GUF", ingles: "French Guiana", espanol: "Guayana Francesa" },
+  { iso3: "PYF", ingles: "French Polynesia", espanol: "Polinesia Francesa" },
+  { iso3: "ATF", ingles: "French Southern Territories", espanol: "Territorios Australes Franceses" },
+  { iso3: "GAB", ingles: "Gabon", espanol: "Gabón" },
+  { iso3: "GMB", ingles: "Gambia", espanol: "Gambia" },
+  { iso3: "GEO", ingles: "Georgia", espanol: "Georgia" },
+  { iso3: "DEU", ingles: "Germany", espanol: "Alemania" },
+  { iso3: "GHA", ingles: "Ghana", espanol: "Ghana" },
+  { iso3: "GIB", ingles: "Gibraltar", espanol: "Gibraltar" },
+  { iso3: "GRC", ingles: "Greece", espanol: "Grecia" },
+  { iso3: "GRL", ingles: "Greenland", espanol: "Groenlandia" },
+  { iso3: "GRD", ingles: "Grenada", espanol: "Granada" },
+  { iso3: "GLP", ingles: "Guadeloupe", espanol: "Guadalupe" },
+  { iso3: "GUM", ingles: "Guam", espanol: "Guam" },
+  { iso3: "GTM", ingles: "Guatemala", espanol: "Guatemala" },
+  { iso3: "GGY", ingles: "Guernsey", espanol: "Guernsey" },
+  { iso3: "GIN", ingles: "Guinea", espanol: "Guinea" },
+  { iso3: "GNB", ingles: "Guinea-Bissau", espanol: "Guinea-Bisáu" },
+  { iso3: "GUY", ingles: "Guyana", espanol: "Guyana" },
+  { iso3: "HTI", ingles: "Haiti", espanol: "Haití" },
+  { iso3: "HMD", ingles: "Heard Island and McDonald Islands", espanol: "Isla Heard y McDonald" },
+  { iso3: "VAT", ingles: "Holy See", espanol: "Santa Sede" },
+  { iso3: "HND", ingles: "Honduras", espanol: "Honduras" },
+  { iso3: "HKG", ingles: "Hong Kong", espanol: "Hong Kong" },
+  { iso3: "HUN", ingles: "Hungary", espanol: "Hungría" },
+  { iso3: "ISL", ingles: "Iceland", espanol: "Islandia" },
+  { iso3: "IND", ingles: "India", espanol: "India" },
+  { iso3: "IDN", ingles: "Indonesia", espanol: "Indonesia" },
+  { iso3: "IRN", ingles: "Iran", espanol: "Irán" },
+  { iso3: "IRQ", ingles: "Iraq", espanol: "Iraq" },
+  { iso3: "IRL", ingles: "Ireland", espanol: "Irlanda" },
+  { iso3: "IMN", ingles: "Isle of Man", espanol: "Isla de Man" },
+  { iso3: "ISR", ingles: "Israel", espanol: "Israel" },
+  { iso3: "ITA", ingles: "Italy", espanol: "Italia" },
+  { iso3: "JAM", ingles: "Jamaica", espanol: "Jamaica" },
+  { iso3: "JPN", ingles: "Japan", espanol: "Japón" },
+  { iso3: "JEY", ingles: "Jersey", espanol: "Jersey" },
+  { iso3: "JOR", ingles: "Jordan", espanol: "Jordania" },
+  { iso3: "KAZ", ingles: "Kazakhstan", espanol: "Kazajistán" },
+  { iso3: "KEN", ingles: "Kenya", espanol: "Kenia" },
+  { iso3: "KIR", ingles: "Kiribati", espanol: "Kiribati" },
+  { iso3: "PRK", ingles: "North Korea", espanol: "Corea del Norte" },
+  { iso3: "KOR", ingles: "South Korea", espanol: "Corea del Sur" },
+  { iso3: "KWT", ingles: "Kuwait", espanol: "Kuwait" },
+  { iso3: "KGZ", ingles: "Kyrgyzstan", espanol: "Kirguistán" },
+  { iso3: "LAO", ingles: "Laos", espanol: "Laos" },
+  { iso3: "LVA", ingles: "Latvia", espanol: "Letonia" },
+  { iso3: "LBN", ingles: "Lebanon", espanol: "Líbano" },
+  { iso3: "LSO", ingles: "Lesotho", espanol: "Lesoto" },
+  { iso3: "LBR", ingles: "Liberia", espanol: "Liberia" },
+  { iso3: "LBY", ingles: "Libya", espanol: "Libia" },
+  { iso3: "LIE", ingles: "Liechtenstein", espanol: "Liechtenstein" },
+  { iso3: "LTU", ingles: "Lithuania", espanol: "Lituania" },
+  { iso3: "LUX", ingles: "Luxembourg", espanol: "Luxemburgo" },
+  { iso3: "MAC", ingles: "Macao", espanol: "Macao" },
+  { iso3: "MDG", ingles: "Madagascar", espanol: "Madagascar" },
+  { iso3: "MWI", ingles: "Malawi", espanol: "Malaui" },
+  { iso3: "MYS", ingles: "Malaysia", espanol: "Malasia" },
+  { iso3: "MDV", ingles: "Maldives", espanol: "Maldivas" },
+  { iso3: "MLI", ingles: "Mali", espanol: "Malí" },
+  { iso3: "MLT", ingles: "Malta", espanol: "Malta" },
+  { iso3: "MHL", ingles: "Marshall Islands", espanol: "Islas Marshall" },
+  { iso3: "MTQ", ingles: "Martinique", espanol: "Martinica" },
+  { iso3: "MRT", ingles: "Mauritania", espanol: "Mauritania" },
+  { iso3: "MUS", ingles: "Mauritius", espanol: "Mauricio" },
+  { iso3: "MYT", ingles: "Mayotte", espanol: "Mayotte" },
+  { iso3: "MEX", ingles: "Mexico", espanol: "México" },
+  { iso3: "FSM", ingles: "Micronesia", espanol: "Micronesia" },
+  { iso3: "MDA", ingles: "Moldova", espanol: "Moldova" },
+  { iso3: "MCO", ingles: "Monaco", espanol: "Mónaco" },
+  { iso3: "MNG", ingles: "Mongolia", espanol: "Mongolia" },
+  { iso3: "MNE", ingles: "Montenegro", espanol: "Montenegro" },
+  { iso3: "MSR", ingles: "Montserrat", espanol: "Montserrat" },
+  { iso3: "MAR", ingles: "Morocco", espanol: "Marruecos" },
+  { iso3: "MOZ", ingles: "Mozambique", espanol: "Mozambique" },
+  { iso3: "MMR", ingles: "Myanmar", espanol: "Myanmar" },
+  { iso3: "NAM", ingles: "Namibia", espanol: "Namibia" },
+  { iso3: "NRU", ingles: "Nauru", espanol: "Nauru" },
+  { iso3: "NPL", ingles: "Nepal", espanol: "Nepal" },
+  { iso3: "NLD", ingles: "Netherlands", espanol: "Países Bajos" },
+  { iso3: "NCL", ingles: "New Caledonia", espanol: "Nueva Caledonia" },
+  { iso3: "NZL", ingles: "New Zealand", espanol: "Nueva Zelanda" },
+  { iso3: "NIC", ingles: "Nicaragua", espanol: "Nicaragua" },
+  { iso3: "NER", ingles: "Niger", espanol: "Níger" },
+  { iso3: "NGA", ingles: "Nigeria", espanol: "Nigeria" },
+  { iso3: "NIU", ingles: "Niue", espanol: "Niue" },
+  { iso3: "MKD", ingles: "North Macedonia", espanol: "Macedonia del Norte" },
+  { iso3: "MNP", ingles: "Northern Mariana Islands", espanol: "Islas Marianas del Norte" },
+  { iso3: "NOR", ingles: "Norway", espanol: "Noruega" },
+  { iso3: "OMN", ingles: "Oman", espanol: "Omán" },
+  { iso3: "PAK", ingles: "Pakistan", espanol: "Pakistán" },
+  { iso3: "PLW", ingles: "Palau", espanol: "Palaos" },
+  { iso3: "PSE", ingles: "Palestine", espanol: "Palestina" },
+  { iso3: "PAN", ingles: "Panama", espanol: "Panamá" },
+  { iso3: "PNG", ingles: "Papua New Guinea", espanol: "Papúa Nueva Guinea" },
+  { iso3: "PRY", ingles: "Paraguay", espanol: "Paraguay" },
+  { iso3: "PER", ingles: "Peru", espanol: "Perú" },
+  { iso3: "PHL", ingles: "Philippines", espanol: "Filipinas" },
+  { iso3: "PCN", ingles: "Pitcairn", espanol: "Pitcairn" },
+  { iso3: "POL", ingles: "Poland", espanol: "Polonia" },
+  { iso3: "PRT", ingles: "Portugal", espanol: "Portugal" },
+  { iso3: "PRI", ingles: "Puerto Rico", espanol: "Puerto Rico" },
+  { iso3: "QAT", ingles: "Qatar", espanol: "Catar" },
+  { iso3: "REU", ingles: "Réunion", espanol: "Reunión" },
+  { iso3: "ROU", ingles: "Romania", espanol: "Rumanía" },
+  { iso3: "RUS", ingles: "Russia", espanol: "Rusia" },
+  { iso3: "RWA", ingles: "Rwanda", espanol: "Ruanda" },
+  { iso3: "BLM", ingles: "Saint Barthélemy", espanol: "San Bartolomé" },
+  { iso3: "BLM", ingles: "Saint Barthélemy", espanol: "San Bartolomé" },
+  { iso3: "SHN", ingles: "Saint Helena, Ascension and Tristan da Cunha", espanol: "Santa Elena, Ascensión y Tristán da Cunha" },
+  { iso3: "KNA", ingles: "Saint Kitts and Nevis", espanol: "San Cristóbal y Nieves" },
+  { iso3: "LCA", ingles: "Saint Lucia", espanol: "Santa Lucía" },
+  { iso3: "MAF", ingles: "Saint Martin (French part)", espanol: "San Martín (parte francesa)" },
+  { iso3: "SPM", ingles: "Saint Pierre and Miquelon", espanol: "San Pedro y Miquelón" },
+  { iso3: "VCT", ingles: "Saint Vincent and the Grenadines", espanol: "San Vicente y las Granadinas" },
+  { iso3: "WSM", ingles: "Samoa", espanol: "Samoa" },
+  { iso3: "SMR", ingles: "San Marino", espanol: "San Marino" },
+  { iso3: "STP", ingles: "Sao Tome and Principe", espanol: "Santo Tomé y Príncipe" },
+  { iso3: "SAU", ingles: "Saudi Arabia", espanol: "Arabia Saudita" },
+  { iso3: "SEN", ingles: "Senegal", espanol: "Senegal" },
+  { iso3: "SRB", ingles: "Serbia", espanol: "Serbia" },
+  { iso3: "SYC", ingles: "Seychelles", espanol: "Seychelles" },
+  { iso3: "SLE", ingles: "Sierra Leone", espanol: "Sierra Leona" },
+  { iso3: "SGP", ingles: "Singapore", espanol: "Singapur" },
+  { iso3: "SXM", ingles: "Sint Maarten (Dutch part)", espanol: "Sint Maarten (parte neerlandesa)" },
+  { iso3: "SVK", ingles: "Slovakia", espanol: "Eslovaquia" },
+  { iso3: "SVN", ingles: "Slovenia", espanol: "Eslovenia" },
+  { iso3: "SLB", ingles: "Solomon Islands", espanol: "Islas Salomón" },
+  { iso3: "SOM", ingles: "Somalia", espanol: "Somalia" },
+  { iso3: "ZAF", ingles: "South Africa", espanol: "Sudáfrica" },
+  { iso3: "SGS", ingles: "South Georgia and the South Sandwich Islands", espanol: "Islas Georgia del Sur y Sandwich del Sur" },
+  { iso3: "SSD", ingles: "South Sudan", espanol: "Sudán del Sur" },
+  { iso3: "ESP", ingles: "Spain", espanol: "España" },          // repetido pero ok
+  { iso3: "LKA", ingles: "Sri Lanka", espanol: "Sri Lanka" },
+  { iso3: "SDN", ingles: "Sudan", espanol: "Sudán" },
+  { iso3: "SUR", ingles: "Suriname", espanol: "Surinam" },
+  { iso3: "SJM", ingles: "Svalbard and Jan Mayen", espanol: "Svalbard y Jan Mayen" },
+  { iso3: "SWE", ingles: "Sweden", espanol: "Suecia" },
+  { iso3: "CHE", ingles: "Switzerland", espanol: "Suiza" },
+  { iso3: "SYR", ingles: "Syria", espanol: "Siria" },
+  { iso3: "TWN", ingles: "Taiwan", espanol: "Taiwán" },
+  { iso3: "TJK", ingles: "Tajikistan", espanol: "Tayikistán" },
+  { iso3: "TZA", ingles: "Tanzania", espanol: "Tanzania" },
+  { iso3: "THA", ingles: "Thailand", espanol: "Tailandia" },
+  { iso3: "TLS", ingles: "Timor-Leste", espanol: "Timor Oriental" },
+  { iso3: "TGO", ingles: "Togo", espanol: "Togo" },
+  { iso3: "TKL", ingles: "Tokelau", espanol: "Tokelau" },
+  { iso3: "TON", ingles: "Tonga", espanol: "Tonga" },
+  { iso3: "TTO", ingles: "Trinidad and Tobago", espanol: "Trinidad y Tobago" },
+  { iso3: "TUN", ingles: "Tunisia", espanol: "Túnez" },
+  { iso3: "TUR", ingles: "Turkey", espanol: "Turquía" },
+  { iso3: "TKM", ingles: "Turkmenistan", espanol: "Turkmenistán" },
+  { iso3: "TCA", ingles: "Turks and Caicos Islands", espanol: "Islas Turcas y Caicos" },
+  { iso3: "TUV", ingles: "Tuvalu", espanol: "Tuvalu" },
+  { iso3: "UGA", ingles: "Uganda", espanol: "Uganda" },
+  { iso3: "UKR", ingles: "Ukraine", espanol: "Ucrania" },
+  { iso3: "ARE", ingles: "United Arab Emirates", espanol: "Emiratos Árabes Unidos" },
+  { iso3: "GBR", ingles: "United Kingdom", espanol: "Reino Unido" },
+  { iso3: "USA", ingles: "United States of America", espanol: "Estados Unidos" },
+  { iso3: "UMI", ingles: "United States Minor Outlying Islands", espanol: "Islas Ultramarinas de EE.UU." },
+  { iso3: "URY", ingles: "Uruguay", espanol: "Uruguay" },
+  { iso3: "UZB", ingles: "Uzbekistan", espanol: "Uzbekistán" },
+  { iso3: "VUT", ingles: "Vanuatu", espanol: "Vanuatu" },
+  { iso3: "VEN", ingles: "Venezuela", espanol: "Venezuela" },
+  { iso3: "VNM", ingles: "Vietnam", espanol: "Vietnam" },
+  { iso3: "VGB", ingles: "British Virgin Islands", espanol: "Islas Vírgenes Británicas" },
+  { iso3: "VIR", ingles: "United States Virgin Islands", espanol: "Islas Vírgenes de EE.UU." },
+  { iso3: "WLF", ingles: "Wallis and Futuna", espanol: "Wallis y Futuna" },
+  { iso3: "ESH", ingles: "Western Sahara", espanol: "Sahara Occidental" },
+  { iso3: "YEM", ingles: "Yemen", espanol: "Yemen" },
+  { iso3: "ZMB", ingles: "Zambia", espanol: "Zambia" },
+  { iso3: "ZWE", ingles: "Zimbabwe", espanol: "Zimbabue" }
+];
+
 
   constructor(
     private servicio: PublicacionesService,
@@ -80,15 +336,11 @@ export class PublicacionesFeedComponent implements OnInit {
     this.fuenteService.getAll();
     this.conceptoService.getAll();
 
-    // Inicializar fechas a hoy
     const hoy = new Date();
     this.fechaDesde = new Date(hoy);
     this.fechaHasta = new Date(hoy);
-
-    // Ejecutar filtros iniciales
     this.aplicarFiltros();
 
-    // Cargar opciones de filtros
     this.fuenteService.items$
       .pipe(map(list => [{ id: null, nombre: 'Todos' }, ...list.map(f => ({ id: f._id!, nombre: f.nombre }))]))
       .subscribe(opts => this.fuentesOpts = opts);
@@ -99,73 +351,93 @@ export class PublicacionesFeedComponent implements OnInit {
   }
 
   aplicarFiltros(): void {
-    // 1. Validar que fechas estén definidas
     if (!this.fechaDesde || !this.fechaHasta) {
       this.alertasFiltradas = [];
       return;
     }
+    const desde = new Date(this.fechaDesde); desde.setHours(2,1,0,0);
+    const hasta = new Date(this.fechaHasta); hasta.setHours(25,59,0,0);
+    this.loading = true;
 
-    // 2. Normalizar rango de fechas
-    const desde = new Date(this.fechaDesde);
-    desde.setHours(2,1,0,0);
-    const hasta = new Date(this.fechaHasta);
-    hasta.setHours(25,59,0,0);
+    this.servicio.getFiltradas({ fechaDesde:desde, fechaHasta:hasta, tono:this.filtroValoracion ?? undefined,
+      busqueda_palabras:this.filtroBusqueda || undefined,
+      fuente_id:this.filtroFuenteId || undefined,
+      concepto_interes:this.filtroConceptoId || undefined })
+      .subscribe({
+        next: (result) => {
+          this.alertas = result.map(pub => ({
+            ...pub,
+            fecha: pub.fecha ? new Date(pub.fecha) : undefined,
+            fuente: pub.fuente ?? undefined,
+            conceptos_relacionados: pub.conceptos_relacionados || []
+          }));
+          this.alertasFiltradas = [...this.alertas];
 
-    this.loading = true; // 3. Mostrar spinner
+          this.datosMapa = {};
+          this.alertasFiltradas.forEach(a => {
+            if (a.pais?.length === 3) {
+              this.datosMapa[a.pais] = (this.datosMapa[a.pais] || 0) + 1;
+            }
+          });
 
-    // 4. Llamar al servicio con filtros
-    this.servicio.getFiltradas({
-      fechaDesde: desde,
-      fechaHasta: hasta,
-      tono: this.filtroValoracion ?? undefined,
-      busqueda_palabras: this.filtroBusqueda || undefined,
-      fuente_id: this.filtroFuenteId || undefined,
-      concepto_interes: this.filtroConceptoId || undefined,
-    }).subscribe({
-      next: (result: Publicacion[]) => {
-        // 5. Mapear resultados y parsear fechas
-        this.alertas = result.map(pub => ({
-          ...pub,
-          fecha: pub.fecha ? new Date(pub.fecha) : undefined,
-          fuente: pub.fuente ?? undefined,
-          conceptos_relacionados: pub.conceptos_relacionados || []
-        }));
-        this.alertasFiltradas = [...this.alertas];
+          this.datosPublicacionesPais = this.getPublicacionesPais();
+          this.datosTonoPais = this.getTonoPais();
+          this.datosPublicacionesDia = this.getPublicacionesDia();
+          this.datosTonoDia = this.getTonoDia();
 
-        // 6. Generar datos para el mapa
-        this.datosMapa = {};
-        this.alertasFiltradas.forEach(a => {
-          if (a.pais && a.pais.length === 3) {
-            this.datosMapa[a.pais] = (this.datosMapa[a.pais] || 0) + 1;
-          }
-        });
+          this.loading = false;
 
-        // 7. Generar dataset para gráficos mediante helpers
-        this.datosPublicacionesPais = this.getPublicacionesPais();
-        this.datosTonoPais = this.getTonoPais();
-        this.datosPublicacionesDia = this.getPublicacionesDia();
-        this.datosTonoDia = this.getTonoDia();
-
-        // 8. Ocultar spinner
-        this.loading = false;
-
-        // 9. Actualizar componente del mapa
-        setTimeout(() => {
-          if (this.mapaComponent) {
-            this.mapaComponent.dataPorPais = { ...this.datosMapa };
-          }
-        });
-      },
-      error: err => {
-        console.error("Error al obtener publicaciones filtradas", err);
-        this.alertas = [];
-        this.alertasFiltradas = [];
-        this.loading = false;
-      }
-    });
+          setTimeout(() => {
+            if (this.mapaComponent) {
+              this.mapaComponent.dataPorPais = { ...this.datosMapa };
+            }
+          }, 0);
+        },
+        error: (err) => {
+          console.error(err);
+          this.alertas = [];
+          this.alertasFiltradas = [];
+          this.loading = false;
+        }
+      });
   }
 
-  // --- Helpers para generación de datasets ---
+  private normalizarNombrePais(nombreRaw: string): string {
+    const n = nombreRaw.trim();
+    const match = this.paisesEquivalentes.find(p =>
+      p.iso3.toLowerCase() === n.toLowerCase() ||
+      p.ingles.toLowerCase() === n.toLowerCase() ||
+      p.espanol.toLowerCase() === n.toLowerCase()
+    );
+    return match ? match.espanol : nombreRaw;
+  }
+
+  private getPublicacionesPais(): { datoX:string; datoY:number }[] {
+    const conteo: Record<string,number> = {};
+    this.alertasFiltradas.forEach(a => {
+      if (a.pais) {
+        const nom = this.normalizarNombrePais(a.pais);
+        conteo[nom] = (conteo[nom] || 0) + 1;
+      }
+    });
+    return Object.entries(conteo)
+      .map(([datoX, datoY]) => ({ datoX, datoY }))
+      .sort((a,b) => a.datoX.localeCompare(b.datoX));
+  }
+
+  private getTonoPais(): { datoX:string; datoY:number }[] {
+    const sums: Record<string,number> = {}, counts: Record<string,number> = {};
+    this.alertasFiltradas.forEach(a => {
+      if (a.pais && a.tono != null) {
+        const nom = this.normalizarNombrePais(a.pais);
+        sums[nom] = (sums[nom] || 0) + a.tono;
+        counts[nom] = (counts[nom] || 0) + 1;
+      }
+    });
+    return Object.entries(sums)
+      .map(([datoX, sum]) => ({ datoX, datoY: sum/counts[datoX] }))
+      .sort((a,b) => a.datoX.localeCompare(b.datoX));
+  }
 
   private getPublicacionesDia(): { datoX:string; datoY:number }[] {
     const conteo: Record<string,number> = {};
@@ -180,21 +452,8 @@ export class PublicacionesFeedComponent implements OnInit {
       .sort((a,b) => a.datoX.localeCompare(b.datoX));
   }
 
-  private getPublicacionesPais(): { datoX:string; datoY:number }[] {
-    const conteo: Record<string,number> = {};
-    this.alertasFiltradas.forEach(a => {
-      if (a.pais) {
-        conteo[a.pais] = (conteo[a.pais] || 0) + 1;
-      }
-    });
-    return Object.entries(conteo)
-      .map(([datoX, datoY]) => ({ datoX, datoY }))
-      .sort((a,b) => a.datoX.localeCompare(b.datoX));
-  }
-
   private getTonoDia(): { datoX:string; datoY:number }[] {
-    const sums: Record<string,number> = {};
-    const counts: Record<string,number> = {};
+    const sums: Record<string,number> = {}, counts: Record<string,number> = {};
     this.alertasFiltradas.forEach(a => {
       if (a.fecha && a.tono != null) {
         const d = a.fecha.toISOString().slice(0,10);
@@ -203,21 +462,7 @@ export class PublicacionesFeedComponent implements OnInit {
       }
     });
     return Object.entries(sums)
-      .map(([datoX, sum]) => ({ datoX, datoY: sum / counts[datoX] }))
-      .sort((a,b) => a.datoX.localeCompare(b.datoX));
-  }
-
-  private getTonoPais(): { datoX:string; datoY:number }[] {
-    const sums: Record<string,number> = {};
-    const counts: Record<string,number> = {};
-    this.alertasFiltradas.forEach(a => {
-      if (a.pais && a.tono != null) {
-        sums[a.pais] = (sums[a.pais] || 0) + a.tono;
-        counts[a.pais] = (counts[a.pais] || 0) + 1;
-      }
-    });
-    return Object.entries(sums)
-      .map(([datoX, sum]) => ({ datoX, datoY: sum / counts[datoX] }))
+      .map(([datoX, sum]) => ({ datoX, datoY: sum/counts[datoX] }))
       .sort((a,b) => a.datoX.localeCompare(b.datoX));
   }
 

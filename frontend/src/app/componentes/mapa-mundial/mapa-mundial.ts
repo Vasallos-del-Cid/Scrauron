@@ -91,6 +91,18 @@ export class MapaMundialComponent implements OnInit, OnChanges {
     }
 
     public dibujarMapa(): void {
+        const tooltip = d3.select("#mapa-d3")
+            .append("div")
+            .style("position", "absolute")
+            .style("background", "#fff")
+            .style("padding", "5px 10px")
+            .style("border", "1px solid #ccc")
+            .style("border-radius", "5px")
+            .style("pointer-events", "none")
+            .style("display", "none")
+            .style("font-size", "14px")
+            .style("z-index", "10");
+
         d3.select("#mapa-d3 svg").remove();
 
         const svg = d3.select("#mapa-d3").append("svg")
@@ -126,11 +138,18 @@ export class MapaMundialComponent implements OnInit, OnChanges {
                     const val = iso3 ? this.dataPorPais[iso3] : undefined;
                     return val != null ? color(val) : "#ccc";
                 })
-                .append("title")
-                .text((d: any) => {
+                .on("mouseover", (event, d: any) => {
                     const nombre = d.properties.name;
                     const iso3 = this.nombreInglesAISO3[nombre];
-                    return `${nombre}: ${this.dataPorPais[iso3] ?? "Sin datos"}`;
+                    const valor = this.dataPorPais[iso3] ?? "Sin datos";
+                    tooltip.style("display", "block").html(`${nombre}: ${valor}`);
+                })
+                .on("mousemove", (event) => {
+                    tooltip.style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 180) + "px");
+                })
+                .on("mouseout", () => {
+                    tooltip.style("display", "none");
                 });
 
 
