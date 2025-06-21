@@ -200,33 +200,34 @@
   margin-top: 1%;
 }
 
-.grafico-1 {
+.grafico-tono-pais {
   position: absolute;
   bottom: 0px;
-  right: 73%;
-  width: 25%;       
-  height: 49%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
-  max-height: 45%;   /* Para evitar que crezca demasiado en pantallas grandes */
+  right: 70%;
+  width: 28%;       
+  height: 48%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
+  max-height: 48%;   /* Para evitar que crezca demasiado en pantallas grandes */
   background: white;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
   padding: 10px;
   box-sizing: border-box;
   overflow: visible;
+
 }
 
-.grafico-1 svg {
-  width: 100%;
-  height: 100%;
+.grafico-tono-pais svg {
+  width: 50%;
+  height: 50%;
 }
 
 
-.grafico-2 {
+.grafico-tono-dia {
   position: absolute;
-  bottom: 50%;
-  right: 73%;
-  width: 25%;       
-  height: 50%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
-  max-height: 50%;   /* Para evitar que crezca demasiado en pantallas grandes */
+  bottom: 0px;
+  right: 4%;
+  width: 28%;       
+  height: 48%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
+  max-height: 48%;   /* Para evitar que crezca demasiado en pantallas grandes */
   background: white;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
   padding: 10px;
@@ -234,46 +235,28 @@
   overflow: hidden;
 }
 
-.grafico-2 svg {
+.grafico-tono-dia svg {
   width: 50%;
   height: auto;
 }
 
 .mapa {
-  width: 40%;
+  width: 34%;
   height: 25vw;
   display: block;
-  margin-left: 28%;
+  margin-left: 31%;
   padding: 1%;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
+
 }
 
-.grafico-sobrepuesto {
-  position: absolute;
-  bottom: 0px;
+.grafico-publicaciones-dia {
+   position: absolute;
+  bottom: 52%;
   right: 4%;
-  width: 25%;       
-  height: 49%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
-  max-height: 45%;   /* Para evitar que crezca demasiado en pantallas grandes */
-  background: white;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  padding: 10px;
-  box-sizing: border-box;
-  overflow: visible;
-}
-
-.grafico-sobrepuesto svg {
-  width: 100%;
-  height: 100%;
-}
-
-.grafico-sobrepuesto-2 {
-  position: absolute;
-  bottom: 50%;
-  right: 4%;
-  width: 25%;       
-  height: 50%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
-  max-height: 50%;   /* Para evitar que crezca demasiado en pantallas grandes */
+  width: 28%;       
+  height: 48%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
+  max-height: 48%;   /* Para evitar que crezca demasiado en pantallas grandes */
   background: white;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
   padding: 10px;
@@ -281,7 +264,46 @@
   overflow: hidden;
 }
 
-.grafico-sobrepuesto-2 svg {
+.grafico-publicaciones-diasvg {
+  width: 100%;
+  height: 100%;
+}
+
+.grafico-publicaciones-pais {
+  position: absolute;
+  bottom: 52%;
+  right: 70%;
+  width: 28%;       
+  height: 48%;      /* Ajusta automáticamente la altura, o usa por ejemplo 40% si necesitas limitarla */
+  max-height: 48%;   /* Para evitar que crezca demasiado en pantallas grandes */
+  background: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  padding: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.grafico-publicaciones-pais svg {
   width: 50%;
   height: auto;
+}
+
+.mapa-info-panel {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
+  text-align: center;
+}
+
+.info-box {
+  flex: 1;
+  background-color: #f9f9f9;
+  padding: 12px;
+  margin: 0 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-size: 0.9rem;
 }

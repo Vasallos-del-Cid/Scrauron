@@ -24,8 +24,8 @@ export class GraficoBarrasComponent implements OnChanges {
     const element = this.graficoContainer.nativeElement;
     d3.select(element).selectAll('*').remove();
 
-    const margin = { top: 30, right: 30, bottom: 100, left: 50 };
-    const width = 800 - margin.left - margin.right;
+    const margin = { top: 50, right: 40, bottom: 100, left: 40 };
+    const width = 700 - margin.left - margin.right;
     const height = 350 - margin.top - margin.bottom;
 
     const self = this;
@@ -46,7 +46,9 @@ export class GraficoBarrasComponent implements OnChanges {
       .attr("text-anchor", "middle")
       .style("font-size", "22px")
       .style("font-weight", "bold")
+      .style("fill", "#003366") // Aplica el color azul
       .text(this.tituloGrafico);
+
 
     const x = d3.scaleBand()
       .domain(this.datosGrafico.map(d => d.datoX))
@@ -64,15 +66,15 @@ export class GraficoBarrasComponent implements OnChanges {
       .selectAll('text')
       .attr('transform', 'rotate(-45)')
       .style('text-anchor', 'end')
-      .style('font-size', '20px');
+      .style('font-size', '170%');
 
     svg.append('g')
       .call(d3.axisLeft(y))
       .selectAll('text')
-      .style('font-size', '20px');
+      .style('font-size', '150%');
 
     // Crear tooltip
-    const tooltip = d3.select(element)
+    const tooltip = d3.select('body')
       .append("div")
       .attr("class", "tooltip")
       .style("position", "absolute")
@@ -82,8 +84,8 @@ export class GraficoBarrasComponent implements OnChanges {
       .style("border-radius", "4px")
       .style("pointer-events", "none")
       .style("font-size", "14px")
-      .style("display", "none");
-
+      .style("display", "none")
+      .style("z-index", "9999"); // Muy importante para que quede por encima
 
     svg.selectAll('.bar')
       .data(this.datosGrafico)
@@ -94,17 +96,20 @@ export class GraficoBarrasComponent implements OnChanges {
       .attr('width', x.bandwidth())
       .attr('height', d => height - y(d.datoY))
       .attr('fill', 'steelblue')
-      .on('mouseover', function (event, d) {
-        tooltip.style('display', 'block')
-          .html(`${self.ejeX}: ${d.datoX}<br>${self.ejeY}: ${d.datoY}`);
+      .on('mouseover', (event, d) => {
+        tooltip
+          .style('display', 'block')
+          .html(`${this.ejeX}: ${d.datoX}<br>${this.ejeY}: ${d.datoY}`);
       })
-      .on('mousemove', function (event) {
-        tooltip.style('left', (event.offsetX + 10) + 'px')
-          .style('top', (event.offsetY - 28) + 'px');
+      .on('mousemove', (event) => {
+        tooltip
+          .style('left', (event.pageX + 10) + 'px')
+          .style('top', (event.pageY + 10) + 'px');
       })
-      .on('mouseout', function () {
+      .on('mouseout', () => {
         tooltip.style('display', 'none');
       });
+
 
   }
 }

@@ -26,20 +26,27 @@
   <button class="boton-reset" (click)="resetFiltros()">Resetear</button>
 </div>
 
-<!-- Mapa D3.js -->
+<!-- Contenedor de mapa y graficos-->
 <div class="contenedor-mapa-grafico">
-  <div class="grafico-1">
-    <app-grafico-barras [datosGrafico]="datosTonoPais" [tituloGrafico]="tituloGraficoTonoPais" [ejeX]="ejeXTonoPais" [ejeY]="ejeYTonoPais"></app-grafico-barras>
+  <div class="grafico-publicaciones-pais">
+    <app-grafico-barras [datosGrafico]="datosPublicacionesPais" [tituloGrafico]="tituloGraficoPublicacionesPais"
+      [ejeX]="ejeXPublicacionesPais" [ejeY]="ejeYPublicacionesPais"></app-grafico-barras>
   </div>
-  <div class="grafico-2">
-    <app-grafico-barras [datosGrafico]="datosTonoDia" [tituloGrafico]="tituloGraficoTonoDia" [ejeX]="ejeXTonoDia" [ejeY]="ejeYTonoDia"></app-grafico-barras>
+  <div class="grafico-tono-pais">
+    <app-grafico-barras [datosGrafico]="datosTonoPais" [tituloGrafico]="tituloGraficoTonoPais" [ejeX]="ejeXTonoPais"
+      [ejeY]="ejeYTonoPais"></app-grafico-barras>
   </div>
-  <app-mapa-mundial [dataPorPais]="datosMapa" class="mapa"></app-mapa-mundial>
-  <div class="grafico-sobrepuesto">
-    <app-grafico-barras [datosGrafico]="datosPublicacionesDia" [tituloGrafico]="tituloGraficoPublicacionesDia" [ejeX]="ejeXPublicacionesDia" [ejeY]="ejeYPublicacionesDia"></app-grafico-barras>
+
+    <app-mapa-mundial [dataPorPais]="datosMapa" class="mapa" [paisConMasPublicaciones]="paisConMasPublicaciones"
+      [tonoMedioGeneral]="tonoMedioGeneral" [totalPublicaciones]="totalPublicaciones"></app-mapa-mundial>
+
+  <div class="grafico-publicaciones-dia">
+    <app-grafico-barras [datosGrafico]="datosPublicacionesDia" [tituloGrafico]="tituloGraficoPublicacionesDia"
+      [ejeX]="ejeXPublicacionesDia" [ejeY]="ejeYPublicacionesDia"></app-grafico-barras>
   </div>
-  <div class="grafico-sobrepuesto-2">
-    <app-grafico-barras [datosGrafico]="datosPublicacionesPais" [tituloGrafico]="tituloGraficoPublicacionesPais" [ejeX]="ejeXPublicacionesPais" [ejeY]="ejeYPublicacionesPais"></app-grafico-barras>
+  <div class="grafico-tono-dia">
+    <app-grafico-barras [datosGrafico]="datosTonoDia" [tituloGrafico]="tituloGraficoTonoDia" [ejeX]="ejeXTonoDia"
+      [ejeY]="ejeYTonoDia"></app-grafico-barras>
   </div>
 </div>
 

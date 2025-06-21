@@ -49,7 +49,7 @@ def construir_indice_keywords(keywords):
 
     return index, textos, embeddings
 
-def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_similitud=0.83):
+def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_similitud=0.834):
     if not publicacion or not publicacion._id:
         logging.warning(f"⚠️ Publicación inválida o sin _id.")
         return []
