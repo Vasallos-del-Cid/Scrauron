@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, ViewChild, Renderer2 } from '@angular/core';
 import * as d3 from 'd3';
 
 @Component({
@@ -13,22 +13,42 @@ export class GraficoBarrasComponent implements OnChanges {
   @Input() ejeY: string = "";
 
   @ViewChild('grafico') private graficoContainer!: ElementRef;
+  mostrarTodos: boolean = false;
+  esFecha: boolean = false;
+  datosVisibles: { datoX: string; datoY: number }[] = [];
+
+  constructor(private renderer: Renderer2) {}
 
   ngOnChanges(): void {
     if (this.datosGrafico && this.graficoContainer) {
-      this.crearGrafico();
+      this.mostrarTodos = false;
+      this.prepararDatos();
+      this.crearGrafico(this.datosVisibles);
     }
   }
 
-  private crearGrafico(): void {
-    const element = this.graficoContainer.nativeElement;
+  prepararDatos(): void {
+    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+    this.esFecha = fechaRegex.test(this.datosGrafico[0]?.datoX);
+
+    const datosOrdenados = [...this.datosGrafico].sort((a, b) => {
+      if (this.esFecha) {
+        return new Date(b.datoX).getTime() - new Date(a.datoX).getTime();
+      }
+      return b.datoY - a.datoY;
+    });
+
+    this.datosVisibles = datosOrdenados.slice(0, 25);
+  }
+
+  crearGrafico(datos: { datoX: string; datoY: number }[], container: ElementRef = this.graficoContainer, anchoExtra: boolean = false, mostrarBoton: boolean = true): void {
+    const element = container.nativeElement;
     d3.select(element).selectAll('*').remove();
 
     const margin = { top: 50, right: 40, bottom: 100, left: 40 };
-    const width = 700 - margin.left - margin.right;
+    const baseWidth = 700;
+    const width = (anchoExtra ? element.clientWidth : baseWidth) - margin.left - margin.right;
     const height = 350 - margin.top - margin.bottom;
-
-    const self = this;
 
     const svgBase = d3.select(element)
       .append('svg')
@@ -46,17 +66,16 @@ export class GraficoBarrasComponent implements OnChanges {
       .attr("text-anchor", "middle")
       .style("font-size", "22px")
       .style("font-weight", "bold")
-      .style("fill", "#003366") // Aplica el color azul
+      .style("fill", "#003366")
       .text(this.tituloGrafico);
 
-
     const x = d3.scaleBand()
-      .domain(this.datosGrafico.map(d => d.datoX))
+      .domain(datos.map(d => d.datoX))
       .range([0, width])
       .padding(0.1);
 
     const y = d3.scaleLinear()
-      .domain([0, d3.max(this.datosGrafico, d => d.datoY)!])
+      .domain([0, d3.max(datos, d => d.datoY)!])
       .nice()
       .range([height, 0]);
 
@@ -73,7 +92,6 @@ export class GraficoBarrasComponent implements OnChanges {
       .selectAll('text')
       .style('font-size', '150%');
 
-    // Crear tooltip
     const tooltip = d3.select('body')
       .append("div")
       .attr("class", "tooltip")
@@ -85,10 +103,10 @@ export class GraficoBarrasComponent implements OnChanges {
       .style("pointer-events", "none")
       .style("font-size", "14px")
       .style("display", "none")
-      .style("z-index", "9999"); // Muy importante para que quede por encima
+      .style("z-index", "9999");
 
     svg.selectAll('.bar')
-      .data(this.datosGrafico)
+      .data(datos)
       .enter().append('rect')
       .attr('class', 'bar')
       .attr('x', d => x(d.datoX)!)
@@ -110,6 +128,60 @@ export class GraficoBarrasComponent implements OnChanges {
         tooltip.style('display', 'none');
       });
 
+    if (mostrarBoton && !this.mostrarTodos && this.datosGrafico.length > 25) {
+      const button = this.renderer.createElement('button');
+      const text = this.renderer.createText('Ver todos');
+      this.renderer.appendChild(button, text);
+      this.renderer.setStyle(button, 'position', 'absolute');
+      this.renderer.setStyle(button, 'top', '10px');
+      this.renderer.setStyle(button, 'right', '10px');
+      this.renderer.setStyle(button, 'z-index', '1000');
+      this.renderer.setStyle(button, 'background-color', '#003366');
+      this.renderer.setStyle(button, 'color', 'white');
+      this.renderer.setStyle(button, 'padding', '8px 12px');
+      this.renderer.setStyle(button, 'border', 'none');
+      this.renderer.setStyle(button, 'border-radius', '4px');
+      this.renderer.setStyle(button, 'cursor', 'pointer');
+      this.renderer.listen(button, 'click', () => this.abrirVentanaEmergente());
+      this.renderer.appendChild(element, button);
+    }
+  }
 
+  abrirVentanaEmergente(): void {
+    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const esFecha = fechaRegex.test(this.datosGrafico[0]?.datoX);
+
+    const datosOrdenados = [...this.datosGrafico].sort((a, b) => {
+      if (esFecha) {
+        return new Date(b.datoX).getTime() - new Date(a.datoX).getTime();
+      }
+      return b.datoY - a.datoY;
+    });
+
+    const popup = window.open('', '_blank', 'width=1400,height=700,scrollbars=yes,resizable=yes');
+    if (popup) {
+      popup.document.write('<html><head><title>Todos los datos</title><style>body{margin:0;padding:0;}#grafico-full{width:100vw;height:100vh;}</style></head><body><div id="grafico-full"></div></body></html>');
+      popup.document.close();
+
+      const container = popup.document.getElementById('grafico-full');
+      if (container) {
+        const wrapper = this.renderer.createElement('div');
+        this.renderer.setStyle(wrapper, 'width', '100%');
+        this.renderer.setStyle(wrapper, 'height', '100%');
+        this.renderer.appendChild(container, wrapper);
+
+        const hostRef = new ElementRef(wrapper);
+        this.crearGrafico(datosOrdenados, hostRef, true, false);
+
+        popup.addEventListener('resize', () => {
+          d3.select(wrapper).selectAll('*').remove();
+          this.crearGrafico(datosOrdenados, hostRef, true, false);
+        });
+      }
+    }
+  }
+
+  verTodos(): void {
+    this.abrirVentanaEmergente();
   }
 }
