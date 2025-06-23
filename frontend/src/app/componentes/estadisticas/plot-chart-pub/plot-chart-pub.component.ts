@@ -115,9 +115,11 @@ export class GraficoBarrasComponent implements OnChanges {
       .attr('height', d => height - y(d.datoY))
       .attr('fill', 'steelblue')
       .on('mouseover', (event, d) => {
+        const valorRedondeado = Number(d.datoY.toFixed(2));
+        const valorMostrado = valorRedondeado % 1 === 0 ? valorRedondeado.toFixed(0) : valorRedondeado.toFixed(2);
         tooltip
           .style('display', 'block')
-          .html(`${this.ejeX}: ${d.datoX}<br>${this.ejeY}: ${d.datoY}${d.conteo !== undefined ? `<br>Publicaciones: ${d.conteo}` : ''}`);
+          .html(`${this.ejeX}: ${d.datoX}<br>${this.ejeY}: ${valorMostrado}${d.conteo !== undefined ? `<br>Publicaciones: ${d.conteo}` : ''}`);
       })
       .on('mousemove', (event) => {
         tooltip
