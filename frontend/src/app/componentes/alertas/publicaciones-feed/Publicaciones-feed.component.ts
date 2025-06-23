@@ -35,6 +35,17 @@ import { PAISES_EQUIVALENTES } from '../../../../environments/paises-equivalente
 export class PublicacionesFeedComponent implements OnInit {
   @ViewChild(MapaMundialComponent) mapaComponent!: MapaMundialComponent;
 
+
+  public filtroPais: string | null = null;
+  public listaPaises = [
+    { codigo: null, nombre: 'Todos' }, { codigo: 'indeterminado', nombre: 'Indeterminado' },
+    ...PAISES_EQUIVALENTES
+      .map(p => ({ codigo: p.iso3, nombre: p.espanol }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+  ];
+
+
+
   //Oublicaciones filtradas
   public alertasFiltradas: Publicacion[] = [];
 
@@ -129,7 +140,8 @@ export class PublicacionesFeedComponent implements OnInit {
       tono: this.filtroValoracion ?? undefined,
       busqueda_palabras: this.filtroBusqueda || undefined,
       fuente_id: this.filtroFuenteId || undefined,
-      concepto_interes: this.filtroConceptoId || undefined
+      concepto_interes: this.filtroConceptoId || undefined,
+      pais: this.filtroPais || undefined // 👈 añadido
     }).subscribe({
       next: (result) => {
         this.alertas = result.map(pub => ({
@@ -154,7 +166,6 @@ export class PublicacionesFeedComponent implements OnInit {
           }
         });
 
-        // Calcular métricas generales
         this.totalPublicaciones = this.alertasFiltradas.length;
         this.tonoMedioGeneral = cuentaTonos > 0 ? +(sumaTonos / cuentaTonos).toFixed(2) : 0;
         this.paisConMasPublicaciones = Object.entries(this.datosMapa)
@@ -184,6 +195,7 @@ export class PublicacionesFeedComponent implements OnInit {
 
 
 
+
   private normalizarNombrePais(nombreRaw: string): string {
     const n = nombreRaw.trim();
     const match = PAISES_EQUIVALENTES.find(p =>
@@ -207,7 +219,7 @@ export class PublicacionesFeedComponent implements OnInit {
       .sort((a, b) => a.datoX.localeCompare(b.datoX));
   }
 
-  private getTonoPais(): { datoX: string; datoY: number }[] {
+  private getTonoPais(): { datoX: string; datoY: number; conteo: number }[] {
     const sums: Record<string, number> = {}, counts: Record<string, number> = {};
     this.alertasFiltradas.forEach(a => {
       if (a.pais && a.tono != null) {
@@ -217,7 +229,11 @@ export class PublicacionesFeedComponent implements OnInit {
       }
     });
     return Object.entries(sums)
-      .map(([datoX, sum]) => ({ datoX, datoY: sum / counts[datoX] }))
+      .map(([datoX, sum]) => ({
+        datoX,
+        datoY: +(sum / counts[datoX]).toFixed(2),
+        conteo: counts[datoX]
+      }))
       .sort((a, b) => a.datoX.localeCompare(b.datoX));
   }
 
@@ -253,11 +269,13 @@ export class PublicacionesFeedComponent implements OnInit {
     this.filtroFuenteId = null;
     this.filtroConceptoId = null;
     this.filtroValoracion = null;
+    this.filtroPais = null;
     const hoy = new Date();
     this.fechaDesde = new Date(hoy);
     this.fechaHasta = new Date(hoy);
     this.aplicarFiltros();
   }
+
 
   getColor(tono?: number): string {
     if (!tono || tono < 1 || tono > 10) return 'transparent';
@@ -282,5 +300,9 @@ export class PublicacionesFeedComponent implements OnInit {
       });
     }
   }
+  public nombrePais(alerta: Publicacion): string {
+    return alerta.pais ? this.normalizarNombrePais(alerta.pais) : '';
+  }
+
 }
 

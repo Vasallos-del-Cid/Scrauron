@@ -186,9 +186,9 @@ def filtrar_publicaciones(
     tono=None,
     keywords_relacionadas=None,
     busqueda_palabras=None,
-    area_id=None
+    area_id=None,
+    pais=None  # 👈 añadido
 ):
-    print(fuente_id)
     condiciones = [
         {"fecha": {"$gte": fecha_inicio, "$lte": fecha_fin}}
     ]
@@ -210,7 +210,10 @@ def filtrar_publicaciones(
                 {"contenido": {"$regex": regex}}
             ]
         })
-    print(condiciones)
+
+    if pais:
+        condiciones.append({"pais": pais})  # 👈 nuevo filtro
+
     query = {"$and": condiciones} if len(condiciones) > 1 else condiciones[0]
     publicaciones = list(get_collection("publicaciones").find(query).sort("fecha", DESCENDING))
 
@@ -239,6 +242,7 @@ def filtrar_publicaciones(
         pub["keywords_relacionadas_ids"] = [str(kid) for kid in pub.get("keywords_relacionadas_ids", [])]
 
     return publicaciones
+
 
 def eliminar_concepto_de_publicacion(pub_id, concepto_id):
     if not ObjectId.is_valid(pub_id) or not ObjectId.is_valid(concepto_id):

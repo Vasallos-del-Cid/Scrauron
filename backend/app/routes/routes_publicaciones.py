@@ -128,6 +128,7 @@ def publicaciones_filtradas_endpoint():
         tone = request.args.get("tono")
         kws = request.args.getlist("keywordsRelacionadas")
         busq = request.args.get("busqueda_palabras")
+        pais = request.args.get("pais")  # 👈 nuevo
 
         if not fi or not ff:
             return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
@@ -148,7 +149,8 @@ def publicaciones_filtradas_endpoint():
             keywords_relacionadas=keywords,
             busqueda_palabras=busq,
             area_id=area_id,
-            fuente_id=fuente_id
+            fuente_id=fuente_id,
+            pais=pais  # 👈 filtrado por país
         )
 
         if concepto_oid:
@@ -184,6 +186,7 @@ def publicaciones_filtradas_endpoint():
         return {"error": f"Parámetro inválido: {ve}"}, 400
     except Exception as e:
         return {"error": f"Error inesperado: {e}"}, 500
+
 
 @api_publicaciones.route('/publicaciones/<pub_id>/conceptos/<concepto_id>', methods=['DELETE'])
 @SerializeJson

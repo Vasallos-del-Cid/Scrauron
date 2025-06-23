@@ -7,7 +7,7 @@ import * as d3 from 'd3';
   styleUrls: ['./plot-chart-pub.component.css']
 })
 export class GraficoBarrasComponent implements OnChanges {
-  @Input() datosGrafico: { datoX: string; datoY: number }[] = [];
+  @Input() datosGrafico: { datoX: string; datoY: number; conteo?: number }[] = [];
   @Input() tituloGrafico: string = "";
   @Input() ejeX: string = "";
   @Input() ejeY: string = "";
@@ -15,7 +15,7 @@ export class GraficoBarrasComponent implements OnChanges {
   @ViewChild('grafico') private graficoContainer!: ElementRef;
   mostrarTodos: boolean = false;
   esFecha: boolean = false;
-  datosVisibles: { datoX: string; datoY: number }[] = [];
+  datosVisibles: { datoX: string; datoY: number; conteo?: number }[] = [];
 
   constructor(private renderer: Renderer2) {}
 
@@ -41,7 +41,7 @@ export class GraficoBarrasComponent implements OnChanges {
     this.datosVisibles = datosOrdenados.slice(0, 25);
   }
 
-  crearGrafico(datos: { datoX: string; datoY: number }[], container: ElementRef = this.graficoContainer, anchoExtra: boolean = false, mostrarBoton: boolean = true): void {
+  crearGrafico(datos: { datoX: string; datoY: number; conteo?: number }[], container: ElementRef = this.graficoContainer, anchoExtra: boolean = false, mostrarBoton: boolean = true): void {
     const element = container.nativeElement;
     d3.select(element).selectAll('*').remove();
 
@@ -115,9 +115,11 @@ export class GraficoBarrasComponent implements OnChanges {
       .attr('height', d => height - y(d.datoY))
       .attr('fill', 'steelblue')
       .on('mouseover', (event, d) => {
+        const valorRedondeado = Number(d.datoY.toFixed(2));
+        const valorMostrado = valorRedondeado % 1 === 0 ? valorRedondeado.toFixed(0) : valorRedondeado.toFixed(2);
         tooltip
           .style('display', 'block')
-          .html(`${this.ejeX}: ${d.datoX}<br>${this.ejeY}: ${d.datoY}`);
+          .html(`${this.ejeX}: ${d.datoX}<br>${this.ejeY}: ${valorMostrado}${d.conteo !== undefined ? `<br>Publicaciones: ${d.conteo}` : ''}`);
       })
       .on('mousemove', (event) => {
         tooltip
