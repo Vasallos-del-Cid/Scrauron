@@ -33,7 +33,7 @@ export class GraficoBarrasComponent implements OnChanges {
 
     const datosOrdenados = [...this.datosGrafico].sort((a, b) => {
       if (this.esFecha) {
-        return new Date(b.datoX).getTime() - new Date(a.datoX).getTime();
+        return new Date(a.datoX).getTime() - new Date(b.datoX).getTime();
       }
       return b.datoY - a.datoY;
     });
@@ -74,8 +74,16 @@ export class GraficoBarrasComponent implements OnChanges {
       .range([0, width])
       .padding(0.1);
 
+    let yMax: number;
+    if (this.tituloGrafico.includes('Tono')) {
+      yMax = 10;
+    } else {
+      const maxY = d3.max(datos, d => d.datoY)!;
+      yMax = maxY + maxY * 0.2;
+    }
+
     const y = d3.scaleLinear()
-      .domain([0, d3.max(datos, d => d.datoY)!])
+      .domain([0, yMax])
       .nice()
       .range([height, 0]);
 
@@ -155,7 +163,7 @@ export class GraficoBarrasComponent implements OnChanges {
 
     const datosOrdenados = [...this.datosGrafico].sort((a, b) => {
       if (esFecha) {
-        return new Date(b.datoX).getTime() - new Date(a.datoX).getTime();
+        return new Date(a.datoX).getTime() - new Date(b.datoX).getTime();
       }
       return b.datoY - a.datoY;
     });
