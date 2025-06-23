@@ -35,42 +35,56 @@ import { PAISES_EQUIVALENTES } from '../../../../environments/paises-equivalente
 export class PublicacionesFeedComponent implements OnInit {
   @ViewChild(MapaMundialComponent) mapaComponent!: MapaMundialComponent;
 
+  //Oublicaciones filtradas
   public alertasFiltradas: Publicacion[] = [];
+
+  //Opciones combos filtrado
   public fuentesOpts: { id: string | null; nombre: string }[] = [];
   public conceptosOpts: { id: string | null; nombre: string }[] = [];
   public valoraciones = [
     { valor: null, nombre: 'Todos' },
     ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ valor: n, nombre: n.toString() }))
   ];
+
+  //Filtros de búsqueda
   public filtroBusqueda = '';
   public filtroFuenteId: string | null = null;
   public filtroConceptoId: string | null = null;
   public filtroValoracion: number | null = null;
   public fechaDesde?: Date;
   public fechaHasta?: Date;
-  public datosMapa: Record<string, number> = {};
+
   public expandidos = new Set<string>();
-  public loading = false;
   public alertas: any[] = [];
 
+  //variable para spinner
+  public loading = false;
+  //Datos gráfica Publicaciones-Dia
   public datosPublicacionesDia: { datoX: string; datoY: number }[] = [];
-  public datosTonoDia: { datoX: string; datoY: number }[] = [];
-  public tituloGraficoPublicacionesDia = "Publicaciones por día";
+  public tituloGraficoPublicacionesDia = "📰 Publicaciones por día 🗓️";
   public ejeXPublicacionesDia = "Día";
   public ejeYPublicacionesDia = "Publicaciones";
-  public tituloGraficoTonoDia = "Tono medio por día";
+
+  //Datos gráfica Tono-Dia
+  public datosTonoDia: { datoX: string; datoY: number }[] = [];
+  public tituloGraficoTonoDia = "🌡️ Tono medio por día 🗓️";
   public ejeXTonoDia = "Día";
   public ejeYTonoDia = "Tono";
 
+  //Datos gráfica Publicaciones-Pais
   public datosPublicacionesPais: { datoX: string; datoY: number }[] = [];
-  public datosTonoPais: { datoX: string; datoY: number }[] = [];
-  public tituloGraficoPublicacionesPais = "Publicaciones por país";
+  public tituloGraficoPublicacionesPais = "📰 Publicaciones por país 🌍";
   public ejeXPublicacionesPais = "País";
   public ejeYPublicacionesPais = "Publicaciones";
-  public tituloGraficoTonoPais = "Tono medio por país";
+
+  //Datos gráfica Tono-país
+  public datosTonoPais: { datoX: string; datoY: number }[] = [];
+  public tituloGraficoTonoPais = "🌡️ Tono medio por país 🌍";
   public ejeXTonoPais = "País";
   public ejeYTonoPais = "Tono";
-  
+
+  //Datos de las cajas del mapamundi
+  public datosMapa: Record<string, number> = {};
   public totalPublicaciones: number = 0;
   public tonoMedioGeneral: number = 0;
   public paisConMasPublicaciones: string | null = null;
@@ -99,74 +113,74 @@ export class PublicacionesFeedComponent implements OnInit {
       .subscribe(opts => this.conceptosOpts = opts);
   }
 
- aplicarFiltros(): void {
-  if (!this.fechaDesde || !this.fechaHasta) {
-    this.alertasFiltradas = [];
-    return;
-  }
-
-  const desde = new Date(this.fechaDesde); desde.setHours(2, 1, 0, 0);
-  const hasta = new Date(this.fechaHasta); hasta.setHours(25, 59, 0, 0);
-  this.loading = true;
-
-  this.servicio.getFiltradas({
-    fechaDesde: desde,
-    fechaHasta: hasta,
-    tono: this.filtroValoracion ?? undefined,
-    busqueda_palabras: this.filtroBusqueda || undefined,
-    fuente_id: this.filtroFuenteId || undefined,
-    concepto_interes: this.filtroConceptoId || undefined
-  }).subscribe({
-    next: (result) => {
-      this.alertas = result.map(pub => ({
-        ...pub,
-        fecha: pub.fecha ? new Date(pub.fecha) : undefined,
-        fuente: pub.fuente ?? undefined,
-        conceptos_relacionados: pub.conceptos_relacionados || []
-      }));
-      this.alertasFiltradas = [...this.alertas];
-
-      this.datosMapa = {};
-      let sumaTonos = 0;
-      let cuentaTonos = 0;
-
-      this.alertasFiltradas.forEach(a => {
-        if (a.pais?.length === 3) {
-          this.datosMapa[a.pais] = (this.datosMapa[a.pais] || 0) + 1;
-        }
-        if (a.tono != null) {
-          sumaTonos += a.tono;
-          cuentaTonos++;
-        }
-      });
-
-      // Calcular métricas generales
-      this.totalPublicaciones = this.alertasFiltradas.length;
-      this.tonoMedioGeneral = cuentaTonos > 0 ? +(sumaTonos / cuentaTonos).toFixed(2) : 0;
-      this.paisConMasPublicaciones = Object.entries(this.datosMapa)
-        .reduce((max, curr) => curr[1] > max[1] ? curr : max, ["", 0])[0] || null;
-
-      this.datosPublicacionesPais = this.getPublicacionesPais();
-      this.datosTonoPais = this.getTonoPais();
-      this.datosPublicacionesDia = this.getPublicacionesDia();
-      this.datosTonoDia = this.getTonoDia();
-
-      this.loading = false;
-
-      setTimeout(() => {
-        if (this.mapaComponent) {
-          this.mapaComponent.dataPorPais = { ...this.datosMapa };
-        }
-      }, 0);
-    },
-    error: (err) => {
-      console.error(err);
-      this.alertas = [];
+  aplicarFiltros(): void {
+    if (!this.fechaDesde || !this.fechaHasta) {
       this.alertasFiltradas = [];
-      this.loading = false;
+      return;
     }
-  });
-}
+
+    const desde = new Date(this.fechaDesde); desde.setHours(2, 1, 0, 0);
+    const hasta = new Date(this.fechaHasta); hasta.setHours(25, 59, 0, 0);
+    this.loading = true;
+
+    this.servicio.getFiltradas({
+      fechaDesde: desde,
+      fechaHasta: hasta,
+      tono: this.filtroValoracion ?? undefined,
+      busqueda_palabras: this.filtroBusqueda || undefined,
+      fuente_id: this.filtroFuenteId || undefined,
+      concepto_interes: this.filtroConceptoId || undefined
+    }).subscribe({
+      next: (result) => {
+        this.alertas = result.map(pub => ({
+          ...pub,
+          fecha: pub.fecha ? new Date(pub.fecha) : undefined,
+          fuente: pub.fuente ?? undefined,
+          conceptos_relacionados: pub.conceptos_relacionados || []
+        }));
+        this.alertasFiltradas = [...this.alertas];
+
+        this.datosMapa = {};
+        let sumaTonos = 0;
+        let cuentaTonos = 0;
+
+        this.alertasFiltradas.forEach(a => {
+          if (a.pais?.length === 3) {
+            this.datosMapa[a.pais] = (this.datosMapa[a.pais] || 0) + 1;
+          }
+          if (a.tono != null) {
+            sumaTonos += a.tono;
+            cuentaTonos++;
+          }
+        });
+
+        // Calcular métricas generales
+        this.totalPublicaciones = this.alertasFiltradas.length;
+        this.tonoMedioGeneral = cuentaTonos > 0 ? +(sumaTonos / cuentaTonos).toFixed(2) : 0;
+        this.paisConMasPublicaciones = Object.entries(this.datosMapa)
+          .reduce((max, curr) => curr[1] > max[1] ? curr : max, ["", 0])[0] || null;
+
+        this.datosPublicacionesPais = this.getPublicacionesPais();
+        this.datosTonoPais = this.getTonoPais();
+        this.datosPublicacionesDia = this.getPublicacionesDia();
+        this.datosTonoDia = this.getTonoDia();
+
+        this.loading = false;
+
+        setTimeout(() => {
+          if (this.mapaComponent) {
+            this.mapaComponent.dataPorPais = { ...this.datosMapa };
+          }
+        }, 0);
+      },
+      error: (err) => {
+        console.error(err);
+        this.alertas = [];
+        this.alertasFiltradas = [];
+        this.loading = false;
+      }
+    });
+  }
 
 
 
@@ -258,4 +272,15 @@ export class PublicacionesFeedComponent implements OnInit {
   isExpanded(id: string): boolean {
     return this.expandidos.has(id);
   }
+
+  confirmarEliminarConcepto(pubId: string, conceptoId: string, nombre: string): void {
+    const confirmar = confirm(`¿Quiere desvincular esta publicación del concepto "${nombre}"?`);
+    if (confirmar) {
+      this.servicio.eliminarConcepto(pubId, conceptoId).subscribe({
+        next: () => this.aplicarFiltros(),
+        error: err => console.error('Error eliminando concepto:', err)
+      });
+    }
+  }
 }
+

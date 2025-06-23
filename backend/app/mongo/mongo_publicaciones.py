@@ -239,3 +239,13 @@ def filtrar_publicaciones(
         pub["keywords_relacionadas_ids"] = [str(kid) for kid in pub.get("keywords_relacionadas_ids", [])]
 
     return publicaciones
+
+def eliminar_concepto_de_publicacion(pub_id, concepto_id):
+    if not ObjectId.is_valid(pub_id) or not ObjectId.is_valid(concepto_id):
+        raise ValueError("ID inválido")
+    
+    result = get_collection("publicaciones").update_one(
+        {"_id": ObjectId(pub_id)},
+        {"$pull": {"conceptos_relacionados_ids": ObjectId(concepto_id)}}
+    )
+    return result.modified_count

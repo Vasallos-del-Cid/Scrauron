@@ -11,9 +11,10 @@ from ..mongo.mongo_publicaciones import (
     delete_publicacion,
     delete_all_publicaciones,
     get_publicaciones_con_conceptos,
-    filtrar_publicaciones
+    filtrar_publicaciones,
+    eliminar_concepto_de_publicacion
 )
-from ..mongo.mongo_fuentes import get_fuente_by_id, get_collection, get_fuentes_dict
+from ..mongo.mongo_fuentes import  get_fuentes_dict
 from ..mongo.mongo_conceptos import get_collection as get_conceptos_collection
 
 api_publicaciones = Blueprint('api_publicaciones', __name__)
@@ -183,3 +184,16 @@ def publicaciones_filtradas_endpoint():
         return {"error": f"Parámetro inválido: {ve}"}, 400
     except Exception as e:
         return {"error": f"Error inesperado: {e}"}, 500
+
+@api_publicaciones.route('/publicaciones/<pub_id>/conceptos/<concepto_id>', methods=['DELETE'])
+@SerializeJson
+def eliminar_concepto_relacionado_endpoint(pub_id, concepto_id):
+    try:
+        count = eliminar_concepto_de_publicacion(pub_id, concepto_id)
+        if count == 0:
+            return {"mensaje": "No se encontró la publicación o el concepto no estaba relacionado"}, 404
+        return {"mensaje": "Concepto eliminado de la publicación"}, 200
+    except ValueError as ve:
+        return {"error": str(ve)}, 400
+    except Exception as e:
+        return {"error": f"Error al eliminar el concepto: {str(e)}"}, 500

@@ -85,6 +85,8 @@
         <div class="tags">
           <span *ngFor="let concepto of alerta.conceptos_relacionados" class="badge">
             {{ concepto.nombre }}
+            <span class="eliminar-concepto" (click)="confirmarEliminarConcepto(alerta._id!, concepto._id!, concepto.nombre)">❌</span>
+
           </span>
         </div>
         <div class="tono">Tono: {{ alerta.tono || "Sin calificar" }}</div>

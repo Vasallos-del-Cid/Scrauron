@@ -307,3 +307,10 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   font-size: 0.9rem;
 }
+
+.eliminar-concepto {
+  cursor: pointer;
+  margin-left: 5px;
+  color: red;
+  font-weight: bold;
+}

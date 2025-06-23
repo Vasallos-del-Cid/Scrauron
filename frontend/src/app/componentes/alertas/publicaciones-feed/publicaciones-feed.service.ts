@@ -74,5 +74,9 @@ export class PublicacionesService extends DataService<Publicacion> {
       conceptos: this.getConceptosArea(areaId)
     });
   }
+  eliminarConcepto(pubId: string, conceptoId: string) {
+  return this.http.delete(`${this.baseUrl}/publicaciones/${pubId}/conceptos/${conceptoId}`);
+}
+
    
 } 
