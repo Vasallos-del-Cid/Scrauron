@@ -1,5 +1,6 @@
 import { Identificable } from "../../../core/services/data-service/identificable.model";
 import { Conceptos } from "../../conceptos/Conceptos.model";
+import { Keyword } from "../../conceptos/Keyword.model";
 import { Fuente } from "../../fuentes/fuente.model";
 
 export interface Publicacion extends Identificable {
@@ -11,6 +12,6 @@ export interface Publicacion extends Identificable {
   tono?: number;
   pais?: string;
   ciudad_region?: string;
-  keywords?: { _id: number; nombre: string }[];
+  keywords?: Keyword[];
   conceptos_relacionados: Conceptos[];
 }

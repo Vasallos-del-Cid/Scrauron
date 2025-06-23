@@ -1,55 +1,94 @@
 <div class="crud-container">
-
   <div class="crud-header">
     <span class="header-text">{{ componentTitle }}</span>
   </div>
 
-  <ejs-grid #grid
+  <ejs-grid
+    #grid
     [dataSource]="servicio.items$ | async"
     [toolbar]="toolbarItems"
     [allowPaging]="true"
-    [pageSettings]="{ pageSizes: true, pageSize:10 }"
+    [pageSettings]="{ pageSizes: true, pageSize: 10 }"
     [allowSorting]="true"
     [allowFiltering]="true"
     (toolbarClick)="toolbarClick($event)"
     (queryCellInfo)="queryCellInfo($event)"
     height="100%"
-    locale="es-ES">
-
+    locale="es-ES"
+  >
     <e-columns>
-      <e-column *ngFor="let col of columns"
+      <e-column
+        *ngFor="let col of columns"
         [field]="col.field"
         [headerText]="col.headerText"
         [width]="col.width"
         [textAlign]="col.textAlign"
         [type]="col.type"
         [format]="col.format"
-        [isPrimaryKey]="col.isPrimaryKey">
+        [isPrimaryKey]="col.isPrimaryKey"
+      >
       </e-column>
     </e-columns>
   </ejs-grid>
 
-  <ejs-dialog #dialog
+  <ejs-dialog
+    #dialog
     [header]="dialogTitle"
     [visible]="false"
     [width]="'500px'"
     [isModal]="true"
     [showCloseIcon]="true"
-    (close)="cancel()">
-    <div class="form-container">
+    (close)="cancel()"
+  >
+    <ng-container *ngIf="hasCustomForm; else defaultForm">
+      <ng-template
+        [ngTemplateOutlet]="customFormTpl ?? null"
+        [ngTemplateOutletContext]="{
+          form: form,
+          submit: submit,
+          cancel: cancel,
+          item: form.value
+        }"
+      >
+      </ng-template>
+    </ng-container>
+    <ng-template #defaultForm>
+      <div class="form-container">
         <form [formGroup]="form" (ngSubmit)="submit()">
           <div class="form-group" *ngFor="let f of formFields">
             <label>{{ f.label }}</label>
             <ng-container [ngSwitch]="f.type">
-              <input *ngSwitchCase="'text'" type="text" [formControlName]="f.name" [placeholder]="f.placeholder"/>
-              <input *ngSwitchCase="'number'" type="number" [formControlName]="f.name"/>
-              <input *ngSwitchCase="'date'" type="date" [formControlName]="f.name"/>
+              <input
+                *ngSwitchCase="'text'"
+                type="text"
+                [formControlName]="f.name"
+                [placeholder]="f.placeholder"
+              />
+              <input
+                *ngSwitchCase="'number'"
+                type="number"
+                [formControlName]="f.name"
+              />
+              <input
+                *ngSwitchCase="'date'"
+                type="date"
+                [formControlName]="f.name"
+              />
               <select *ngSwitchCase="'select'" [formControlName]="f.name">
-                <option *ngFor="let opt of f.options" [value]="opt.value">{{ opt.label }}</option>
+                <option *ngFor="let opt of f.options" [value]="opt.value">
+                  {{ opt.label }}
+                </option>
               </select>
-              <input *ngSwitchCase="'checkbox'" type="checkbox" [formControlName]="f.name"/>
+              <input
+                *ngSwitchCase="'checkbox'"
+                type="checkbox"
+                [formControlName]="f.name"
+              />
             </ng-container>
-            <div class="error" *ngIf="form.get(f.name)?.invalid && form.get(f.name)?.touched">
+            <div
+              class="error"
+              *ngIf="form.get(f.name)?.invalid && form.get(f.name)?.touched"
+            >
               Campo inválido
             </div>
           </div>
@@ -59,5 +98,6 @@
           </div>
         </form>
       </div>
+    </ng-template>
   </ejs-dialog>
 </div>

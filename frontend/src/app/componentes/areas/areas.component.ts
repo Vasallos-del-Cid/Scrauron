@@ -17,7 +17,8 @@ import { DataService } from '../../core/services/data-service/data-service.servi
 })
 export class AreasComponent {
   itemDefault: Partial<Areas> = {};
-areasService: AreasService;
+  areasService: AreasService;
+  
   constructor(public servicio: AreasService) {
     this.areasService = servicio;
    }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ContentChild, Input, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import {
   GridComponent,
   GridModule,
@@ -51,6 +51,12 @@ export class CrudGenericComponent implements OnInit {
 
   @ViewChild('grid', { static: true }) grid!: GridComponent;
   @ViewChild('dialog', { static: true }) dialog!: any;
+
+  @ContentChild('dialogForm', { static: true, read: TemplateRef }) customFormTpl?: TemplateRef<any>;
+
+  get hasCustomForm() {
+    return !!this.customFormTpl;
+  }
 
   form!: FormGroup;
   modoEdicion = false;
