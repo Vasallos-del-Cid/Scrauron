@@ -38,11 +38,11 @@ export class PublicacionesFeedComponent implements OnInit {
 
   public filtroPais: string | null = null;
   public listaPaises = [
-  { codigo: null, nombre: 'Todos' },{ codigo: 'indeterminado', nombre: 'indeterminado' },
-  ...PAISES_EQUIVALENTES
-    .map(p => ({ codigo: p.iso3, nombre: p.espanol }))
-    .sort((a, b) => a.nombre.localeCompare(b.nombre))
-];
+    { codigo: null, nombre: 'Todos' }, { codigo: 'indeterminado', nombre: 'Indeterminado' },
+    ...PAISES_EQUIVALENTES
+      .map(p => ({ codigo: p.iso3, nombre: p.espanol }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+  ];
 
 
 
@@ -219,7 +219,7 @@ export class PublicacionesFeedComponent implements OnInit {
       .sort((a, b) => a.datoX.localeCompare(b.datoX));
   }
 
-  private getTonoPais(): { datoX: string; datoY: number }[] {
+  private getTonoPais(): { datoX: string; datoY: number; conteo: number }[] {
     const sums: Record<string, number> = {}, counts: Record<string, number> = {};
     this.alertasFiltradas.forEach(a => {
       if (a.pais && a.tono != null) {
@@ -229,7 +229,11 @@ export class PublicacionesFeedComponent implements OnInit {
       }
     });
     return Object.entries(sums)
-      .map(([datoX, sum]) => ({ datoX, datoY: sum / counts[datoX] }))
+      .map(([datoX, sum]) => ({
+        datoX,
+        datoY: +(sum / counts[datoX]).toFixed(2),
+        conteo: counts[datoX]
+      }))
       .sort((a, b) => a.datoX.localeCompare(b.datoX));
   }
 
