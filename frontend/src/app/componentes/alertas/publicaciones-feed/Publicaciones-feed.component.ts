@@ -38,7 +38,7 @@ export class PublicacionesFeedComponent implements OnInit {
 
   public filtroPais: string | null = null;
   public listaPaises = [
-  { codigo: 'indeterminado', nombre: 'indeterminado' },
+  { codigo: null, nombre: 'Todos' },{ codigo: 'indeterminado', nombre: 'indeterminado' },
   ...PAISES_EQUIVALENTES
     .map(p => ({ codigo: p.iso3, nombre: p.espanol }))
     .sort((a, b) => a.nombre.localeCompare(b.nombre))
