@@ -38,7 +38,7 @@ export class GraficoBarrasComponent implements OnChanges {
       return b.datoY - a.datoY;
     });
 
-    this.datosVisibles = datosOrdenados.slice(0, 25);
+    this.datosVisibles = datosOrdenados.slice(0, 20);
   }
 
   crearGrafico(datos: { datoX: string; datoY: number; conteo?: number }[], container: ElementRef = this.graficoContainer, anchoExtra: boolean = false, mostrarBoton: boolean = true): void {
