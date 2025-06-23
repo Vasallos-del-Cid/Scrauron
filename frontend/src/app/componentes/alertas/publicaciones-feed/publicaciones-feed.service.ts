@@ -19,8 +19,9 @@ export class PublicacionesService extends DataService<Publicacion> {
   busqueda_palabras?: string;
   fuente_id?: string;
   keywords?: string[];
-  concepto_interes?: string; 
+  concepto_interes?: string;
   area_id?: string;
+  pais?: string; 
 }): Observable<Publicacion[]> {
   const cleanISO = (date: Date) => date.toISOString().replace('Z', '');
 
@@ -35,14 +36,18 @@ export class PublicacionesService extends DataService<Publicacion> {
     params = params.set('busqueda_palabras', filtros.busqueda_palabras);
   }
 
-  if (filtros.concepto_interes) {  
-    params = params.set('concepto_interes', filtros.concepto_interes);  
+  if (filtros.concepto_interes) {
+    params = params.set('concepto_interes', filtros.concepto_interes);
   } else if (filtros.area_id) {
     params = params.set('area_id', filtros.area_id);
   }
 
-  if (filtros.fuente_id) {  
-    params = params.set('fuente_id', filtros.fuente_id);  
+  if (filtros.fuente_id) {
+    params = params.set('fuente_id', filtros.fuente_id);
+  }
+
+  if (filtros.pais) { 
+    params = params.set('pais', filtros.pais);
   }
 
   if (filtros.keywords) {
@@ -50,10 +55,9 @@ export class PublicacionesService extends DataService<Publicacion> {
       params = params.append('keywordsRelacionadas', k)
     );
   }
-  
+
   return this.http.get<Publicacion[]>(`${this.baseUrl}/publicaciones_filtradas`, { params });
 }
-
 
   getConceptosArea(areaId: string): Observable<any[]> {
     const params = new HttpParams().set('area_id', areaId);

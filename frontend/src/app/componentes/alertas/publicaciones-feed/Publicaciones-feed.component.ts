@@ -35,6 +35,17 @@ import { PAISES_EQUIVALENTES } from '../../../../environments/paises-equivalente
 export class PublicacionesFeedComponent implements OnInit {
   @ViewChild(MapaMundialComponent) mapaComponent!: MapaMundialComponent;
 
+
+  public filtroPais: string | null = null;
+  public listaPaises = [
+  { codigo: 'indeterminado', nombre: 'indeterminado' },
+  ...PAISES_EQUIVALENTES
+    .map(p => ({ codigo: p.iso3, nombre: p.espanol }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre))
+];
+
+
+
   //Oublicaciones filtradas
   public alertasFiltradas: Publicacion[] = [];
 
@@ -129,7 +140,8 @@ export class PublicacionesFeedComponent implements OnInit {
       tono: this.filtroValoracion ?? undefined,
       busqueda_palabras: this.filtroBusqueda || undefined,
       fuente_id: this.filtroFuenteId || undefined,
-      concepto_interes: this.filtroConceptoId || undefined
+      concepto_interes: this.filtroConceptoId || undefined,
+      pais: this.filtroPais || undefined // 👈 añadido
     }).subscribe({
       next: (result) => {
         this.alertas = result.map(pub => ({
@@ -154,7 +166,6 @@ export class PublicacionesFeedComponent implements OnInit {
           }
         });
 
-        // Calcular métricas generales
         this.totalPublicaciones = this.alertasFiltradas.length;
         this.tonoMedioGeneral = cuentaTonos > 0 ? +(sumaTonos / cuentaTonos).toFixed(2) : 0;
         this.paisConMasPublicaciones = Object.entries(this.datosMapa)
@@ -181,6 +192,7 @@ export class PublicacionesFeedComponent implements OnInit {
       }
     });
   }
+
 
 
 
@@ -253,11 +265,13 @@ export class PublicacionesFeedComponent implements OnInit {
     this.filtroFuenteId = null;
     this.filtroConceptoId = null;
     this.filtroValoracion = null;
+    this.filtroPais = null;
     const hoy = new Date();
     this.fechaDesde = new Date(hoy);
     this.fechaHasta = new Date(hoy);
     this.aplicarFiltros();
   }
+
 
   getColor(tono?: number): string {
     if (!tono || tono < 1 || tono > 10) return 'transparent';
@@ -282,5 +296,9 @@ export class PublicacionesFeedComponent implements OnInit {
       });
     }
   }
+  public nombrePais(alerta: Publicacion): string {
+    return alerta.pais ? this.normalizarNombrePais(alerta.pais) : '';
+  }
+
 }
 
