@@ -4,7 +4,7 @@ import { Keyword } from "./Keyword.model";
 export interface Conceptos extends Identificable {
   nombre: string;
   descripcion?: string;
-  keywords?: Keyword[];
+  keywords?: string[];
   publicaciones_relacionadas_ids?: string[];
   // TODO estos se deben agregar en back
   /* num_menciones?: number;

@@ -22,7 +22,7 @@ export abstract class DataService<T extends Identificable> {
    * @description Almacena la lista de items y permite su suscripción.
    * @see {@link items$} para acceder a la lista de items como Observable.
    */
-  protected readonly _items$ = new BehaviorSubject<T[]>([]);
+  protected readonly _items$: BehaviorSubject<T[]> = new BehaviorSubject<T[]>([]);
 
   /** Observable que expone la lista de items reactiva
    *
@@ -44,7 +44,7 @@ export abstract class DataService<T extends Identificable> {
    * @see {@link BehaviorSubject} para más información sobre su uso.
    * @see {@link Observable} para más información sobre la suscripción a cambios.
    */
-  public readonly items$ = this._items$.asObservable();
+  public readonly items$: Observable<T[]> = this._items$.asObservable();
 
   /** Opciones HTTP por defecto (JSON) */
   private readonly httpOptions = {
@@ -131,7 +131,7 @@ export abstract class DataService<T extends Identificable> {
             options?.success?.(created);
           },
           options,
-          '🖫 Elemento creado correctamente'
+          `🖫 Elemento ${this.endpoint} creado correctamente`
         ) // true para mostrar mensaje de éxito
       )
       .subscribe();
@@ -158,7 +158,7 @@ export abstract class DataService<T extends Identificable> {
             options?.success?.(updated);
           },
           options,
-          '🖫 Elemento actualizado correctamente'
+          `🖫 Elemento ${this.endpoint} actualizado correctamente`
         ) // true para mostrar mensaje de éxito
       )
       .subscribe();
@@ -182,7 +182,7 @@ export abstract class DataService<T extends Identificable> {
             options?.success?.();
           },
           options,
-          '🗑 Elemento eliminado correctamente'
+          `🗑 Elemento ${this.endpoint} eliminado correctamente`
         ) // true para mostrar mensaje de éxito
       )
       .subscribe();

@@ -45,8 +45,9 @@
         [ngTemplateOutlet]="customFormTpl ?? null"
         [ngTemplateOutletContext]="{
           form: form,
-          submit: submit,
-          cancel: cancel,
+          submit: submit.bind(this),
+          cancel: cancel.bind(this),
+          modoEdicion: modoEdicion,
           item: form.value
         }"
       >
