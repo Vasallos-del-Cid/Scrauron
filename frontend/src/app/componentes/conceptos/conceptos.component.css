@@ -1,22 +1,43 @@
-.contenedor-grid {
+/* 1) Lista sin bullets y con espacio entre filas */
+.form-group.buttons ul {
+  list-style: none;
   padding: 0;
-  margin: 0;
-  flex: 1;
+  margin: 0 0 12px 0;
+}
+.form-group.buttons ul li {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-.e-grid {
-  flex-grow: 1;
-  height: 100%;
+/* 2) Botón “X” más pequeño */
+.form-group.buttons ul li .btn-remove {
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  line-height: 1;
+  margin-left: 8px;
 }
 
-.e-grid .e-gridheader, .e-grid .e-gridcontent {
-  overflow-x: auto;
-  overflow-y: auto;
+/* 3) Alinear en fila input + botón Añadir */
+.add-kw-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+.add-kw-row input {
+  flex: 1;
+  /* hereda estilos de input del CRUD genérico */
+}
+.add-kw-row button {
+  /* hereda estilos de button del CRUD genérico */
 }
 
-.e-gridcontent {
-  height: 100%;
+
+.btn-remove {
+  padding: 2px 4px;       /* menos “padding” horizontal */
+  min-width: auto;        /* permite que se ajusten al contenido */
+  width: auto;            /* que no fijen ancho fijo */
+  font-size: 0.75rem;     /* un poco más pequeños */
+  line-height: 1;         /* para que no se estiren */
 }

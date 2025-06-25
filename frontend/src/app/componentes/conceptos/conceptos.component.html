@@ -12,135 +12,188 @@
     let-cancel="cancel"
     let-modoEdicion="modoEdicion"
   >
-    <div class="wizard-container">
-      <!-- ─── A) EDICIÓN: formulario único ─── -->
-      <form
-        *ngIf="modoEdicion"
-        [formGroup]="form"
-        (ngSubmit)="patch()"
-        class="edit-form"
-      >
+    <div class="form-container">
+      <!-- ─── A) EDICIÓN ─── -->
+      <form *ngIf="modoEdicion" [formGroup]="form" (ngSubmit)="patch()">
         <h3>Editar Concepto</h3>
 
-        <label>Área</label>
-        <select formControlName="areaId">
-          <option value="" disabled selected>— Seleccione un área —</option>
-          <option *ngFor="let a of areas | async" [value]="a._id">
-            {{ a.nombre }}
-          </option>
-        </select>
-
-        <label>Nombre</label>
-        <input type="text" formControlName="nombre" />
-
-        <label>Descripción</label>
-        <textarea formControlName="descripcion" rows="4"></textarea>
-
-        <label>Keywords</label>
-        <ul>
-          <li *ngFor="let kw of keywordsList; let i = index">
-            <input
-              [(ngModel)]="keywordsList[i].nombre"
-              [ngModelOptions]="{ standalone: true }"
-              name="kw-{{ i }}"
-            />
-            <button type="button" (click)="removeKeyword(i)">X</button>
-          </li>
-        </ul>
-        <input #newKw placeholder="Nueva keyword" />
-        <button
-          type="button"
-          (click)="addKeyword(newKw.value); newKw.value = ''"
-        >
-          Añadir
-        </button>
-
-        <div class="buttons">
-          <button type="submit">Guardar cambios</button>
-          <button type="button" (click)="cancel()">Cancelar</button>
-        </div>
-      </form>
-
-      <!-- ─── B) CREACIÓN: wizard paso a paso ─── -->
-      <ng-container *ngIf="!modoEdicion">
-        <!-- STEP 1 -->
-        <form *ngIf="step === 1" [formGroup]="form">
-          <div class="steps">1. Datos básicos</div>
+        <div class="form-group">
           <label>Área</label>
           <select formControlName="areaId">
+            <option value="" disabled>— Seleccione un área —</option>
             <option *ngFor="let a of areas | async" [value]="a._id">
               {{ a.nombre }}
             </option>
           </select>
+        </div>
 
-          <label>Nombre del Concepto</label>
+        <div class="form-group">
+          <label>Nombre</label>
           <input type="text" formControlName="nombre" />
+        </div>
 
-          <div class="buttons">
-            <button type="button" (click)="onCreateName()">Siguiente</button>
-            <button type="button" (click)="cancel()">Cancelar</button>
-          </div>
-        </form>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea formControlName="descripcion" rows="4"></textarea>
+        </div>
 
-        <!-- STEP 2 -->
-        <form *ngIf="step === 2" [formGroup]="form">
-          <div class="steps">2. Descripción</div>
-          <app-spinner
-            *ngIf="loadingMask"
-            message="Generando descripcion..."
-          ></app-spinner>
-          <div *ngIf="!loadingMask">
-            <textarea formControlName="descripcion" rows="6"></textarea>
-            <div class="buttons">
-              <button type="button" (click)="onGenerateKeywords()">
-                Siguiente
-              </button>
-              <button type="button" (click)="step = 1">Atrás</button>
-            </div>
-          </div>
-        </form>
-
-        <!-- STEP 3 -->
-        <div *ngIf="step === 3">
-          <div class="steps">3. Keywords</div>
+        <div class="form-group buttons">
+          <label>Keywords</label>
           <ul>
             <li *ngFor="let kw of keywordsList; let i = index">
-              <input [(ngModel)]="keywordsList[i].nombre" />
-              <button type="button" (click)="removeKeyword(i)">X</button>
+              <input
+                [(ngModel)]="keywordsList[i].nombre"
+                [ngModelOptions]="{ standalone: true }"
+                name="kw-{{ i }}"
+              />
+              <button
+                type="button"
+                class="btn-remove"
+                title="Eliminar keyword"
+                (click)="removeKeyword(i)"
+              >
+                X
+              </button>
             </li>
           </ul>
-          <input #newKw placeholder="Nueva keyword" />
-          <button
-            type="button"
-            (click)="addKeyword(newKw.value); newKw.value = ''"
-          >
-            Añadir
-          </button>
-
-          <div class="buttons">
-            <button type="button" (click)="onReview()">Siguiente</button>
-            <button type="button" (click)="step = 2">Atrás</button>
+          <label>Agregar Keyword</label>
+          <div class="add-kw-row">
+            <input #newKw placeholder="Nueva keyword" />
+            <button
+              type="button"
+              title="Generar y agregar nueva keyword"
+              (click)="addKeyword(newKw.value); newKw.value = ''"
+            >
+              Añadir
+            </button>
           </div>
         </div>
 
-        <!-- STEP 4 -->
-        <div *ngIf="step === 4">
-          <div class="steps">4. Revisión</div>
-          <p><strong>Área:</strong> {{ getAreaName(form.value.areaId) }}</p>
-          <p><strong>Nombre:</strong> {{ form.value.nombre }}</p>
-          <p><strong>Descripción:</strong></p>
-          <p>{{ form.value.descripcion }}</p>
-          <p><strong>Keywords:</strong></p>
-          <ul>
-            <li *ngFor="let kw of keywordsList">{{ kw.nombre }}</li>
-          </ul>
+        <div class="buttons">
+          <button type="submit">Guardar cambios</button>
+          <button type="button" (click)="onCancelWizard()">Cancelar</button>
+        </div>
+      </form>
 
-          <div class="buttons">
-            <button type="button" (click)="finish()">Terminar</button>
-            <button type="button" (click)="step = 3">Atrás</button>
+      <!-- ─── B) CREACIÓN ─── -->
+      <ng-container *ngIf="!modoEdicion">
+        <!-- Envolvemos todo el wizard en un único form-container -->
+        <div class="form-container">
+          <!-- STEP 1 -->
+          <form *ngIf="step === 1" [formGroup]="form">
+            <div class="steps">1. Datos básicos</div>
+
+            <div class="form-group">
+              <label>Área</label>
+              <select formControlName="areaId">
+                <option *ngFor="let a of areas | async" [value]="a._id">
+                  {{ a.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Nombre del Concepto</label>
+              <input type="text" formControlName="nombre" />
+            </div>
+
+            <div class="buttons">
+              <button type="button" (click)="onCreateName()">Siguiente</button>
+              <button type="button" (click)="onCancelWizard()">Cancelar</button>
+            </div>
+          </form>
+
+          <!-- STEP 2 -->
+          <form *ngIf="step === 2" [formGroup]="form">
+            <div class="steps">2. Descripción</div>
+
+            <app-spinner
+              *ngIf="loadingMask"
+              message="Generando descripción..."
+            ></app-spinner>
+
+            <div *ngIf="!loadingMask">
+              <div class="form-group">
+                <textarea formControlName="descripcion" rows="6"></textarea>
+              </div>
+              <div class="buttons">
+                <button type="button" (click)="onGenerateKeywords()">
+                  Siguiente
+                </button>
+                <button type="button" (click)="step = 1">Atrás</button>
+              </div>
+            </div>
+          </form>
+
+          <!-- STEP 3 -->
+          <div *ngIf="step === 3">
+            <div class="steps">3. Keywords</div>
+
+            <div class="form-group buttons">
+              <ul>
+                <li *ngFor="let kw of keywordsList; let i = index">
+                  <input
+                    [(ngModel)]="keywordsList[i].nombre"
+                    [ngModelOptions]="{ standalone: true }"
+                    name="kw-{{ i }}"
+                  />
+                  <button
+                    type="button"
+                    class="btn-remove"
+                    title="Eliminar keyword"
+                    (click)="removeKeyword(i)"
+                  >
+                    X
+                  </button>
+                </li>
+              </ul>
+
+              <label>Agregar Keyword</label>
+              <div class="add-kw-row">
+                <input #newKw placeholder="Nueva keyword" />
+                <button
+                  type="button"
+                  title="Generar y agregar nueva keyword"
+                  (click)="addKeyword(newKw.value); newKw.value = ''"
+                >
+                  Añadir
+                </button>
+              </div>
+            </div>
+
+            <div class="buttons">
+              <button type="button" (click)="onReview()">Siguiente</button>
+              <button type="button" (click)="step = 2">Atrás</button>
+            </div>
+          </div>
+
+          <!-- STEP 4 -->
+          <div *ngIf="step === 4">
+            <div class="steps">Resumen del Nuevo concepto</div>
+            <div class="form-group">
+              <strong>Área:</strong> {{ getAreaName(form.value.areaId) }}
+            </div>
+            <div class="form-group">
+              <strong>Nombre:</strong> {{ form.value.nombre }}
+            </div>
+            <div class="form-group">
+              <strong>Descripción:</strong><br />{{ form.value.descripcion }}
+            </div>
+            <div class="form-group">
+              <strong>Keywords:</strong>
+              <ul>
+                <li *ngFor="let kw of keywordsList">{{ kw.nombre }}</li>
+              </ul>
+            </div>
+            <div class="buttons">
+              <button type="button" (click)="finish()">Terminar</button>
+              <button type="button" (click)="step = 3">Atrás</button>
+            </div>
           </div>
         </div>
+        <!-- /.form-container -->
       </ng-container>
     </div>
+    <!-- /.form-container -->
   </ng-template>
 </app-crud-generic>

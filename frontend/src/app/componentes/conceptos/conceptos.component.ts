@@ -34,7 +34,7 @@ import { SpinnerComponent } from '../../core/plantillas/spinner/spinner.componen
     CrudGenericComponent,
     FormsModule,
     ReactiveFormsModule,
-    SpinnerComponent
+    SpinnerComponent,
   ],
   templateUrl: './conceptos.component.html',
   styleUrls: ['./conceptos.component.css'],
@@ -114,6 +114,7 @@ export class ConceptosComponent implements OnInit, AfterViewInit {
         this.keywordsList = [];
       }
     });
+    this.crud.dialog.close.subscribe(() => this.onCancelWizard());
   }
 
   columns: ColumnConfig[] = [
@@ -216,9 +217,14 @@ export class ConceptosComponent implements OnInit, AfterViewInit {
   // Paso 3: generar keywords
   onGenerateKeywords() {
     const id = this.form.get('_id')!.value || this.crud.form.get('_id')!.value;
-    const desc = this.crud.form.get('descripcion')!.value || this.form.get('descripcion')!.value || '';
+    const desc =
+      this.crud.form.get('descripcion')!.value ||
+      this.form.get('descripcion')!.value ||
+      '';
     if (!id || !desc) {
-      console.error(`No hay ID  o descripcion de concepto para generar keywords: ${id}, ${desc}`);
+      console.error(
+        `No hay ID  o descripcion de concepto para generar keywords: ${id}, ${desc}`
+      );
       return;
     }
     this.conceptosService.generateKeywords(id, desc).subscribe(
@@ -254,18 +260,19 @@ export class ConceptosComponent implements OnInit, AfterViewInit {
     const body = {
       _id: this.form.value._id || this.crud.form.value._id,
       nombre: this.crud.form.value.nombre || this.form.value.nombre,
-      descripcion: this.crud.form.value.descripcion || this.form.value.descripcion,
+      descripcion:
+        this.crud.form.value.descripcion || this.form.value.descripcion,
       keywords_ids: keywordsRelacionadas,
     };
     this.conceptosService
       .acceptKeywords(areaId, body)
-      .subscribe(() => this.crud.cancel());
+      .subscribe(() => this.onCancelWizard());
   }
 
   patch() {
     const areaId = this.crud.form.value.areaId || this.form.value.areaId;
     if (!areaId) {
-       alert(`⚠️ Debe seleccionar un área para continuar.`);
+      alert(`⚠️ Debe seleccionar un área para continuar.`);
       return;
     }
 
@@ -282,7 +289,7 @@ export class ConceptosComponent implements OnInit, AfterViewInit {
     };
     this.conceptosService.acceptKeywords(areaId, body).subscribe(() =>
       this.conceptosService.guardar(body, true, {
-        callback: () => this.crud.cancel(),
+        callback: () => this.onCancelWizard(),
       })
     );
   }
@@ -290,5 +297,20 @@ export class ConceptosComponent implements OnInit, AfterViewInit {
   onReview() {
     // Advance to step 4 (review step)
     this.step = 4;
+  }
+
+  onCancelWizard() {
+    // 1) reset del wizard
+    this.step = 1;
+    this.form.reset({
+      _id: '',
+      areaId: '',
+      nombre: '',
+      descripcion: '',
+    });
+    this.keywordsList = [];
+
+    // 2) cierra el diálogo
+    this.crud.cancel();
   }
 }

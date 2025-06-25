@@ -1,9 +1,5 @@
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
-}
+/* Los estilos base están en styles.css global */
+/* Solo mantener estilos específicos del grid */
 
 .contenedor-grid {
   padding: 0;
@@ -12,31 +8,4 @@ html, body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-.e-grid {
-  flex-grow: 1;
-  height: 100%;
-}
-
-.e-grid .e-gridheader, .e-grid .e-gridcontent {
-  overflow-x: auto;
-  overflow-y: auto;
-}
-
-
-/* para el titulo */
-
-.crud-header {
-  background-color: var(--secondary-color); /* Azul material */
-  color: var(--text-gold);
-  padding: 12px 16px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  box-shadow: var(--primary-color);
-  margin-bottom: 8px;
-}
-
-.header-text {
-  vertical-align: middle;
 }
