@@ -35,12 +35,12 @@ export class HeaderComponent {
       subItems: [{ header: '<i class="e-icons e-home"></i> Home' }],
     },
     {
-      header: '<i class="e-icons e-bookmark"></i> Estadísticas',
+      header: '<i class="e-icons e-chart"></i> Estadísticas',
       content: '<div id="gestion_Items"></div>',
       subItems: [
-        { header: '<i class="e-icons e-bookmark"></i> Evolucion Conceptos' },
-        { header: '<i class="e-icons e-eye"></i> Bar Chart' },
-        { header: '<i class="e-icons e-location"></i> Plot Chart' },
+        { header: '<i class="e-icons e-chart-lines"></i> Fuentes y Conceptos' },
+        { header: '<i class="e-icons e-chart-3d-column-4"></i> Publicaciones por concepto' },
+        { header: '<i class="e-icons e-chart-up-down-bars-2"></i> Evolucion del Tono' },
       ],
     },
     {
@@ -57,11 +57,11 @@ export class HeaderComponent {
       content: '<div id="alertas_Items"></div>',
       subItems: [{ header: '<i class="e-icons e-web-layout"></i> Ver publicaciones' }],
     },
-    {
+    /* {
       header: '<i class="e-icons e-user"></i> Perfil',
       content: '<div id="perfil_Items"></div>',
       subItems: [{ header: '<i class="e-icons e-user"></i> Mi perfil' }],
-    },
+    }, */
   ];
 
   public expand(e: ExpandEventArgs): void {
@@ -95,15 +95,15 @@ export class HeaderComponent {
         this._router.navigate(['/']);
         this.sidebarObj?.hide();
         break;
-      case 'Evolucion Conceptos':
+      case 'Fuentes y Conceptos':
         this._router.navigate(['/multilinea']);
         this.sidebarObj?.hide();
         break;
-      case 'Bar Chart':
+      case 'Publicaciones por concepto':
         this._router.navigate(['/barchart']);
         this.sidebarObj?.hide();
         break;
-      case 'Plot Chart':
+      case 'Evolucion del Tono':
         this._router.navigate(['/plotchart']);
         this.sidebarObj?.hide();
         break;

@@ -61,7 +61,7 @@ export class PlotChartComponent  implements OnInit {
         xField: 'fecha',
         yField: 'valor',
         seriesField: 'serie',
-        title: 'Sentimiento medio de las publicaciones por concepto',
+        title: 'Evolución del tono medio de los conceptos de interés',
         xAxisLabel: 'Fecha',
         yAxisLabel: 'Tono medio (1–10)',
         legend: true,

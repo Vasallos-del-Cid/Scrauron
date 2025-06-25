@@ -363,14 +363,14 @@ button[type="submit"]:disabled {
    =============================================== */
 
 .e-pager .e-currentitem {
-  background: #325f22 !important;
+  background: var(--secondary-color) !important;
   color: var(--text-gold) !important;
 }
 
 .e-switch-wrapper .e-switch-on {
-  background-color: #547b46 !important;
+  background-color: var(--secondary-color) !important;
 }
 
 .e-switch-wrapper .e-switch-handle.e-switch-active {
-  background-color: #325f22 !important;
+  background-color: var(--secondary-color) !important;
 }
