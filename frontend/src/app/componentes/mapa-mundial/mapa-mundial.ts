@@ -12,7 +12,7 @@ import { PAISES_EQUIVALENTES } from '../../../environments/paises-equivalentes';
     imports: [CommonModule],
     template: `
   <div id="mapa-d3" style="display: flex; justify-content: center;"></div>
-  <div style="display: flex; justify-content: space-between; margin-top: 5%; flex-wrap: wrap; gap: 10px; max-width: 100%; box-sizing: border-box;">
+  <div style="display: flex; justify-content: space-between; margin-top: 10%; flex-wrap: wrap; gap: 10px; max-width: 100%; box-sizing: border-box;">
     <div style="flex: 1 1 25%; min-width: 100px; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; text-align: center; font-size: clamp(0.5rem, 2vw, 0.9rem);">
       <div style="color: #003366; font-weight: bold; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="'Total publicaciones:'">Total publicaciones:</div>
       <div>{{ totalPublicaciones }}</div>
@@ -75,7 +75,7 @@ export class MapaMundialComponent implements OnInit, OnChanges {
             .attr("preserveAspectRatio", "xMidYMid meet")
             .style("width", "100%")
             .style("height", "100%")
-            .style("margin-top", "6%");
+            .style("margin-top", "12%");
 
         const projection = d3.geoNaturalEarth1()
             .scale(210)

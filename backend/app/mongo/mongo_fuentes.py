@@ -10,16 +10,14 @@ from bson import ObjectId
 def get_fuentes():
     fuentes = list(get_collection("fuentes").find())
     for f in fuentes:
-        f["_id"] = str(f["_id"])  # Convertir ObjectId para JSON
+        f["_id"] = str(f["_id"])  
     return fuentes
-
 
 def get_fuentes_dict():
     """
     Devuelve una lista de documentos fuente como diccionarios.
     """
     return list(get_collection("fuentes").find())
-
 
 # --------------------------------------------------
 def get_fuente_by_id(fuente_id: str):
@@ -69,7 +67,7 @@ def update_fuente(fuente_id, data):
     # Solo incluimos campos válidos para evitar errores
     campos_validos = [
         "nombre", "url", "tipo", "activa", "fecha_alta",
-        "etiqueta_titulo", "etiqueta_contenido"
+        "etiqueta_titulo", "etiqueta_contenido", "url_imagen"  
     ]
     update_data = {key: data[key] for key in data if key in campos_validos}
 
@@ -101,7 +99,7 @@ def validar_url_fuente(fuente: dict, fuente_id: str = None):
             if "_id" in fuente or fuente_id:
                 id = fuente_id if fuente_id else fuente["_id"]
                 if str(fuente_misma_url["_id"]) == str(id):
-                    return None  # Es la misma fuente
+                    return None  
                 else:
                     return {"error": "Ya existe una fuente con esa URL"}
             else:

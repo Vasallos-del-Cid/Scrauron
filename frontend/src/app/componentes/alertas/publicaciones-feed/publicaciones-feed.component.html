@@ -58,45 +58,48 @@
   <app-spinner *ngIf="loading" message="Cargando noticias..."></app-spinner>
   <div *ngFor="let alerta of alertasFiltradas" class="alerta-card"
     [ngStyle]="{ 'background-color': getColor(alerta.tono) }">
+    <div class="card-imagen">
+      <!-- Imagen de la fuente -->
+      <div class="imagen-fuente" *ngIf="alerta.fuente?.url_imagen">
+        <div class="fuente">
+          <a [href]="alerta.url" target="_blank">
+            <img *ngIf="alerta.fuente?.url_imagen" [src]="alerta.fuente?.url_imagen" alt="Imagen de fuente" />
+          </a>
+        </div>
+      </div>
+    </div>
     <div class="card-texto">
       <!-- Header -->
       <div class="fila-header">
-        <div class="titulo">{{ alerta.titulo }}</div>
+        <div class="titulo">
+          {{ alerta.titulo }}</div>
+      </div>
+      <br>
+      <div class="fila-datos-publicacion">
         <div class="fecha">
-          <span *ngIf="alerta.pais">{{ nombrePais(alerta) }} • </span>
-          {{ alerta.fecha | date : "short" }}
+          <span *ngIf="alerta.pais">País: {{ nombrePais(alerta) }}</span> •
+          <span>Fecha/hora: {{ alerta.fecha | date : "short" }}</span>
         </div>
-
       </div>
 
-      <!-- Contenido colapsable [class.collapsed]="!isExpanded(alerta._id!)" -->
-      <div class="resumen contenido" (click)="toggleExpand(alerta._id!)">
+      <br>
+
+      <!-- Contenido colapsable -->
+      <div class="resumen contenido">
         {{ alerta.contenido }}
       </div>
-      <!-- <button
-        class="toggle-btn"
-        (click)="toggleExpand(alerta._id!); $event.stopPropagation()"
-      >
-        {{ isExpanded(alerta._id!) ? "Mostrar menos" : "Mostrar más" }}
-      </button> -->
 
       <!-- Footer -->
       <div class="fila-footer">
-        <div class="fuente">
-          <!--  TODO: Cambiar por el nombre de la fuente cuando se recupere desde back con join de alertas y fuentes
-          <a [href]="alerta.url" target="_blank">{{ alerta.fuente }}</a> 
-          -->
-          <a [href]="alerta.url" target="_blank">{{ alerta.fuente?.nombre }}</a>
-        </div>
+
+        <div class="tono">Tono: {{ alerta.tono || "Sin calificar" }}</div>
         <div class="tags">
           <span *ngFor="let concepto of alerta.conceptos_relacionados" class="badge">
             {{ concepto.nombre }}
             <span class="eliminar-concepto"
               (click)="confirmarEliminarConcepto(alerta._id!, concepto._id!, concepto.nombre)">❌</span>
-
           </span>
         </div>
-        <div class="tono">Tono: {{ alerta.tono || "Sin calificar" }}</div>
       </div>
     </div>
   </div>

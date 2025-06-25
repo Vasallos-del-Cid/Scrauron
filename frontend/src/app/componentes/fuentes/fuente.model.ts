@@ -9,4 +9,5 @@ export interface Fuente extends Identificable {
   url: string;
   etiqueta_contenido: string;
   etiqueta_titulo: string;
+  url_imagen: string;
 }

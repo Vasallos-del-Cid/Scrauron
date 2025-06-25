@@ -44,7 +44,7 @@ class NoticiasSpider(scrapy.Spider):
     def extraer_titular_noticias(self, response):
         titulos_baneados = {
             "Nacional", "Internacional", "Economía", "Opinión", "Tele",
-            "Gente", "Deportes", "20bits", "Ed. Impresa"
+            "Gente", "Deportes", "20bits", "Ed. Impresa", "España"
         }
 
         for noticia in response.xpath(self.fuente.etiqueta_titulo):

@@ -55,7 +55,7 @@ export class GraficoBarrasComponent implements OnChanges {
       .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
       .attr('preserveAspectRatio', 'xMidYMid meet')
       .style('width', '100%')
-      .style('height', '100%');
+      .style('height', '95%');
 
     const svg = svgBase.append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
@@ -146,7 +146,7 @@ export class GraficoBarrasComponent implements OnChanges {
       this.renderer.setStyle(button, 'top', '10px');
       this.renderer.setStyle(button, 'right', '10px');
       this.renderer.setStyle(button, 'z-index', '1000');
-      this.renderer.setStyle(button, 'background-color', '#003366');
+      this.renderer.setStyle(button, 'background-color', '#23333c');
       this.renderer.setStyle(button, 'color', 'white');
       this.renderer.setStyle(button, 'padding', '8px 12px');
       this.renderer.setStyle(button, 'border', 'none');
