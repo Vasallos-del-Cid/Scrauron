@@ -1,4 +1,10 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnInit,
+  TemplateRef,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CrudGenericComponent } from '../../core/plantillas/crud-generic/crud-generic.component';
 import { ConceptosService } from './conceptos.service';
@@ -17,6 +23,8 @@ import { finalize } from 'rxjs';
 import { AreasService } from '../areas/areas.service';
 import { Areas } from '../areas/areas.model';
 import { Keyword } from './Keyword.model';
+import { DialogComponent } from '@syncfusion/ej2-angular-popups';
+import { SpinnerComponent } from '../../core/plantillas/spinner/spinner.component';
 
 @Component({
   selector: 'app-conceptos',
@@ -26,14 +34,16 @@ import { Keyword } from './Keyword.model';
     CrudGenericComponent,
     FormsModule,
     ReactiveFormsModule,
+    SpinnerComponent,
   ],
   templateUrl: './conceptos.component.html',
   styleUrls: ['./conceptos.component.css'],
 })
-export class ConceptosComponent {
+export class ConceptosComponent implements OnInit, AfterViewInit {
   conceptosService: ConceptosService;
 
   @ViewChild(CrudGenericComponent) crud!: CrudGenericComponent;
+  @ViewChild('dialog', { read: DialogComponent }) dialog!: DialogComponent;
 
   itemDefault = {
     _id: '',
@@ -45,10 +55,11 @@ export class ConceptosComponent {
 
   // wizard state
   step = 1;
-  wizardForm: FormGroup;
+  form: FormGroup;
   keywordsList: Keyword[] = [];
   areas;
   createdId: any;
+  loadingMask = true;
 
   constructor(
     public servicio: ConceptosService,
@@ -56,7 +67,7 @@ export class ConceptosComponent {
     private areasService: AreasService
   ) {
     this.conceptosService = servicio;
-    this.wizardForm = this.fb.group({
+    this.form = this.fb.group({
       _id: [''],
       areaId: ['', Validators.required],
       nombre: ['', Validators.required],
@@ -67,6 +78,43 @@ export class ConceptosComponent {
     this.areasService.getAll();
 
     this.areas = this.areasService.items$;
+  }
+
+  ngOnInit() {
+    //this.areasService.getAll();
+    this.areasService.items$.subscribe((list) => {
+      const areaField = this.formFields.find((f) => f.name === 'areaId');
+      if (areaField) {
+        areaField.options = list.map((a) => ({
+          value: a._id,
+          label: a.nombre,
+        }));
+      }
+    });
+  }
+
+  ngAfterViewInit() {
+    this.crud.dialog.open.subscribe(() => {
+      if (this.crud.modoEdicion) {
+        const rec = this.crud.grid.getSelectedRecords()[0] as any;
+        // parchea el form y keywordsList
+        this.form.patchValue({
+          _id: rec._id,
+          areaId: rec.areaId,
+          nombre: rec.nombre,
+          descripcion: rec.descripcion,
+        });
+        this.conceptosService
+          .fetchKeywordsByConcept(rec._id)
+          .subscribe((list) => (this.keywordsList = list));
+      } else {
+        // reset al crear
+        this.step = 1;
+        this.form.reset({ _id: '', areaId: '', nombre: '', descripcion: '' });
+        this.keywordsList = [];
+      }
+    });
+    this.crud.dialog.close.subscribe(() => this.onCancelWizard());
   }
 
   columns: ColumnConfig[] = [
@@ -89,6 +137,13 @@ export class ConceptosComponent {
   ];
 
   formFields: FormFieldConfig[] = [
+    {
+      name: 'areaId', // <<-- lo añades aquí
+      label: 'Área',
+      type: 'select',
+      validators: [Validators.required],
+      options: [], // se rellenará en ngOnInit
+    },
     {
       name: 'nombre',
       label: 'Nombre',
@@ -125,54 +180,66 @@ export class ConceptosComponent {
 
   // Paso 1: crear sólo nombre + área
   onCreateName() {
-  const { nombre, areaId } = this.wizardForm.value;
-  this.conceptosService.createOnlyName(nombre)
-    .subscribe(res => {
-      // ¡guardamos el id CLARAMENTE!
-      this.wizardForm.patchValue({ _id: res._id, areaId });
-      this.onGenerateDescription()
-      this.step = 2;
-    }, err => {
-      console.error('Error creando concepto:', err);
-    });
-}
+    const { nombre, areaId } = this.form.value;
+    this.conceptosService.createOnlyName(nombre).subscribe(
+      (res) => {
+        // ¡guardamos el id CLARAMENTE!
+        this.form.patchValue({ _id: res._id, areaId });
+        this.onGenerateDescription();
+        this.step = 2;
+      },
+      (err) => {
+        console.error('Error creando concepto:', err);
+      }
+    );
+  }
 
   // Paso 2: generar descripción
   onGenerateDescription() {
-  const id = this.wizardForm.get('_id')!.value;
-  if (!id) {
-    console.error('No hay ID de concepto para generar descripción');
-    return;
+    const id = this.form.get('_id')!.value;
+    if (!id) {
+      console.error('No hay ID de concepto para generar descripción');
+      return;
+    }
+    this.conceptosService.generateDescription(id).subscribe(
+      (res) => {
+        this.crud.form.patchValue({ descripcion: res.descripcion });
+        this.form.patchValue({ descripcion: res.descripcion });
+        //this.step = 3;
+        this.loadingMask = false; // ocultamos la máscara de carga
+      },
+      (err) => {
+        console.error('Error generando descripción:', err);
+      }
+    );
   }
-  this.conceptosService.generateDescription(id)
-    .subscribe(res => {
-      this.wizardForm.patchValue({ descripcion: res.descripcion });
-      //this.step = 3;
-    }, err => {
-      console.error('Error generando descripción:', err);
-    });
-}
 
   // Paso 3: generar keywords
   onGenerateKeywords() {
-  const id   = this.wizardForm.get('_id')!.value;
-  const desc = this.wizardForm.get('descripcion')!.value || '';
-  if (!id) {
-    console.error('No hay ID de concepto para generar keywords');
-    return;
-  }
-  this.conceptosService.generateKeywords(id, desc)
-    .subscribe(res => {
-      // tras generar los IDs, los traemos completos
-      this.conceptosService.fetchKeywordsByConcept(id)
-        .subscribe(list => {
+    const id = this.form.get('_id')!.value || this.crud.form.get('_id')!.value;
+    const desc =
+      this.crud.form.get('descripcion')!.value ||
+      this.form.get('descripcion')!.value ||
+      '';
+    if (!id || !desc) {
+      console.error(
+        `No hay ID  o descripcion de concepto para generar keywords: ${id}, ${desc}`
+      );
+      return;
+    }
+    this.conceptosService.generateKeywords(id, desc).subscribe(
+      (res) => {
+        // tras generar los IDs, los traemos completos
+        this.conceptosService.fetchKeywordsByConcept(id).subscribe((list) => {
           this.keywordsList = list;
           this.step = 3;
         });
-    }, err => {
-      console.error('Error generando keywords:', err);
-    });
-}
+      },
+      (err) => {
+        console.error('Error generando keywords:', err);
+      }
+    );
+  }
 
   addKeyword(name: string) {
     this.conceptosService
@@ -185,22 +252,65 @@ export class ConceptosComponent {
 
   // Paso 4: terminar y guardar associations
   finish() {
-    const areaId = this.wizardForm.value.areaId;
-    const keywordsRelacionadas: string[] = this.keywordsList.map((kw) => kw._id).filter((id): id is string => typeof id === 'string');
-    
+    const areaId = this.crud.form.value.areaId || this.form.value.areaId;
+    const keywordsRelacionadas: string[] = this.keywordsList
+      .map((kw) => kw._id)
+      .filter((id): id is string => typeof id === 'string');
+
     const body = {
-      _id: this.wizardForm.value._id,
-      nombre: this.wizardForm.value.nombre,
-      descripcion: this.wizardForm.value.descripcion,
+      _id: this.form.value._id || this.crud.form.value._id,
+      nombre: this.crud.form.value.nombre || this.form.value.nombre,
+      descripcion:
+        this.crud.form.value.descripcion || this.form.value.descripcion,
       keywords_ids: keywordsRelacionadas,
     };
     this.conceptosService
       .acceptKeywords(areaId, body)
-      .subscribe(() => this.crud.cancel());
+      .subscribe(() => this.onCancelWizard());
+  }
+
+  patch() {
+    const areaId = this.crud.form.value.areaId || this.form.value.areaId;
+    if (!areaId) {
+      alert(`⚠️ Debe seleccionar un área para continuar.`);
+      return;
+    }
+
+    const keywordsRelacionadas: string[] = this.keywordsList
+      .map((kw) => kw._id)
+      .filter((id): id is string => typeof id === 'string');
+
+    const body = {
+      _id: this.form.value._id,
+      nombre: this.crud.form.value.nombre || this.form.value.nombre,
+      descripcion:
+        this.crud.form.value.descripcion || this.form.value.descripcion,
+      keywords_ids: keywordsRelacionadas,
+    };
+    this.conceptosService.acceptKeywords(areaId, body).subscribe(() =>
+      this.conceptosService.guardar(body, true, {
+        callback: () => this.onCancelWizard(),
+      })
+    );
   }
 
   onReview() {
     // Advance to step 4 (review step)
     this.step = 4;
+  }
+
+  onCancelWizard() {
+    // 1) reset del wizard
+    this.step = 1;
+    this.form.reset({
+      _id: '',
+      areaId: '',
+      nombre: '',
+      descripcion: '',
+    });
+    this.keywordsList = [];
+
+    // 2) cierra el diálogo
+    this.crud.cancel();
   }
 }

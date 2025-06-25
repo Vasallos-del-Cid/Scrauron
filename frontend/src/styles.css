@@ -1,10 +1,6 @@
 @import '../node_modules/@syncfusion/ej2-material-theme/styles/material.css';
 @import '../node_modules/@syncfusion/ej2-base/styles/material.css';
 @import '../node_modules/@syncfusion/ej2-navigations/styles/material.css';
-/* You can add global styles to this file, and also import other style files */
-
-@import '../node_modules/@syncfusion/ej2-base/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-navigations/styles/material.css';
 @import '../node_modules/@syncfusion/ej2-angular-navigations/styles/material.css';
 @import '../node_modules/@syncfusion/ej2-angular-dropdowns/styles/material.css';
 @import '../node_modules/@syncfusion/ej2-buttons/styles/material.css';
@@ -19,7 +15,7 @@
 /* Variables de colores globales */
 :root {
   /* Colores principales */
-  --primary-color: #23333c; /* Azul estilo material */
+  --primary-color: #23333c;
   --primary-hover: #475157;
   --secondary-color: #324854;
   
@@ -34,7 +30,7 @@
   --text-secondary: #666666;
   --text-muted: #444444;
   --text-white: #ffffff;
-  --text-gold: #dbb96b; /* Dorado */
+  --text-gold: #dbb96b;
   
   /* Colores de borde */
   --border-color: #cccccc;
@@ -50,8 +46,13 @@
   --footer-height: 34px;
   --border-radius: 4px;
   --border-radius-large: 8px;
+  
+  /* Formularios */
+  --form-padding: 20px;
+  --form-gap: 15px;
+  --input-padding: 8px 12px;
+  --button-padding: 8px 16px;
 }
-
 
 html, body {
   height: 100%;
@@ -67,17 +68,276 @@ app-root {
   overflow: hidden;
 }
 
+/* ===============================================
+   ESTILOS GLOBALES DE FORMULARIOS
+   =============================================== */
 
-/* Estilos para centrar las graficas */
+/* Contenedor principal del formulario */
+.form-container {
+  padding: var(--form-padding);
+  width: 100%;
+  box-sizing: border-box;
+  height: auto;
+  max-height: 70vh;
+  overflow-y: auto;
+  
+}
+
+/* Grupo de campo (label + input) */
+.form-group {
+  margin-bottom: var(--form-gap);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* Labels */
+.form-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+/* Inputs de texto */
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="url"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group input[type="password"] {
+  width: 100%;
+  padding: var(--input-padding);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(35, 51, 60, 0.1);
+}
+
+/* Selectores */
+.form-group select {
+  width: 100%;
+  padding: var(--input-padding);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  /* background-color: var(--background-white); */
+  transition: border-color 0.2s ease;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='5'><path fill='%23999' d='M0 0l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 10px 5px;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(35, 51, 60, 0.1);
+}
+
+/* Textarea */
+.form-group textarea {
+  width: 100%;
+  padding: var(--input-padding);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s ease;
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(35, 51, 60, 0.1);
+}
+
+/* Contenedor de botones */
+.buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: var(--form-gap);
+  flex-wrap: wrap;
+}
+
+/* Botones */
+.buttons button,
+button[type="submit"],
+button[type="button"] {
+  padding: var(--button-padding);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+/* Botón primario */
+.buttons button[type="submit"],
+.buttons .btn-primary,
+button[type="submit"] {
+  background-color: var(--primary-color) !important;
+  color: var(--text-white) !important;
+  border: none !important;
+}
+
+.buttons button[type="submit"]:hover,
+.buttons .btn-primary:hover,
+button[type="submit"]:hover {
+  background-color: var(--primary-hover) !important;
+  color: var(--text-white) !important;
+}
+
+.buttons button[type="submit"]:disabled,
+button[type="submit"]:disabled {
+  background-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.buttons button {
+ background-color: var(--secondary-color) !important;
+  color: var(--text-white) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+
+/* Botón secundario */
+.buttons button[type="button"],
+.buttons .btn-secondary {
+  
+}
+
+.buttons button[type="button"]:hover,
+.buttons .btn-secondary:hover {
+  background-color: var(--background-light) !important;
+  border-color: var(--text-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Mensajes de error */
+.campo-error,
+.error {
+  color: #d32f2f;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Barra de filtros */
+.barra-filtros {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  padding: 16px;
+  background-color: var(--background-white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-light);
+}
+
+/* Steps para wizards */
+.steps {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: var(--form-gap);
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border-light);
+}
+
+/* ===============================================
+   ESTILOS PARA CRUD Y GRIDS
+   =============================================== */
+
+.crud-header {
+  background-color: var(--secondary-color);
+  color: var(--text-gold);
+  padding: 12px 16px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  box-shadow: var(--shadow-light);
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.header-text {
+  vertical-align: middle;
+}
+
+.contenedor-grid {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 150px);
+  overflow: hidden;
+  margin: 0;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.e-grid {
+  flex-grow: 1;
+  height: auto;
+  min-height: 0;
+}
+
+.e-grid .e-gridheader,
+.e-grid .e-gridcontent {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+/* ===============================================
+   ESTILOS PARA DIÁLOGOS
+   =============================================== */
+
+::ng-deep .e-dialog {
+  height: auto !important;
+  max-height: 80vh !important;
+  overflow-y: auto !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+
+::ng-deep .dialog-fuente.e-dialog {
+  height: auto !important;
+  max-height: 80vh !important;
+}
+
+/* ===============================================
+   ESTILOS PARA GRÁFICAS
+   =============================================== */
+
 .chart-container {
-  min-height: 400px; /* altura mínima para que el centrado vertical sea visible */
+  min-height: 400px;
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;  /* Centrado vertical */
-  align-items: center;      /* Centrado horizontal */
+  justify-content: center;
+  align-items: center;
   width: 100%;
-  height: 100%;             /* Ajusta la altura al padre o usa min-height */
+  height: 100%;
   padding: 10px;
   box-sizing: border-box;
 }
@@ -94,21 +354,23 @@ app-root {
   justify-content: center;
   flex-direction: column;
   font-size: 16px;
-  color: #333;
+  color: var(--text-primary);
   z-index: 1000;
 }
 
-/* Sobre escribiendo colores de material de sync*/
-/* las bolas de paginación */
+/* ===============================================
+   OVERRIDE SYNCFUSION COLORS
+   =============================================== */
+
 .e-pager .e-currentitem {
-  background: #325f22 !important;
+  background: var(--secondary-color) !important;
   color: var(--text-gold) !important;
 }
 
 .e-switch-wrapper .e-switch-on {
-  background-color: #547b46 !important;
+  background-color: var(--secondary-color) !important;
 }
 
-.e-switch-wrapper .e-switch-handle.e-switch-active{
-  background-color: #325f22 !important;
+.e-switch-wrapper .e-switch-handle.e-switch-active {
+  background-color: var(--secondary-color) !important;
 }

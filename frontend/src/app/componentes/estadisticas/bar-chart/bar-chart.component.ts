@@ -57,8 +57,8 @@ export class BarChartComponent implements AfterViewInit, OnInit {
         yField: 'value',
         barColor: '#4062b9', // Color verde para las barras
         xAxisLabel: 'Conceptos de interés',
-        yAxisLabel: 'Número de noticias',
-        title: 'Noticias relacionadas con cada concepto',
+        yAxisLabel: 'Número de publicaciones',
+        title: 'Total de publicaciones por concepto',
         fontSize: 14,
         fontFamily: 'Arial',
       });

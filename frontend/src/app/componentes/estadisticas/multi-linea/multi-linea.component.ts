@@ -77,9 +77,9 @@ export class MultiLineaComponent implements OnInit {
         xField: 'fecha',
         yField: 'total',
         seriesField: 'serie',
-        title: 'Noticias por fuente a lo largo del tiempo',
+        title: 'Publicaciones diarias según la fuente',
         xAxisLabel: 'Fecha',
-        yAxisLabel: 'Noticias',
+        yAxisLabel: 'Publicaciones',
         legend: true,
       });
       this.loading = false; // oculto la máscara
@@ -97,7 +97,7 @@ export class MultiLineaComponent implements OnInit {
         xField: 'fecha',
         yField: 'total',
         seriesField: 'serie',
-        title: 'Conceptos publicados a lo largo del tiempo',
+        title: 'Evolución de las publicaciones relacionadas con Conceptos de interés',
         xAxisLabel: 'Fecha',
         yAxisLabel: 'Noticias',
         legend: true,

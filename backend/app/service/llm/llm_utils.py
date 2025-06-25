@@ -6,6 +6,7 @@ import logging
 import os
 from dotenv import load_dotenv  # Carga variables de entorno desde un archivo .env
 from openai import OpenAI, RateLimitError  # Cliente oficial para la API de OpenAI
+from openai._exceptions import APIConnectionError  # Agrega esta línea para importar APIConnectionError
 import ast  # Permite evaluar strings como estructuras de Python de forma segura
 import re
 from app.models.publicacion import Publicacion
@@ -49,6 +50,10 @@ def get_gpt_response(messages, temperature):
     try:
         response = client.chat.completions.create(model=model, messages=messages, temperature=temperature)
         response = response.choices[0].message.content.strip()
+    except APIConnectionError as e:
+        logging.error(f"Error al conectar con la API de OpenAi: \n{e}")
+        raise e
+
     except Exception as e:
         logging.error(f"Error al generar la descripción del concepto: \n{e}")
         raise e
