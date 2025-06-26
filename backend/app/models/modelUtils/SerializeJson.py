@@ -1,27 +1,31 @@
 from functools import wraps
-from flask import jsonify, Response
-
+from flask import Response
+import json
+from datetime import datetime
+from bson import ObjectId
 from app.models.modelUtils.serializerUtils import serialize_mongo
 
+def custom_serializer(obj):
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    raise TypeError(f"Type {type(obj)} not serializable")
 
 def SerializeJson(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         result = func(*args, **kwargs)
 
-        # Caso: ya es una respuesta tipo Flask
         if isinstance(result, Response):
             return result
 
-        # Caso: es una tupla con response ya serializado
-        if isinstance(result, tuple) and isinstance(result[0], Response):
-            return result
-
-        # Caso: es una tupla con un objeto aún no serializado
         if isinstance(result, tuple):
             body, *rest = result
-            return jsonify(serialize_mongo(body)), *rest
+            json_body = json.dumps(serialize_mongo(body), ensure_ascii=False, default=custom_serializer)
+            return Response(json_body, mimetype='application/json'), *rest
 
-        # Caso: objeto puro, no serializado
-        return jsonify(serialize_mongo(result))
+        json_body = json.dumps(serialize_mongo(result), ensure_ascii=False, default=custom_serializer)
+        return Response(json_body, mimetype='application/json')
+
     return wrapper

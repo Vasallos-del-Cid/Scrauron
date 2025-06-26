@@ -81,6 +81,42 @@ export class PublicacionesService extends DataService<Publicacion> {
   eliminarConcepto(pubId: string, conceptoId: string) {
   return this.http.delete(`${this.baseUrl}/publicaciones/${pubId}/conceptos/${conceptoId}`);
 }
+generarInformeImpactoTemporal(filtros: {
+  fechaDesde: Date;
+  fechaHasta: Date;
+  tono?: number;
+  busqueda_palabras?: string;
+  fuente_id?: string;
+  keywords?: string[];
+  concepto_interes?: string;
+  area_id?: string;
+  pais?: string;
+}): Observable<Blob> {
+  const cleanISO = (date: Date) => date.toISOString().replace('Z', '');
+
+  let params = new HttpParams()
+    .set('fechaInicio', cleanISO(filtros.fechaDesde))
+    .set('fechaFin', cleanISO(filtros.fechaHasta));
+
+  if (filtros.tono != null) params = params.set('tono', filtros.tono.toString());
+  if (filtros.busqueda_palabras) params = params.set('busqueda_palabras', filtros.busqueda_palabras);
+  if (filtros.concepto_interes) {
+    params = params.set('concepto_interes', filtros.concepto_interes);
+  } else if (filtros.area_id) {
+    params = params.set('area_id', filtros.area_id);
+  }
+  if (filtros.fuente_id) params = params.set('fuente_id', filtros.fuente_id);
+  if (filtros.pais) params = params.set('pais', filtros.pais);
+  if (filtros.keywords) {
+    filtros.keywords.forEach(k => params = params.append('keywordsRelacionadas', k));
+  }
+
+  return this.http.get(`${this.baseUrl}/informe_impacto_temporal`, {
+    params,
+    responseType: 'blob'
+  });
+}
+
 
    
 } 

@@ -12,7 +12,18 @@ import re
 from app.models.publicacion import Publicacion
 from app.models.keyword import Keyword
 from app.mongo.mongo_keywords import create_keyword
+import math
 import json
+from datetime import datetime
+from typing import List
+from app.mongo.mongo_fuentes import get_fuentes_dict
+from io import BytesIO
+from docx import Document
+from app.models.publicacion import Publicacion
+from bson import ObjectId
+
+from app.mongo.mongo_conceptos import get_collection as get_conceptos_collection
+
 
 def get_openai_client():
     global open_ai_client
@@ -266,3 +277,148 @@ def analizar_publicacion(publicacion, max_tokens=600):
         return publicacion
     except (json.JSONDecodeError, KeyError, ValueError):
         raise ValueError(f"Respuesta inesperada del modelo, se esperaba JSON con claves 'resumen', 'tono', 'ciuda-region' y 'pais': {respuesta}")
+
+MAX_TOKENS_TOTAL = 12000
+TOKENS_POR_PUB = 500
+
+def generar_informe_impacto_temporal(publicaciones: List[dict], filtros: dict = None) -> BytesIO:
+    if not publicaciones:
+        raise ValueError("No hay publicaciones para analizar.")
+
+    publicaciones.sort(key=lambda x: x.get("fecha") or datetime.now())
+    fechas = [p["fecha"] for p in publicaciones if p.get("fecha")]
+    fecha_inicio = min(fechas).isoformat() if fechas else None
+    fecha_fin = max(fechas).isoformat() if fechas else None
+
+    lote_size = MAX_TOKENS_TOTAL // TOKENS_POR_PUB
+    total_lotes = math.ceil(len(publicaciones) / lote_size)
+    logging.info(f"📚 Dividiendo {len(publicaciones)} publicaciones en {total_lotes} lotes para análisis temporal.")
+
+    impactos_lotes = []
+
+    for i in range(total_lotes):
+        inicio = i * lote_size
+        fin = inicio + lote_size
+        lote = publicaciones[inicio:fin]
+
+        entradas = []
+        for pub in lote:
+            tono = pub.get("tono", "-")
+            pais = pub.get("pais", "??")
+            titulo = pub.get("titulo", "").strip()
+            contenido = pub.get("contenido", "").strip()
+            entradas.append(f"- ({tono}/10) [{pais}] {titulo}\n{contenido}")
+
+        prompt = (
+    "A partir de los siguientes titulares y contenidos de noticias ordenadas en el tiempo, redacta un análisis de cómo evoluciona la situación y su impacto.\n"
+    "Analiza el impacto desde tres perspectivas: económica, social y de seguridad.\n"
+    "En cada una, resume en 1-2 líneas lo que se puede deducir del conjunto de noticias.\n"
+    "Indica evolución, intensidad, y ejemplos concretos si los hay.\n"
+    "Evita muletillas o introducciones, este parrafo formará parte de un conjunto fusionado.\n"
+    "Devuelve solo un JSON como este:\n"
+    '{\n'
+    '  "impactos": {\n'
+    '    "economico": "...",\n'
+    '    "social": "...",\n'
+    '    "seguridad": "..."\n'
+    '  }\n'
+    '}\n'
+    "No añadas explicaciones, solo el JSON final.\n"
+    "Solo devuélveme el JSON. No lo envuelvas con ```json ni ningún otro texto.\n"
+    "Noticias:\n" + "\n\n".join(entradas[:150])
+)
+
+        messages = [
+            {"role": "system", "content": "Eres un experto en análisis de impacto social, económico y de seguridad."},
+            {"role": "user", "content": prompt}
+        ]
+
+        try:
+            respuesta = get_gpt_response(messages, temperature=0.6).strip()
+            logging.debug(f"🔍 Respuesta cruda del modelo:\n{respuesta}")
+            data = json.loads(respuesta)
+            impactos_lotes.append(data["impactos"])
+            logging.info(f"✅ Lote {i+1}/{total_lotes} procesado correctamente.")
+        except Exception as e:
+            logging.error(f"❌ Error en análisis del lote {i+1}: {e}")
+
+    texto_por_area = {"economico": [], "social": [], "seguridad": []}
+    for impacto in impactos_lotes:
+        for clave in texto_por_area:
+            texto_por_area[clave].append(impacto.get(clave, ""))
+
+    doc = Document()
+    doc.add_heading('Informe de Impacto Temporal', 0)
+
+    if filtros:
+        fuentes_map = {str(f['_id']): f for f in get_fuentes_dict()}
+        concepto_id = filtros.get("concepto_interes")
+        conceptos_map = {}
+        if concepto_id:
+            conceptos_map = {
+                str(c['_id']): c
+                for c in get_conceptos_collection("conceptos_interes").find({"_id": {"$in": [ObjectId(concepto_id)]}})
+            }
+
+        doc.add_heading("Filtros aplicados", level=1)
+
+        etiquetas = {
+            "concepto_interes": "Concepto de interés",
+            "fuente_id": "Fuente",
+            "pais": "País",
+            "tono": "Tono",
+            "busqueda_palabras": "Palabras buscadas",
+            "keywordsRelacionadas": "Keywords relacionadas"
+        }
+
+        if fecha_inicio and fecha_fin:
+            doc.add_paragraph(f"Período analizado: {fecha_inicio} a {fecha_fin}")
+
+        for key, label in etiquetas.items():
+            value = filtros.get(key)
+            if value:
+                valor_str = ""
+                if key == "concepto_interes" and value in conceptos_map:
+                    valor_str = conceptos_map[value].get("nombre", str(value))
+                elif key == "fuente_id" and value in fuentes_map:
+                    valor_str = fuentes_map[value].get("nombre", str(value))
+                elif isinstance(value, list):
+                    valor_str = ", ".join(map(str, value))
+                else:
+                    valor_str = str(value)
+                doc.add_paragraph(f"{label}: {valor_str}")
+
+    for area in ["economico", "social", "seguridad"]:
+        doc.add_heading(area.capitalize(), level=1)
+        area_texto = "\n\n".join(texto_por_area[area]).strip()
+        area_texto = resumir_parrafos_si_muchos(area_texto)
+        doc.add_paragraph(area_texto)
+
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+def resumir_parrafos_si_muchos(texto: str, umbral=5) -> str:
+    parrafos = [p.strip() for p in texto.split("\n") if p.strip()]
+    if len(parrafos) <= umbral:
+        return texto
+
+    prompt = (
+        "A continuación tienes un conjunto de párrafos que resumen noticias en un área específica (económica, social o seguridad). "
+        "Por favor, genera un resumen consolidado en forma de 5 párrafos como máximo, conservando los puntos clave, evolución e intensidad."
+        "Evita repeticiones y enfócate en los aspectos más relevantes.\n\n"
+        "Texto original:\n" + "\n".join(parrafos)
+    )
+
+    messages = [
+        {"role": "system", "content": "Eres un experto en análisis de impacto de noticias, redactas resúmenes ejecutivos en lenguaje claro."},
+        {"role": "user", "content": prompt}
+    ]
+
+    try:
+        respuesta = get_gpt_response(messages, temperature=0.5).strip()
+        return respuesta
+    except Exception as e:
+        logging.error(f"Error al resumir párrafos para el área: {e}")
+        return "\n".join(parrafos[:5])

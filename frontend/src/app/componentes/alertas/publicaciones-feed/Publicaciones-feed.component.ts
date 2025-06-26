@@ -304,5 +304,42 @@ export class PublicacionesFeedComponent implements OnInit {
     return alerta.pais ? this.normalizarNombrePais(alerta.pais) : '';
   }
 
+  generarInformeImpactoTemporal(): void {
+    if (!this.fechaDesde || !this.fechaHasta) return;
+
+    const desde = new Date(this.fechaDesde); desde.setHours(2, 1, 0, 0);
+    const hasta = new Date(this.fechaHasta); hasta.setHours(25, 59, 0, 0);
+
+    let params = {
+      fechaDesde: desde,
+      fechaHasta: hasta,
+      tono: this.filtroValoracion ?? undefined,
+      busqueda_palabras: this.filtroBusqueda || undefined,
+      fuente_id: this.filtroFuenteId || undefined,
+      concepto_interes: this.filtroConceptoId || undefined,
+      pais: this.filtroPais || undefined
+    };
+
+    this.loading = true;
+    this.servicio.generarInformeImpactoTemporal(params).subscribe({
+      next: (blob: Blob) => {
+        this.loading = false;
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'informe_impacto.docx'; // Puedes cambiar el nombre si lo deseas
+        a.click();
+        window.URL.revokeObjectURL(url);
+        console.log("Informe descargado con éxito.");
+      },
+      error: (err) => {
+        this.loading = false;
+        console.error("Error al generar el informe:", err);
+      }
+    });
+
+  }
+
+
 }
 

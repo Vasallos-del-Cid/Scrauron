@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 from datetime import datetime
 from bson import ObjectId
+import logging
 from ..models.modelUtils.SerializeJson import SerializeJson
 from ..models.publicacion import Publicacion
 from ..mongo.mongo_publicaciones import (
@@ -16,6 +17,7 @@ from ..mongo.mongo_publicaciones import (
 )
 from ..mongo.mongo_fuentes import  get_fuentes_dict
 from ..mongo.mongo_conceptos import get_collection as get_conceptos_collection
+from ..service.llm.llm_utils import generar_informe_impacto_temporal
 
 api_publicaciones = Blueprint('api_publicaciones', __name__)
 
@@ -128,7 +130,7 @@ def publicaciones_filtradas_endpoint():
         tone = request.args.get("tono")
         kws = request.args.getlist("keywordsRelacionadas")
         busq = request.args.get("busqueda_palabras")
-        pais = request.args.get("pais")  # 👈 nuevo
+        pais = request.args.get("pais")  
 
         if not fi or not ff:
             return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
@@ -150,7 +152,7 @@ def publicaciones_filtradas_endpoint():
             busqueda_palabras=busq,
             area_id=area_id,
             fuente_id=fuente_id,
-            pais=pais  # 👈 filtrado por país
+            pais=pais  
         )
 
         if concepto_oid:
@@ -200,3 +202,67 @@ def eliminar_concepto_relacionado_endpoint(pub_id, concepto_id):
         return {"error": str(ve)}, 400
     except Exception as e:
         return {"error": f"Error al eliminar el concepto: {str(e)}"}, 500
+
+
+@api_publicaciones.route('/informe_impacto_temporal', methods=['GET'])
+def informe_impacto_temporal_endpoint():
+    try:
+        fi = request.args.get("fechaInicio")
+        ff = request.args.get("fechaFin")
+        ci = request.args.get("concepto_interes")
+        ai = request.args.get("area_id")
+        fiu = request.args.get("fuente_id")
+        tone = request.args.get("tono")
+        kws = request.args.getlist("keywordsRelacionadas")
+        busq = request.args.get("busqueda_palabras")
+        pais = request.args.get("pais")
+
+        if not fi or not ff:
+            return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
+
+        fecha_inicio = datetime.fromisoformat(fi)
+        fecha_fin = datetime.fromisoformat(ff)
+
+        concepto_oid = ObjectId(ci) if ci else None
+        area_id = ObjectId(ai) if ai else None
+        fuente_id = ObjectId(fiu) if fiu else None
+        tono = int(tone) if tone else None
+        keywords = [ObjectId(k) for k in kws] if kws else None
+
+        publicaciones_dicts = filtrar_publicaciones(
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            tono=tono,
+            keywords_relacionadas=keywords,
+            busqueda_palabras=busq,
+            area_id=area_id,
+            fuente_id=fuente_id,
+            pais=pais
+        )
+
+        if concepto_oid:
+            publicaciones_dicts = [
+                pub for pub in publicaciones_dicts
+                if concepto_oid in pub.get("conceptos_relacionados_ids", [])
+            ]
+
+        filtros = {
+            "concepto_interes": ci,
+            "area_id": ai,
+            "fuente_id": fiu,
+            "tono": tone,
+            "busqueda_palabras": busq,
+            "pais": pais,
+            "keywordsRelacionadas": kws
+        }
+
+        word_file = generar_informe_impacto_temporal(publicaciones_dicts, filtros)
+        filename = f"informe_impacto_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+        return send_file(word_file, as_attachment=True, download_name=filename, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+
+    except ValueError as ve:
+        return {"error": f"Parámetro inválido: {ve}"}, 400
+    except Exception as e:
+        logging.exception("❌ Error inesperado al generar el informe de impacto temporal")
+        return {"error": f"Error inesperado: {e}"}, 500
+
