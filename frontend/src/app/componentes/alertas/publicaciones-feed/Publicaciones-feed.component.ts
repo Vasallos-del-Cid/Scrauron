@@ -86,7 +86,7 @@ export class PublicacionesFeedComponent implements OnInit {
   public paisConMasPublicaciones: string | null = null;
 
   public paginaActual = 1;
-  public publicacionesPorPagina = 25;
+  public publicacionesPorPagina = 20;
   public totalFiltradas = 0;
 
   constructor(
@@ -320,6 +320,9 @@ export class PublicacionesFeedComponent implements OnInit {
       this.paginaActual = ultimaPagina;
       this.aplicarFiltros();
     }
+  }
+  get totalPaginas(): number {
+    return Math.ceil(this.totalFiltradas / this.publicacionesPorPagina);
   }
 
 }
