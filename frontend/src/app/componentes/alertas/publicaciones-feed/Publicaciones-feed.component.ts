@@ -113,6 +113,11 @@ export class PublicacionesFeedComponent implements OnInit {
       .subscribe(opts => this.conceptosOpts = opts);
   }
 
+  aplicarFiltrosNuevaConsulta(): void {
+    this.paginaActual=1
+    this.aplicarFiltros()
+  }
+
   aplicarFiltros(): void {
     if (!this.fechaDesde || !this.fechaHasta) {
       this.alertasFiltradas = [];
