@@ -114,7 +114,7 @@ export class PublicacionesFeedComponent implements OnInit {
   }
 
   aplicarFiltrosNuevaConsulta(): void {
-    this.paginaActual=1
+    this.paginaActual = 1
     this.aplicarFiltros()
   }
 
@@ -306,4 +306,20 @@ export class PublicacionesFeedComponent implements OnInit {
       this.aplicarFiltros();
     }
   }
+
+  irPrimeraPagina(): void {
+    if (this.paginaActual > 1) {
+      this.paginaActual = 1;
+      this.aplicarFiltros();
+    }
+  }
+
+  irUltimaPagina(): void {
+    const ultimaPagina = Math.ceil(this.totalFiltradas / this.publicacionesPorPagina);
+    if (this.paginaActual < ultimaPagina) {
+      this.paginaActual = ultimaPagina;
+      this.aplicarFiltros();
+    }
+  }
+
 }

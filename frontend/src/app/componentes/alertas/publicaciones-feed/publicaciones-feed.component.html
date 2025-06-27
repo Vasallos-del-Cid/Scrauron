@@ -102,14 +102,13 @@
 
   <!-- Paginación -->
   <div class="paginacion-centrada">
-    <button (click)="paginaAnterior()" [disabled]="paginaActual === 1" class="boton-paginacion">
-      ← Anterior
-    </button>
-
+    <button class="boton-reset" (click)="irPrimeraPagina()" [disabled]="paginaActual === 1">« Primera</button>
+    <button class="boton-reset" (click)="paginaAnterior()" [disabled]="paginaActual === 1">← Anterior</button>
     <span class="pagina-actual">Página {{ paginaActual }}</span>
-
-    <button (click)="paginaSiguiente()" [disabled]="paginaActual * publicacionesPorPagina >= totalFiltradas"
-      class="boton-paginacion">
+    <button class="boton-reset" (click)="paginaSiguiente()"
+      [disabled]="paginaActual * publicacionesPorPagina >= totalFiltradas">
       Siguiente →
     </button>
+    <button class="boton-reset" (click)="irUltimaPagina()"
+      [disabled]="paginaActual * publicacionesPorPagina >= totalFiltradas">Última »</button>
   </div>
