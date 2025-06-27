@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, send_file
 from datetime import datetime
 from bson import ObjectId
 import logging
+from collections import defaultdict
 from ..models.modelUtils.SerializeJson import SerializeJson
 from ..models.publicacion import Publicacion
 from ..mongo.mongo_publicaciones import (
@@ -131,6 +132,8 @@ def publicaciones_filtradas_endpoint():
         kws = request.args.getlist("keywordsRelacionadas")
         busq = request.args.get("busqueda_palabras")
         pais = request.args.get("pais")  
+        page = int(request.args.get("page", 1))
+        page_size = int(request.args.get("pageSize", 25))
 
         if not fi or not ff:
             return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
@@ -161,6 +164,11 @@ def publicaciones_filtradas_endpoint():
                 if concepto_oid in pub.get("conceptos_relacionados_ids", [])
             ]
 
+        total = len(publicaciones)
+        inicio = (page - 1) * page_size
+        fin = inicio + page_size
+        publicaciones = publicaciones[inicio:fin]
+
         # --- Obtener fuentes y conceptos completos
         fuentes_map = {str(f["_id"]): f for f in get_fuentes_dict()}
         all_concepts = set()
@@ -182,12 +190,13 @@ def publicaciones_filtradas_endpoint():
             pub["conceptos_relacionados"] = [conceptos_map[cid] for cid in cr_ids if cid in conceptos_map]
             pub.pop("conceptos_relacionados_ids", None)
 
-        return publicaciones, 200
+        return {"total": total, "publicaciones": publicaciones}, 200
 
     except ValueError as ve:
         return {"error": f"Parámetro inválido: {ve}"}, 400
     except Exception as e:
         return {"error": f"Error inesperado: {e}"}, 500
+
 
 
 @api_publicaciones.route('/publicaciones/<pub_id>/conceptos/<concepto_id>', methods=['DELETE'])
@@ -266,3 +275,255 @@ def informe_impacto_temporal_endpoint():
         logging.exception("❌ Error inesperado al generar el informe de impacto temporal")
         return {"error": f"Error inesperado: {e}"}, 500
 
+
+
+
+@api_publicaciones.route('/publicaciones_dia', methods=['GET'])
+@SerializeJson
+def publicaciones_por_dia_endpoint():
+    try:
+        fi = request.args.get("fechaInicio")
+        ff = request.args.get("fechaFin")
+        ci = request.args.get("concepto_interes")
+        ai = request.args.get("area_id")
+        fiu = request.args.get("fuente_id")
+        tone = request.args.get("tono")
+        kws = request.args.getlist("keywordsRelacionadas")
+        busq = request.args.get("busqueda_palabras")
+        pais = request.args.get("pais")
+
+        if not fi or not ff:
+            return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
+
+        fecha_inicio = datetime.fromisoformat(fi)
+        fecha_fin = datetime.fromisoformat(ff)
+
+        concepto_oid = ObjectId(ci) if ci else None
+        area_id = ObjectId(ai) if ai else None
+        fuente_id = ObjectId(fiu) if fiu else None
+        tono = int(tone) if tone else None
+        keywords = [ObjectId(k) for k in kws] if kws else None
+
+        publicaciones = filtrar_publicaciones(
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            tono=tono,
+            keywords_relacionadas=keywords,
+            busqueda_palabras=busq,
+            area_id=area_id,
+            fuente_id=fuente_id,
+            pais=pais  
+        )
+
+        if concepto_oid:
+            publicaciones = [
+                pub for pub in publicaciones
+                if concepto_oid in pub.get("conceptos_relacionados_ids", [])
+            ]
+
+        conteo_por_dia = defaultdict(int)
+        for pub in publicaciones:
+            fecha_pub = pub.get("fecha")
+            if fecha_pub:
+                fecha_str = fecha_pub.date().isoformat()
+                conteo_por_dia[fecha_str] += 1
+
+        datos_publicaciones_dia = [{"datoX": fecha, "datoY": count} for fecha, count in sorted(conteo_por_dia.items())]
+
+        return datos_publicaciones_dia, 200
+
+    except ValueError as ve:
+        return {"error": f"Parámetro inválido: {ve}"}, 400
+    except Exception as e:
+        return {"error": f"Error inesperado: {e}"}, 500
+
+
+@api_publicaciones.route('/publicaciones_pais', methods=['GET'])
+@SerializeJson
+def publicaciones_por_pais_endpoint():
+    try:
+        fi = request.args.get("fechaInicio")
+        ff = request.args.get("fechaFin")
+        ci = request.args.get("concepto_interes")
+        ai = request.args.get("area_id")
+        fiu = request.args.get("fuente_id")
+        tone = request.args.get("tono")
+        kws = request.args.getlist("keywordsRelacionadas")
+        busq = request.args.get("busqueda_palabras")
+        pais = request.args.get("pais")
+
+        if not fi or not ff:
+            return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
+
+        fecha_inicio = datetime.fromisoformat(fi)
+        fecha_fin = datetime.fromisoformat(ff)
+
+        concepto_oid = ObjectId(ci) if ci else None
+        area_id = ObjectId(ai) if ai else None
+        fuente_id = ObjectId(fiu) if fiu else None
+        tono = int(tone) if tone else None
+        keywords = [ObjectId(k) for k in kws] if kws else None
+
+        publicaciones = filtrar_publicaciones(
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            tono=tono,
+            keywords_relacionadas=keywords,
+            busqueda_palabras=busq,
+            area_id=area_id,
+            fuente_id=fuente_id,
+            pais=pais
+        )
+
+        if concepto_oid:
+            publicaciones = [
+                pub for pub in publicaciones
+                if concepto_oid in pub.get("conceptos_relacionados_ids", [])
+            ]
+
+        conteo_por_pais = defaultdict(int)
+        for pub in publicaciones:
+            pais_pub = pub.get("pais") or "Desconocido"
+            conteo_por_pais[pais_pub] += 1
+
+        datos_publicaciones_pais = [
+            {"datoX": str(pais), "datoY": count}
+            for pais, count in conteo_por_pais.items()
+        ]
+        datos_publicaciones_pais.sort(key=lambda x: x["datoX"])
+
+        return datos_publicaciones_pais, 200
+
+
+    except ValueError as ve:
+        return {"error": f"Parámetro inválido: {ve}"}, 400
+    except Exception as e:
+        return {"error": f"Error inesperado: {e}"}, 500
+
+
+@api_publicaciones.route('/tono_medio_dia', methods=['GET'])
+@SerializeJson
+def tono_medio_por_dia_endpoint():
+    try:
+        fi = request.args.get("fechaInicio")
+        ff = request.args.get("fechaFin")
+        ci = request.args.get("concepto_interes")
+        ai = request.args.get("area_id")
+        fiu = request.args.get("fuente_id")
+        tone = request.args.get("tono")
+        kws = request.args.getlist("keywordsRelacionadas")
+        busq = request.args.get("busqueda_palabras")
+        pais = request.args.get("pais")
+
+        if not fi or not ff:
+            return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
+
+        fecha_inicio = datetime.fromisoformat(fi)
+        fecha_fin = datetime.fromisoformat(ff)
+
+        concepto_oid = ObjectId(ci) if ci else None
+        area_id = ObjectId(ai) if ai else None
+        fuente_id = ObjectId(fiu) if fiu else None
+        tono_filtro = int(tone) if tone else None
+        keywords = [ObjectId(k) for k in kws] if kws else None
+
+        publicaciones = filtrar_publicaciones(
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            tono=tono_filtro,
+            keywords_relacionadas=keywords,
+            busqueda_palabras=busq,
+            area_id=area_id,
+            fuente_id=fuente_id,
+            pais=pais
+        )
+
+        if concepto_oid:
+            publicaciones = [
+                pub for pub in publicaciones
+                if concepto_oid in pub.get("conceptos_relacionados_ids", [])
+            ]
+
+        tonos_por_dia = defaultdict(list)
+        for pub in publicaciones:
+            fecha_pub = pub.get("fecha")
+            tono = pub.get("tono")
+            if fecha_pub is not None and isinstance(tono, int):
+                fecha_str = fecha_pub.date().isoformat()
+                tonos_por_dia[fecha_str].append(tono)
+
+        datos_tono_medio_dia = [
+            {"datoX": fecha, "datoY": sum(tonos) / len(tonos)}
+            for fecha, tonos in sorted(tonos_por_dia.items())
+        ]
+
+        return datos_tono_medio_dia, 200
+
+    except ValueError as ve:
+        return {"error": f"Parámetro inválido: {ve}"}, 400
+    except Exception as e:
+        return {"error": f"Error inesperado: {e}"}, 500
+
+
+
+@api_publicaciones.route('/tono_medio_pais', methods=['GET'])
+@SerializeJson
+def tono_medio_por_pais_endpoint():
+    try:
+        fi = request.args.get("fechaInicio")
+        ff = request.args.get("fechaFin")
+        ci = request.args.get("concepto_interes")
+        ai = request.args.get("area_id")
+        fiu = request.args.get("fuente_id")
+        tone = request.args.get("tono")
+        kws = request.args.getlist("keywordsRelacionadas")
+        busq = request.args.get("busqueda_palabras")
+        pais = request.args.get("pais")
+
+        if not fi or not ff:
+            return {"error": "Los parámetros fechaInicio y fechaFin son obligatorios"}, 400
+
+        fecha_inicio = datetime.fromisoformat(fi)
+        fecha_fin = datetime.fromisoformat(ff)
+
+        concepto_oid = ObjectId(ci) if ci else None
+        area_id = ObjectId(ai) if ai else None
+        fuente_id = ObjectId(fiu) if fiu else None
+        tono_filtro = int(tone) if tone else None
+        keywords = [ObjectId(k) for k in kws] if kws else None
+
+        publicaciones = filtrar_publicaciones(
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            tono=tono_filtro,
+            keywords_relacionadas=keywords,
+            busqueda_palabras=busq,
+            area_id=area_id,
+            fuente_id=fuente_id,
+            pais=pais
+        )
+
+        if concepto_oid:
+            publicaciones = [
+                pub for pub in publicaciones
+                if concepto_oid in pub.get("conceptos_relacionados_ids", [])
+            ]
+
+        tonos_por_pais = defaultdict(list)
+        for pub in publicaciones:
+            pais_pub = pub.get("pais", "Desconocido")
+            tono = pub.get("tono")
+            if isinstance(tono, int):
+                tonos_por_pais[pais_pub].append(tono)
+
+        datos_tono_medio_pais = [
+            {"datoX": pais, "datoY": sum(tonos) / len(tonos)}
+            for pais, tonos in sorted(tonos_por_pais.items())
+        ]
+
+        return datos_tono_medio_pais, 200
+
+    except ValueError as ve:
+        return {"error": f"Parámetro inválido: {ve}"}, 400
+    except Exception as e:
+        return {"error": f"Error inesperado: {e}"}, 500

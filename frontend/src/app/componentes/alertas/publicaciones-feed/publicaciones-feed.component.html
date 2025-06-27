@@ -57,42 +57,37 @@
 
 <div class="contenedor-cards">
   <app-spinner *ngIf="loading" message="Cargando noticias..."></app-spinner>
+
   <div *ngFor="let alerta of alertasFiltradas" class="alerta-card"
     [ngStyle]="{ 'background-color': getColor(alerta.tono) }">
     <div class="card-imagen">
-      <!-- Imagen de la fuente -->
       <div class="imagen-fuente" *ngIf="alerta.fuente?.url_imagen">
         <div class="fuente">
           <a [href]="alerta.url" target="_blank">
-            <img *ngIf="alerta.fuente?.url_imagen" [src]="alerta.fuente?.url_imagen" alt="Imagen de fuente" />
+            <img [src]="alerta.fuente?.url_imagen" alt="Imagen de fuente" />
           </a>
         </div>
       </div>
     </div>
     <div class="card-texto">
-      <!-- Header -->
       <div class="fila-header">
-        <div class="titulo">
-          {{ alerta.titulo }}</div>
+        <div class="titulo">{{ alerta.titulo }}</div>
       </div>
+
       <br>
+
       <div class="fila-datos-publicacion">
         <div class="fecha">
           <span *ngIf="alerta.pais">País: {{ nombrePais(alerta) }}</span> •
-          <span>Fecha/hora: {{ alerta.fecha | date : "short" }}</span>
+          <span>Fecha/hora: {{ alerta.fecha | date: "short" }}</span>
         </div>
       </div>
 
       <br>
 
-      <!-- Contenido colapsable -->
-      <div class="resumen contenido">
-        {{ alerta.contenido }}
-      </div>
+      <div class="resumen contenido">{{ alerta.contenido }}</div>
 
-      <!-- Footer -->
       <div class="fila-footer">
-
         <div class="tono">Tono: {{ alerta.tono || "Sin calificar" }}</div>
         <div class="tags">
           <span *ngFor="let concepto of alerta.conceptos_relacionados" class="badge">
@@ -104,4 +99,17 @@
       </div>
     </div>
   </div>
-</div>
+
+  <!-- Paginación -->
+  <div class="paginacion-centrada">
+    <button (click)="paginaAnterior()" [disabled]="paginaActual === 1" class="boton-paginacion">
+      ← Anterior
+    </button>
+
+    <span class="pagina-actual">Página {{ paginaActual }}</span>
+
+    <button (click)="paginaSiguiente()" [disabled]="paginaActual * publicacionesPorPagina >= totalFiltradas"
+      class="boton-paginacion">
+      Siguiente →
+    </button>
+  </div>

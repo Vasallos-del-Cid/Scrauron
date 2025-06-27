@@ -12,52 +12,44 @@ export class PublicacionesService extends DataService<Publicacion> {
     super(http, 'publicacionesconceptos');
   }
 
- getFiltradas(filtros: {
-  fechaDesde: Date;
-  fechaHasta: Date;
-  tono?: number;
-  busqueda_palabras?: string;
-  fuente_id?: string;
-  keywords?: string[];
-  concepto_interes?: string;
-  area_id?: string;
-  pais?: string; 
-}): Observable<Publicacion[]> {
-  const cleanISO = (date: Date) => date.toISOString().replace('Z', '');
+  getFiltradas(filtros: {
+    fechaDesde: Date;
+    fechaHasta: Date;
+    tono?: number;
+    busqueda_palabras?: string;
+    fuente_id?: string;
+    keywords?: string[];
+    concepto_interes?: string;
+    area_id?: string;
+    pais?: string;
+    page?: number;
+    pageSize?: number;
+  }): Observable<{ total: number; publicaciones: Publicacion[] }> {
+    const cleanISO = (date: Date) => date.toISOString().replace('Z', '');
 
-  let params = new HttpParams()
-    .set('fechaInicio', cleanISO(filtros.fechaDesde))
-    .set('fechaFin', cleanISO(filtros.fechaHasta));
+    let params = new HttpParams()
+      .set('fechaInicio', cleanISO(filtros.fechaDesde))
+      .set('fechaFin', cleanISO(filtros.fechaHasta));
 
-  if (filtros.tono != null) {
-    params = params.set('tono', filtros.tono.toString());
-  }
-  if (filtros.busqueda_palabras) {
-    params = params.set('busqueda_palabras', filtros.busqueda_palabras);
-  }
+    if (filtros.tono != null) params = params.set('tono', filtros.tono.toString());
+    if (filtros.busqueda_palabras) params = params.set('busqueda_palabras', filtros.busqueda_palabras);
+    if (filtros.concepto_interes) params = params.set('concepto_interes', filtros.concepto_interes);
+    else if (filtros.area_id) params = params.set('area_id', filtros.area_id);
+    if (filtros.fuente_id) params = params.set('fuente_id', filtros.fuente_id);
+    if (filtros.pais) params = params.set('pais', filtros.pais);
+    if (filtros.page) params = params.set('page', filtros.page.toString());
+    if (filtros.pageSize) params = params.set('pageSize', filtros.pageSize.toString());
+    if (filtros.keywords) {
+      filtros.keywords.forEach(k => {
+        params = params.append('keywordsRelacionadas', k);
+      });
+    }
 
-  if (filtros.concepto_interes) {
-    params = params.set('concepto_interes', filtros.concepto_interes);
-  } else if (filtros.area_id) {
-    params = params.set('area_id', filtros.area_id);
-  }
-
-  if (filtros.fuente_id) {
-    params = params.set('fuente_id', filtros.fuente_id);
-  }
-
-  if (filtros.pais) { 
-    params = params.set('pais', filtros.pais);
-  }
-
-  if (filtros.keywords) {
-    filtros.keywords.forEach(k =>
-      params = params.append('keywordsRelacionadas', k)
+    return this.http.get<{ total: number; publicaciones: Publicacion[] }>(
+      `${this.baseUrl}/publicaciones_filtradas`, { params }
     );
   }
 
-  return this.http.get<Publicacion[]>(`${this.baseUrl}/publicaciones_filtradas`, { params });
-}
 
   getConceptosArea(areaId: string): Observable<any[]> {
     const params = new HttpParams().set('area_id', areaId);
@@ -68,7 +60,7 @@ export class PublicacionesService extends DataService<Publicacion> {
     return this.http.get<any[]>(`${this.baseUrl}/areas`);
   }
 
- getFuentes(): Observable<any[]> {
+  getFuentes(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/fuentes`);
   }
 
@@ -79,44 +71,55 @@ export class PublicacionesService extends DataService<Publicacion> {
     });
   }
   eliminarConcepto(pubId: string, conceptoId: string) {
-  return this.http.delete(`${this.baseUrl}/publicaciones/${pubId}/conceptos/${conceptoId}`);
-}
-generarInformeImpactoTemporal(filtros: {
-  fechaDesde: Date;
-  fechaHasta: Date;
-  tono?: number;
-  busqueda_palabras?: string;
-  fuente_id?: string;
-  keywords?: string[];
-  concepto_interes?: string;
-  area_id?: string;
-  pais?: string;
-}): Observable<Blob> {
-  const cleanISO = (date: Date) => date.toISOString().replace('Z', '');
-
-  let params = new HttpParams()
-    .set('fechaInicio', cleanISO(filtros.fechaDesde))
-    .set('fechaFin', cleanISO(filtros.fechaHasta));
-
-  if (filtros.tono != null) params = params.set('tono', filtros.tono.toString());
-  if (filtros.busqueda_palabras) params = params.set('busqueda_palabras', filtros.busqueda_palabras);
-  if (filtros.concepto_interes) {
-    params = params.set('concepto_interes', filtros.concepto_interes);
-  } else if (filtros.area_id) {
-    params = params.set('area_id', filtros.area_id);
+    return this.http.delete(`${this.baseUrl}/publicaciones/${pubId}/conceptos/${conceptoId}`);
   }
-  if (filtros.fuente_id) params = params.set('fuente_id', filtros.fuente_id);
-  if (filtros.pais) params = params.set('pais', filtros.pais);
-  if (filtros.keywords) {
-    filtros.keywords.forEach(k => params = params.append('keywordsRelacionadas', k));
+  generarInformeImpactoTemporal(filtros: {
+    fechaDesde: Date;
+    fechaHasta: Date;
+    tono?: number;
+    busqueda_palabras?: string;
+    fuente_id?: string;
+    keywords?: string[];
+    concepto_interes?: string;
+    area_id?: string;
+    pais?: string;
+  }): Observable<Blob> {
+    const cleanISO = (date: Date) => date.toISOString().replace('Z', '');
+
+    let params = new HttpParams()
+      .set('fechaInicio', cleanISO(filtros.fechaDesde))
+      .set('fechaFin', cleanISO(filtros.fechaHasta));
+
+    if (filtros.tono != null) params = params.set('tono', filtros.tono.toString());
+    if (filtros.busqueda_palabras) params = params.set('busqueda_palabras', filtros.busqueda_palabras);
+    if (filtros.concepto_interes) {
+      params = params.set('concepto_interes', filtros.concepto_interes);
+    } else if (filtros.area_id) {
+      params = params.set('area_id', filtros.area_id);
+    }
+    if (filtros.fuente_id) params = params.set('fuente_id', filtros.fuente_id);
+    if (filtros.pais) params = params.set('pais', filtros.pais);
+    if (filtros.keywords) {
+      filtros.keywords.forEach(k => params = params.append('keywordsRelacionadas', k));
+    }
+
+    return this.http.get(`${this.baseUrl}/informe_impacto_temporal`, {
+      params,
+      responseType: 'blob'
+    });
   }
 
-  return this.http.get(`${this.baseUrl}/informe_impacto_temporal`, {
-    params,
-    responseType: 'blob'
-  });
-}
+  getPublicacionesPorDia(params: any) {
+    return this.http.get<{ datoX: string; datoY: number }[]>(`${this.baseUrl}/publicaciones_dia`, { params });
+  }
+  getTonoMedioPorDia(params: any) {
+    return this.http.get<{ datoX: string; datoY: number }[]>(`${this.baseUrl}/tono_medio_dia`, { params });
+  }
+  getPublicacionesPorPais(params: any) {
+    return this.http.get<{ datoX: string; datoY: number }[]>(`${this.baseUrl}/publicaciones_pais`, { params });
+  }
+  getTonoMedioPorPais(params: any) {
+    return this.http.get<{ datoX: string; datoY: number }[]>(`${this.baseUrl}/tono_medio_pais`, { params });
+  }
 
-
-   
 } 

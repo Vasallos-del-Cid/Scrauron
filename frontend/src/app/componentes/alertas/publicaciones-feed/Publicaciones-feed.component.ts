@@ -12,9 +12,7 @@ import { FuenteService } from '../../fuentes/fuentes.service';
 import { ConceptosService } from '../../conceptos/conceptos.service';
 import { map } from 'rxjs';
 import { GraficoBarrasComponent } from '../../estadisticas/plot-chart-pub/plot-chart-pub.component';
-import { PAISES_EQUIVALENTES } from '../../../../environments/paises-equivalentes'
-
-
+import { PAISES_EQUIVALENTES } from '../../../../environments/paises-equivalentes';
 
 @Component({
   selector: 'app-alertas-feed',
@@ -35,7 +33,6 @@ import { PAISES_EQUIVALENTES } from '../../../../environments/paises-equivalente
 export class PublicacionesFeedComponent implements OnInit {
   @ViewChild(MapaMundialComponent) mapaComponent!: MapaMundialComponent;
 
-
   public filtroPais: string | null = null;
   public listaPaises = [
     { codigo: null, nombre: 'Todos' }, { codigo: 'indeterminado', nombre: 'Indeterminado' },
@@ -44,12 +41,7 @@ export class PublicacionesFeedComponent implements OnInit {
       .sort((a, b) => a.nombre.localeCompare(b.nombre))
   ];
 
-
-
-  //Oublicaciones filtradas
   public alertasFiltradas: Publicacion[] = [];
-
-  //Opciones combos filtrado
   public fuentesOpts: { id: string | null; nombre: string }[] = [];
   public conceptosOpts: { id: string | null; nombre: string }[] = [];
   public valoraciones = [
@@ -57,7 +49,6 @@ export class PublicacionesFeedComponent implements OnInit {
     ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ valor: n, nombre: n.toString() }))
   ];
 
-  //Filtros de búsqueda
   public filtroBusqueda = '';
   public filtroFuenteId: string | null = null;
   public filtroConceptoId: string | null = null;
@@ -67,38 +58,36 @@ export class PublicacionesFeedComponent implements OnInit {
 
   public expandidos = new Set<string>();
   public alertas: any[] = [];
-
-  //variable para spinner
   public loading = false;
-  //Datos gráfica Publicaciones-Dia
+
   public datosPublicacionesDia: { datoX: string; datoY: number }[] = [];
   public tituloGraficoPublicacionesDia = "📰 Publicaciones por día 🗓️";
   public ejeXPublicacionesDia = "Día";
   public ejeYPublicacionesDia = "Publicaciones";
 
-  //Datos gráfica Tono-Dia
   public datosTonoDia: { datoX: string; datoY: number }[] = [];
   public tituloGraficoTonoDia = "🌡️ Tono medio por día 🗓️";
   public ejeXTonoDia = "Día";
   public ejeYTonoDia = "Tono";
 
-  //Datos gráfica Publicaciones-Pais
   public datosPublicacionesPais: { datoX: string; datoY: number }[] = [];
   public tituloGraficoPublicacionesPais = "📰 Publicaciones por país 🌍";
   public ejeXPublicacionesPais = "País";
   public ejeYPublicacionesPais = "Publicaciones";
 
-  //Datos gráfica Tono-país
   public datosTonoPais: { datoX: string; datoY: number }[] = [];
   public tituloGraficoTonoPais = "🌡️ Tono medio por país 🌍";
   public ejeXTonoPais = "País";
   public ejeYTonoPais = "Tono";
 
-  //Datos de las cajas del mapamundi
   public datosMapa: Record<string, number> = {};
   public totalPublicaciones: number = 0;
   public tonoMedioGeneral: number = 0;
   public paisConMasPublicaciones: string | null = null;
+
+  public paginaActual = 1;
+  public publicacionesPorPagina = 25;
+  public totalFiltradas = 0;
 
   constructor(
     private servicio: PublicacionesService,
@@ -134,17 +123,22 @@ export class PublicacionesFeedComponent implements OnInit {
     const hasta = new Date(this.fechaHasta); hasta.setHours(25, 59, 0, 0);
     this.loading = true;
 
-    this.servicio.getFiltradas({
+    const filtros = {
       fechaDesde: desde,
       fechaHasta: hasta,
       tono: this.filtroValoracion ?? undefined,
       busqueda_palabras: this.filtroBusqueda || undefined,
       fuente_id: this.filtroFuenteId || undefined,
       concepto_interes: this.filtroConceptoId || undefined,
-      pais: this.filtroPais || undefined // 👈 añadido
-    }).subscribe({
+      pais: this.filtroPais || undefined,
+      page: this.paginaActual,
+      pageSize: this.publicacionesPorPagina
+    };
+
+    this.servicio.getFiltradas(filtros).subscribe({
       next: (result) => {
-        this.alertas = result.map(pub => ({
+        this.totalFiltradas = result.total;
+        this.alertas = result.publicaciones.map(pub => ({
           ...pub,
           fecha: pub.fecha ? new Date(pub.fecha) : undefined,
           fuente: pub.fuente ?? undefined,
@@ -152,29 +146,40 @@ export class PublicacionesFeedComponent implements OnInit {
         }));
         this.alertasFiltradas = [...this.alertas];
 
-        this.datosMapa = {};
-        let sumaTonos = 0;
-        let cuentaTonos = 0;
+        const params: any = {
+          fechaInicio: this.toLocalIsoString(desde),
+          fechaFin: this.toLocalIsoString(hasta)
+        };
 
-        this.alertasFiltradas.forEach(a => {
-          if (a.pais?.length === 3) {
-            this.datosMapa[a.pais] = (this.datosMapa[a.pais] || 0) + 1;
-          }
-          if (a.tono != null) {
-            sumaTonos += a.tono;
-            cuentaTonos++;
-          }
+        if (this.filtroValoracion != null) params.tono = this.filtroValoracion;
+        if (this.filtroBusqueda) params.busqueda_palabras = this.filtroBusqueda;
+        if (this.filtroFuenteId) params.fuente_id = this.filtroFuenteId;
+        if (this.filtroConceptoId) params.concepto_interes = this.filtroConceptoId;
+        if (this.filtroPais) params.pais = this.filtroPais;
+
+        this.servicio.getPublicacionesPorDia(params).subscribe(d => this.datosPublicacionesDia = d);
+        this.servicio.getTonoMedioPorDia(params).subscribe(d => this.datosTonoDia = d);
+
+        this.servicio.getPublicacionesPorPais(params).subscribe(d => {
+          this.datosMapa = d.reduce((acc, cur) => ({ ...acc, [cur.datoX]: cur.datoY }), {});
+          this.totalPublicaciones = d.reduce((sum, item) => sum + item.datoY, 0);
+          const maxPais = d.reduce((prev, curr) => curr.datoY > prev.datoY ? curr : prev, { datoX: '', datoY: 0 });
+          this.paisConMasPublicaciones = maxPais?.datoX || null;
+
+          this.datosPublicacionesPais = d.map(p => ({
+            datoX: this.normalizarNombrePais(p.datoX),
+            datoY: p.datoY
+          }));
         });
 
-        this.totalPublicaciones = this.alertasFiltradas.length;
-        this.tonoMedioGeneral = cuentaTonos > 0 ? +(sumaTonos / cuentaTonos).toFixed(2) : 0;
-        this.paisConMasPublicaciones = Object.entries(this.datosMapa)
-          .reduce((max, curr) => curr[1] > max[1] ? curr : max, ["", 0])[0] || null;
-
-        this.datosPublicacionesPais = this.getPublicacionesPais();
-        this.datosTonoPais = this.getTonoPais();
-        this.datosPublicacionesDia = this.getPublicacionesDia();
-        this.datosTonoDia = this.getTonoDia();
+        this.servicio.getTonoMedioPorPais(params).subscribe(d => {
+          this.datosTonoPais = d.map(p => ({
+            datoX: this.normalizarNombrePais(p.datoX),
+            datoY: p.datoY
+          }));
+          const totalPeso = d.reduce((sum, item) => sum + item.datoY, 0);
+          this.tonoMedioGeneral = d.length > 0 ? +(totalPeso / d.length).toFixed(2) : 0;
+        });
 
         this.loading = false;
 
@@ -193,8 +198,10 @@ export class PublicacionesFeedComponent implements OnInit {
     });
   }
 
-
-
+  private toLocalIsoString(date: Date): string {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  }
 
   private normalizarNombrePais(nombreRaw: string): string {
     const n = nombreRaw.trim();
@@ -204,64 +211,6 @@ export class PublicacionesFeedComponent implements OnInit {
       p.espanol.toLowerCase() === n.toLowerCase()
     );
     return match ? match.espanol : nombreRaw;
-  }
-
-  private getPublicacionesPais(): { datoX: string; datoY: number }[] {
-    const conteo: Record<string, number> = {};
-    this.alertasFiltradas.forEach(a => {
-      if (a.pais) {
-        const nom = this.normalizarNombrePais(a.pais);
-        conteo[nom] = (conteo[nom] || 0) + 1;
-      }
-    });
-    return Object.entries(conteo)
-      .map(([datoX, datoY]) => ({ datoX, datoY }))
-      .sort((a, b) => a.datoX.localeCompare(b.datoX));
-  }
-
-  private getTonoPais(): { datoX: string; datoY: number; conteo: number }[] {
-    const sums: Record<string, number> = {}, counts: Record<string, number> = {};
-    this.alertasFiltradas.forEach(a => {
-      if (a.pais && a.tono != null) {
-        const nom = this.normalizarNombrePais(a.pais);
-        sums[nom] = (sums[nom] || 0) + a.tono;
-        counts[nom] = (counts[nom] || 0) + 1;
-      }
-    });
-    return Object.entries(sums)
-      .map(([datoX, sum]) => ({
-        datoX,
-        datoY: +(sum / counts[datoX]).toFixed(2),
-        conteo: counts[datoX]
-      }))
-      .sort((a, b) => a.datoX.localeCompare(b.datoX));
-  }
-
-  private getPublicacionesDia(): { datoX: string; datoY: number }[] {
-    const conteo: Record<string, number> = {};
-    this.alertasFiltradas.forEach(a => {
-      if (a.fecha) {
-        const d = a.fecha.toISOString().slice(0, 10);
-        conteo[d] = (conteo[d] || 0) + 1;
-      }
-    });
-    return Object.entries(conteo)
-      .map(([datoX, datoY]) => ({ datoX, datoY }))
-      .sort((a, b) => a.datoX.localeCompare(b.datoX));
-  }
-
-  private getTonoDia(): { datoX: string; datoY: number }[] {
-    const sums: Record<string, number> = {}, counts: Record<string, number> = {};
-    this.alertasFiltradas.forEach(a => {
-      if (a.fecha && a.tono != null) {
-        const d = a.fecha.toISOString().slice(0, 10);
-        sums[d] = (sums[d] || 0) + a.tono;
-        counts[d] = (counts[d] || 0) + 1;
-      }
-    });
-    return Object.entries(sums)
-      .map(([datoX, sum]) => ({ datoX, datoY: sum / counts[datoX] }))
-      .sort((a, b) => a.datoX.localeCompare(b.datoX));
   }
 
   resetFiltros(): void {
@@ -275,7 +224,6 @@ export class PublicacionesFeedComponent implements OnInit {
     this.fechaHasta = new Date(hoy);
     this.aplicarFiltros();
   }
-
 
   getColor(tono?: number): string {
     if (!tono || tono < 1 || tono > 10) return 'transparent';
@@ -300,6 +248,7 @@ export class PublicacionesFeedComponent implements OnInit {
       });
     }
   }
+
   public nombrePais(alerta: Publicacion): string {
     return alerta.pais ? this.normalizarNombrePais(alerta.pais) : '';
   }
@@ -327,7 +276,7 @@ export class PublicacionesFeedComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'informe_impacto.docx'; // Puedes cambiar el nombre si lo deseas
+        a.download = 'informe_impacto.docx';
         a.click();
         window.URL.revokeObjectURL(url);
         console.log("Informe descargado con éxito.");
@@ -337,9 +286,19 @@ export class PublicacionesFeedComponent implements OnInit {
         console.error("Error al generar el informe:", err);
       }
     });
-
   }
 
+  paginaAnterior(): void {
+    if (this.paginaActual > 1) {
+      this.paginaActual--;
+      this.aplicarFiltros();
+    }
+  }
 
+  paginaSiguiente(): void {
+    if ((this.paginaActual * this.publicacionesPorPagina) < this.totalFiltradas) {
+      this.paginaActual++;
+      this.aplicarFiltros();
+    }
+  }
 }
-

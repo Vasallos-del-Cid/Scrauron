@@ -37,9 +37,10 @@ export class MapaMundialComponent implements OnInit, OnChanges {
     nombrePaisConMasPublicaciones: string = '';
     private iso3ANombre: Record<string, string> = {};
     private nombreInglesAIso3: Record<string, string> = {};
+
     ngOnInit(): void {
         for (const pais of PAISES_EQUIVALENTES) {
-            this.iso3ANombre[pais.iso3] = pais.ingles;
+            this.iso3ANombre[pais.iso3] = pais.espanol;
             this.nombreInglesAIso3[pais.ingles] = pais.iso3;
         }
     }
