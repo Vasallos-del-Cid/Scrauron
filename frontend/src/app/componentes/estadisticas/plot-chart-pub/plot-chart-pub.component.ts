@@ -28,18 +28,21 @@ export class GraficoBarrasComponent implements OnChanges {
   }
 
   prepararDatos(): void {
-    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
-    this.esFecha = fechaRegex.test(this.datosGrafico[0]?.datoX);
+  const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+  this.esFecha = fechaRegex.test(this.datosGrafico[0]?.datoX);
 
-    const datosOrdenados = [...this.datosGrafico].sort((a, b) => {
-      if (this.esFecha) {
-        return new Date(a.datoX).getTime() - new Date(b.datoX).getTime();
-      }
-      return b.datoY - a.datoY;
-    });
+  const datosOrdenados = [...this.datosGrafico].sort((a, b) => {
+    if (this.esFecha) {
+      return new Date(b.datoX).getTime() - new Date(a.datoX).getTime(); // Más recientes primero
+    }
+    return b.datoY - a.datoY; // Mayores valores primero
+  });
 
-    this.datosVisibles = datosOrdenados.slice(0, 20);
-  }
+  const topDatos = datosOrdenados.slice(0, 20);
+  this.datosVisibles = this.esFecha ? topDatos.reverse() : topDatos;
+}
+
+
 
   crearGrafico(datos: { datoX: string; datoY: number; conteo?: number }[], container: ElementRef = this.graficoContainer, anchoExtra: boolean = false, mostrarBoton: boolean = true): void {
     const element = container.nativeElement;
@@ -99,8 +102,8 @@ export class GraficoBarrasComponent implements OnChanges {
       .call(d3.axisLeft(y))
       .selectAll('text')
       .style('font-size', '150%');
-
-    const tooltip = d3.select('body')
+    const doc = container.nativeElement.ownerDocument;
+    const tooltip = d3.select(doc.body)
       .append("div")
       .attr("class", "tooltip")
       .style("position", "absolute")
@@ -138,7 +141,7 @@ export class GraficoBarrasComponent implements OnChanges {
         tooltip.style('display', 'none');
       });
 
-    if (mostrarBoton && !this.mostrarTodos && this.datosGrafico.length > 25) {
+    if (mostrarBoton && !this.mostrarTodos && this.datosGrafico.length > 20) {
       const button = this.renderer.createElement('button');
       const text = this.renderer.createText('Ver todos');
       this.renderer.appendChild(button, text);

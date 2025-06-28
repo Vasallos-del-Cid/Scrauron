@@ -87,7 +87,7 @@ def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_simi
     return conceptos_enlazados_ids
 
 
-def obtener_keywords_relacionadas(publicacion, umbral_keyword=0.8, top_k=10):
+def obtener_keywords_relacionadas(publicacion, umbral_keyword=0.83, top_k=10):
     texto = normalizar_texto(f"{publicacion.titulo}. {publicacion.contenido}")
     emb_pub = model.encode(["query: " + texto], normalize_embeddings=True)[0].astype("float32")
 
