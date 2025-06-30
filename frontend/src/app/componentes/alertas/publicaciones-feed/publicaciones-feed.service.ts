@@ -97,6 +97,7 @@ export class PublicacionesService extends DataService<Publicacion> {
     } else if (filtros.area_id) {
       params = params.set('area_id', filtros.area_id);
     }
+    if (filtros.area_id) params = params.set('area_id', filtros.area_id);
     if (filtros.fuente_id) params = params.set('fuente_id', filtros.fuente_id);
     if (filtros.pais) params = params.set('pais', filtros.pais);
     if (filtros.keywords) {

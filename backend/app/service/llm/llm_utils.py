@@ -12,6 +12,7 @@ import re
 from app.models.publicacion import Publicacion
 from app.models.keyword import Keyword
 from app.mongo.mongo_keywords import create_keyword
+from app.mongo.mongo_area_impacto import get_areas_impacto
 import math
 import json
 from datetime import datetime
@@ -281,14 +282,29 @@ def analizar_publicacion(publicacion, max_tokens=600):
 MAX_TOKENS_TOTAL = 12000
 TOKENS_POR_PUB = 500
 
-def generar_informe_impacto_temporal(publicaciones: List[dict], filtros: dict = None) -> BytesIO:
+#--------------------------------------------------------------
+
+
+def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, filtros: dict = None) -> BytesIO:
     if not publicaciones:
         raise ValueError("No hay publicaciones para analizar.")
+    if not area_id:
+        raise ValueError("Se requiere un área de trabajo (area_id) para el análisis.")
 
     publicaciones.sort(key=lambda x: x.get("fecha") or datetime.now())
     fechas = [p["fecha"] for p in publicaciones if p.get("fecha")]
     fecha_inicio = min(fechas).isoformat() if fechas else None
     fecha_fin = max(fechas).isoformat() if fechas else None
+
+    # Obtener áreas de impacto asociadas
+    areas_impacto = [a for a in get_areas_impacto() if str(a.area_id) == str(area_id)]
+    if not areas_impacto:
+        raise ValueError(f"No se encontraron áreas de impacto para el área {area_id}.")
+
+    descripciones_impacto = "\n".join([
+        f"- {a.nombre}: {a.descripcion.strip()}" for a in areas_impacto
+    ])
+    claves_impacto = [a.nombre.lower().strip() for a in areas_impacto]
 
     lote_size = MAX_TOKENS_TOTAL // TOKENS_POR_PUB
     total_lotes = math.ceil(len(publicaciones) / lote_size)
@@ -311,38 +327,51 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], filtros: dict = 
 
         prompt = (
     "A partir de los siguientes titulares y contenidos de noticias ordenadas en el tiempo, redacta un análisis de cómo evoluciona la situación y su impacto.\n"
-    "Analiza el impacto desde tres perspectivas: económica, social y de seguridad.\n"
-    "En cada una, resume en 1-2 líneas lo que se puede deducir del conjunto de noticias.\n"
+    "Analiza el impacto en base a estas dimensiones definidas por el usuario:\n"
+    f"{descripciones_impacto}\n\n"
+    "Para cada una, resume en 1-2 líneas lo que se puede deducir del conjunto de noticias.\n"
     "Indica evolución, intensidad, y ejemplos concretos si los hay.\n"
-    "Evita muletillas o introducciones, este parrafo formará parte de un conjunto fusionado.\n"
-    "Devuelve solo un JSON como este:\n"
+    "Evita introducciones, explicaciones o cualquier texto adicional: este análisis será integrado automáticamente a un informe generado por IA.\n"
+    "IMPORTANTE: Devuelve exclusivamente un JSON válido con esta estructura exacta:\n"
     '{\n'
-    '  "impactos": {\n'
-    '    "economico": "...",\n'
-    '    "social": "...",\n'
-    '    "seguridad": "..."\n'
+    '  "impactos": {\n' +
+    "".join([f'    "{clave}": "...",\n' for clave in claves_impacto]).rstrip(',\n') + '\n'
     '  }\n'
     '}\n'
-    "No añadas explicaciones, solo el JSON final.\n"
-    "Solo devuélveme el JSON. No lo envuelvas con ```json ni ningún otro texto.\n"
+    "No incluyas ningún comentario, encabezado, ni código markdown como ```json.\n"
+    "Solo responde con el JSON limpio.\n"
     "Noticias:\n" + "\n\n".join(entradas[:150])
 )
 
+
         messages = [
-            {"role": "system", "content": "Eres un experto en análisis de impacto social, económico y de seguridad."},
+            {"role": "system", "content": "Eres un experto en análisis de impacto con base en noticias."},
             {"role": "user", "content": prompt}
         ]
 
         try:
-            respuesta = get_gpt_response(messages, temperature=0.6).strip()
-            logging.debug(f"🔍 Respuesta cruda del modelo:\n{respuesta}")
-            data = json.loads(respuesta)
+            data = None
+            for attempt in range(2):
+                respuesta = get_gpt_response(messages, temperature=0.6).strip()
+                logging.debug(f"🔍 Respuesta cruda (intento {attempt+1}):\n{respuesta}")
+                if respuesta:
+                    try:
+                        data = json.loads(respuesta)
+                        break
+                    except json.JSONDecodeError:
+                        logging.warning(f"🚧 JSON inválido en intento {attempt+1}")
+                else:
+                    logging.warning(f"🚧 Respuesta vacía en intento {attempt+1}")
+
+            if not data:
+                raise ValueError("No se obtuvo JSON válido del modelo")
+
             impactos_lotes.append(data["impactos"])
             logging.info(f"✅ Lote {i+1}/{total_lotes} procesado correctamente.")
         except Exception as e:
             logging.error(f"❌ Error en análisis del lote {i+1}: {e}")
 
-    texto_por_area = {"economico": [], "social": [], "seguridad": []}
+    texto_por_area = {clave: [] for clave in claves_impacto}
     for impacto in impactos_lotes:
         for clave in texto_por_area:
             texto_por_area[clave].append(impacto.get(clave, ""))
@@ -361,7 +390,6 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], filtros: dict = 
             }
 
         doc.add_heading("Filtros aplicados", level=1)
-
         etiquetas = {
             "concepto_interes": "Concepto de interés",
             "fuente_id": "Fuente",
@@ -388,7 +416,7 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], filtros: dict = 
                     valor_str = str(value)
                 doc.add_paragraph(f"{label}: {valor_str}")
 
-    for area in ["economico", "social", "seguridad"]:
+    for area in claves_impacto:
         doc.add_heading(area.capitalize(), level=1)
         area_texto = "\n\n".join(texto_por_area[area]).strip()
         area_texto = resumir_parrafos_si_muchos(area_texto)
@@ -398,6 +426,9 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], filtros: dict = 
     doc.save(buffer)
     buffer.seek(0)
     return buffer
+
+
+#-------------------------------------------
 
 def resumir_parrafos_si_muchos(texto: str, umbral=5) -> str:
     parrafos = [p.strip() for p in texto.split("\n") if p.strip()]

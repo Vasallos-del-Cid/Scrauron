@@ -10,9 +10,11 @@ import { MapaMundialComponent } from '../../mapa-mundial/mapa-mundial';
 import { SpinnerComponent } from '../../../core/plantillas/spinner/spinner.component';
 import { FuenteService } from '../../fuentes/fuentes.service';
 import { ConceptosService } from '../../conceptos/conceptos.service';
-import { map } from 'rxjs';
+import { AreasService } from '../../areas/areas.service';
+import { map, switchMap, of } from 'rxjs';
 import { GraficoBarrasComponent } from '../../estadisticas/plot-chart-pub/plot-chart-pub.component';
 import { PAISES_EQUIVALENTES } from '../../../../environments/paises-equivalentes';
+import { Conceptos } from '../../conceptos/Conceptos.model';
 
 @Component({
   selector: 'app-alertas-feed',
@@ -41,24 +43,29 @@ export class PublicacionesFeedComponent implements OnInit {
       .sort((a, b) => a.nombre.localeCompare(b.nombre))
   ];
 
+  public filtroBusqueda = '';
+  public filtroFuenteId: string | null = null;
+  public filtroConceptoId: string | null = null;
+  public filtroAreaId: string | null = null;
+  public filtroValoracion: number | null = null;
+  public fechaDesde?: Date;
+  public fechaHasta?: Date;
+
   public alertasFiltradas: Publicacion[] = [];
+  public alertas: any[] = [];
   public fuentesOpts: { id: string | null; nombre: string }[] = [];
   public conceptosOpts: { id: string | null; nombre: string }[] = [];
+  public areasTrabajoOpts: { id: string | null; nombre: string }[] = [];
   public valoraciones = [
     { valor: null, nombre: 'Todos' },
     ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ valor: n, nombre: n.toString() }))
   ];
 
-  public filtroBusqueda = '';
-  public filtroFuenteId: string | null = null;
-  public filtroConceptoId: string | null = null;
-  public filtroValoracion: number | null = null;
-  public fechaDesde?: Date;
-  public fechaHasta?: Date;
-
-  public expandidos = new Set<string>();
-  public alertas: any[] = [];
   public loading = false;
+  public expandidos = new Set<string>();
+  public paginaActual = 1;
+  public publicacionesPorPagina = 20;
+  public totalFiltradas = 0;
 
   public datosPublicacionesDia: { datoX: string; datoY: number }[] = [];
   public tituloGraficoPublicacionesDia = "📰 Publicaciones por día 🗓️";
@@ -85,19 +92,16 @@ export class PublicacionesFeedComponent implements OnInit {
   public tonoMedioGeneral: number = 0;
   public paisConMasPublicaciones: string | null = null;
 
-  public paginaActual = 1;
-  public publicacionesPorPagina = 20;
-  public totalFiltradas = 0;
-
   constructor(
     private servicio: PublicacionesService,
     private fuenteService: FuenteService,
-    private conceptoService: ConceptosService
+    private conceptoService: ConceptosService,
+    private areaTrabajoService: AreasService
   ) { }
 
   ngOnInit(): void {
     this.fuenteService.getAll();
-    this.conceptoService.getAll();
+    this.areaTrabajoService.getAll();
 
     const hoy = new Date();
     this.fechaDesde = new Date(hoy);
@@ -108,9 +112,59 @@ export class PublicacionesFeedComponent implements OnInit {
       .pipe(map(list => [{ id: null, nombre: 'Todos' }, ...list.map(f => ({ id: f._id!, nombre: f.nombre }))]))
       .subscribe(opts => this.fuentesOpts = opts);
 
-    this.conceptoService.items$
-      .pipe(map(list => [{ id: null, nombre: 'Todos' }, ...list.map(c => ({ id: c._id!, nombre: c.nombre }))]))
-      .subscribe(opts => this.conceptosOpts = opts);
+    this.areaTrabajoService.items$
+      .pipe(map(list => [{ id: null, nombre: 'Todos' }, ...list.map(a => ({ id: a._id!, nombre: a.nombre }))]))
+      .subscribe(opts => this.areasTrabajoOpts = opts);
+  }
+
+  set filtroAreaIdSeleccionada(areaId: string | null) {
+    this.filtroAreaId = areaId;
+    this.filtroConceptoId = null;
+    this.actualizarConceptosPorArea();
+  }
+
+
+
+  public onAreaChange(areaId: string | null) {
+  this.filtroAreaId = areaId;
+  this.filtroConceptoId = null;
+  if (!areaId) {
+    this.conceptosOpts = [];
+    return;
+  }
+  this.areaTrabajoService.getById(areaId).pipe(
+    switchMap(area => {
+      const ids = area.conceptos_interes_ids || [];
+      if (!ids.length) return of([] as Conceptos[]);
+      return this.conceptoService.getAll().pipe(
+        map(conceptos => conceptos.filter(c => ids.includes(c._id!)))
+      );
+    })
+  ).subscribe(conceptos => {
+    this.conceptosOpts = [{ id: null, nombre: 'Todos' }, ...conceptos.map(c => ({ id: c._id!, nombre: c.nombre }))];
+  });
+}
+
+
+  actualizarConceptosPorArea(): void {
+    if (!this.filtroAreaId) {
+      this.conceptosOpts = [];
+      return;
+    }
+
+    this.areaTrabajoService.getById(this.filtroAreaId).pipe(
+      switchMap((area: any) => {
+        if (!area?.conceptos_interes_ids?.length) return of([]);
+        return this.conceptoService.getAll().pipe(
+          map((conceptos: Conceptos[]) => conceptos.filter((c: Conceptos) => area.conceptos_interes_ids!.includes(c._id!)))
+        );
+      })
+    ).subscribe((conceptos: Conceptos[]) => {
+      this.conceptosOpts = [{ id: null, nombre: 'Todos' }, ...conceptos.map((c: Conceptos) => ({
+        id: c._id!,
+        nombre: c.nombre
+      }))];
+    });
   }
 
   aplicarFiltrosNuevaConsulta(): void {
@@ -271,6 +325,7 @@ export class PublicacionesFeedComponent implements OnInit {
       busqueda_palabras: this.filtroBusqueda || undefined,
       fuente_id: this.filtroFuenteId || undefined,
       concepto_interes: this.filtroConceptoId || undefined,
+      area_id: this.filtroAreaId || undefined,
       pais: this.filtroPais || undefined
     };
 
@@ -324,5 +379,7 @@ export class PublicacionesFeedComponent implements OnInit {
   get totalPaginas(): number {
     return Math.ceil(this.totalFiltradas / this.publicacionesPorPagina);
   }
+
+  
 
 }

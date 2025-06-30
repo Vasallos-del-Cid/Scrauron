@@ -3,10 +3,17 @@
 </div>
 
 <div class="barra-filtros">
-  <ejs-textbox placeholder="Buscar alerta..." [(ngModel)]="filtroBusqueda"></ejs-textbox>
+  <ejs-textbox placeholder="Buscar palabras..." [(ngModel)]="filtroBusqueda"></ejs-textbox>
+
+  <ejs-dropdownlist [dataSource]="areasTrabajoOpts" [(ngModel)]="filtroAreaId" (ngModelChange)="onAreaChange($event)"
+    [fields]="{ text: 'nombre', value: 'id' }" placeholder="Área de trabajo">
+  </ejs-dropdownlist>
 
   <ejs-dropdownlist [dataSource]="conceptosOpts" [(ngModel)]="filtroConceptoId"
-    [fields]="{ text: 'nombre', value: 'id' }" [value]="filtroConceptoId" placeholder="Concepto"></ejs-dropdownlist>
+    [fields]="{ text: 'nombre', value: 'id' }" [value]="filtroConceptoId" placeholder="Concepto"
+    [enabled]="!!filtroAreaId">
+  </ejs-dropdownlist>
+
 
   <ejs-dropdownlist [dataSource]="fuentesOpts" [(ngModel)]="filtroFuenteId" [fields]="{ text: 'nombre', value: 'id' }"
     [value]="filtroFuenteId" placeholder="Fuente"></ejs-dropdownlist>
@@ -100,15 +107,15 @@
     </div>
   </div>
 
-<!-- Paginación -->
-<div class="paginacion-centrada">
-  <button class="boton-reset" (click)="irPrimeraPagina()" [disabled]="paginaActual === 1">« Primera</button>
-  <button class="boton-reset" (click)="paginaAnterior()" [disabled]="paginaActual === 1">← Anterior</button>
-  <span class="pagina-actual">Página {{ paginaActual }} de {{ totalPaginas }}</span>
-  <button class="boton-reset" (click)="paginaSiguiente()"
-    [disabled]="paginaActual * publicacionesPorPagina >= totalFiltradas">
-    Siguiente →
-  </button>
-  <button class="boton-reset" (click)="irUltimaPagina()"
-    [disabled]="paginaActual * publicacionesPorPagina >= totalFiltradas">Última »</button>
-</div>
+  <!-- Paginación -->
+  <div class="paginacion-centrada">
+    <button class="boton-reset" (click)="irPrimeraPagina()" [disabled]="paginaActual === 1">« Primera</button>
+    <button class="boton-reset" (click)="paginaAnterior()" [disabled]="paginaActual === 1">← Anterior</button>
+    <span class="pagina-actual">Página {{ paginaActual }} de {{ totalPaginas }}</span>
+    <button class="boton-reset" (click)="paginaSiguiente()"
+      [disabled]="paginaActual * publicacionesPorPagina >= totalFiltradas">
+      Siguiente →
+    </button>
+    <button class="boton-reset" (click)="irUltimaPagina()"
+      [disabled]="paginaActual * publicacionesPorPagina >= totalFiltradas">Última »</button>
+  </div>

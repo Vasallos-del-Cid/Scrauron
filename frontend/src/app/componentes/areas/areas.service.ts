@@ -10,4 +10,8 @@ export class AreasService extends DataService<Areas> {
   constructor(http: HttpClient) {
     super(http, 'areas');
   }
+
+  getById(id: string) {
+    return this.http.get<Areas>(`${this.baseUrl}/areas/${id}`);
+  }
 }

@@ -13,6 +13,14 @@ export class ConceptosService extends DataService<Conceptos> {
     super(http, 'conceptos');
   }
 
+  override getAll(): Observable<Conceptos[]> {
+    return this.http.get<Conceptos[]>(`${this.baseUrl}/conceptos`);
+  }
+
+  getById(id: string): Observable<Conceptos> {
+    return this.http.get<Conceptos>(`${this.baseUrl}/conceptos/${id}`);
+  }
+
   createOnlyName(nombre: string): Observable<{ _id: string }> {
     return this.http.post<{ _id: string }>(`${this.baseUrl}/conceptos`, { nombre });
   }
@@ -50,8 +58,5 @@ export class ConceptosService extends DataService<Conceptos> {
       `${this.baseUrl}/conceptos/${areaId}/keywords_aceptadas`, body
     );
   }
-
-
-
-
+  
 }

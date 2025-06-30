@@ -233,8 +233,8 @@ def informe_impacto_temporal_endpoint():
         fecha_fin = datetime.fromisoformat(ff)
 
         concepto_oid = ObjectId(ci) if ci else None
-        area_id = ObjectId(ai) if ai else None
-        fuente_id = ObjectId(fiu) if fiu else None
+        area_oid = ObjectId(ai) if ai else None
+        fuente_oid = ObjectId(fiu) if fiu else None
         tono = int(tone) if tone else None
         keywords = [ObjectId(k) for k in kws] if kws else None
 
@@ -244,8 +244,8 @@ def informe_impacto_temporal_endpoint():
             tono=tono,
             keywords_relacionadas=keywords,
             busqueda_palabras=busq,
-            area_id=area_id,
-            fuente_id=fuente_id,
+            area_id=area_oid,
+            fuente_id=fuente_oid,
             pais=pais
         )
 
@@ -265,7 +265,7 @@ def informe_impacto_temporal_endpoint():
             "keywordsRelacionadas": kws
         }
 
-        word_file = generar_informe_impacto_temporal(publicaciones_dicts, filtros)
+        word_file = generar_informe_impacto_temporal(publicaciones_dicts, ai, filtros)
         filename = f"informe_impacto_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
         return send_file(word_file, as_attachment=True, download_name=filename, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
@@ -274,6 +274,7 @@ def informe_impacto_temporal_endpoint():
     except Exception as e:
         logging.exception("❌ Error inesperado al generar el informe de impacto temporal")
         return {"error": f"Error inesperado: {e}"}, 500
+
 
 
 
