@@ -6,11 +6,13 @@ from ..mongo.mongo_area_impacto import (
     get_area_impacto_by_id,
     create_area_impacto,
     update_area_impacto,
-    delete_area_impacto
+    delete_area_impacto,
+    get_areas_impacto_by_area_trabajo_id
 )
 
 api_areas_impacto = Blueprint('api_areas_impacto', __name__)
 
+# --------------------------------------------------
 # GET todas las áreas de impacto
 @api_areas_impacto.route('/areas_impacto', methods=['GET'])
 @SerializeJson
@@ -21,6 +23,7 @@ def get_areas_impacto_endpoint():
     except Exception as e:
         return {"error": str(e)}, 500
 
+# --------------------------------------------------
 # GET área de impacto por ID
 @api_areas_impacto.route('/areas_impacto/<area_id>', methods=['GET'])
 def get_area_impacto_endpoint(area_id):
@@ -35,6 +38,7 @@ def get_area_impacto_endpoint(area_id):
     except Exception as e:
         return {"error": str(e)}, 500
 
+# --------------------------------------------------
 # POST crear nueva área de impacto
 @api_areas_impacto.route('/areas_impacto', methods=['POST'])
 def create_area_impacto_endpoint():
@@ -47,6 +51,7 @@ def create_area_impacto_endpoint():
     except Exception as e:
         return {"error": str(e)}, 400
 
+# --------------------------------------------------
 # PATCH actualizar campos de un área de impacto
 @api_areas_impacto.route('/areas_impacto/<area_id>', methods=['PATCH'])
 def patch_area_impacto_endpoint(area_id):
@@ -71,6 +76,7 @@ def patch_area_impacto_endpoint(area_id):
     except Exception as e:
         return {"error": str(e)}, 500
 
+# --------------------------------------------------
 # DELETE eliminar área de impacto
 @api_areas_impacto.route('/areas_impacto/<area_id>', methods=['DELETE'])
 def delete_area_impacto_endpoint(area_id):
@@ -82,13 +88,17 @@ def delete_area_impacto_endpoint(area_id):
     except ValueError as ve:
         return {"error": str(ve)}, 400
 
-# GET áreas de impacto por area_id
+# --------------------------------------------------
+# Areas de impacto por área de trabajo
 @api_areas_impacto.route('/areas_impacto/por_area/<area_id>', methods=['GET'])
 @SerializeJson
 def get_areas_impacto_por_area_id_endpoint(area_id):
     try:
-        todas = get_areas_impacto()
-        filtradas = [a.to_dict() for a in todas if a.area_id == area_id]
-        return filtradas, 200
+        print("en route:", area_id)
+        impactos = get_areas_impacto_by_area_trabajo_id(area_id)
+        return [i.to_dict() for i in impactos], 200
+    except ValueError as ve:
+        return {"error": str(ve)}, 400
     except Exception as e:
         return {"error": str(e)}, 500
+

@@ -13,6 +13,7 @@ from ..mongo.mongo_areas import (
 
 api_areas = Blueprint('api_areas', __name__)
 
+# --------------------------------------------------
 # GET todas las áreas
 @api_areas.route('/areas', methods=['GET'])
 @SerializeJson
@@ -24,6 +25,7 @@ def get_areas_endpoint():
     except Exception as e:
         return {"error": str(e)}, 500
 
+# --------------------------------------------------
 # GET área por ID
 @api_areas.route('/areas/<area_id>', methods=['GET'])
 def get_area_endpoint(area_id):
@@ -37,7 +39,8 @@ def get_area_endpoint(area_id):
         return {"error": str(ve)}, 400
     except Exception as e:
         return {"error": str(e)}, 500
-
+    
+# --------------------------------------------------
 # POST crear nueva área
 @api_areas.route('/areas', methods=['POST'])
 def create_area_endpoint():
@@ -50,6 +53,7 @@ def create_area_endpoint():
     except Exception as e:
         return {"error": str(e)}, 400
 
+# --------------------------------------------------
 # PATCH actualizar campos de un área (parcial)
 @api_areas.route('/areas/<area_id>', methods=['PATCH'])
 def patch_area_endpoint(area_id):
@@ -71,6 +75,7 @@ def patch_area_endpoint(area_id):
     except Exception as e:
         return {"error": str(e)}, 500
 
+# --------------------------------------------------
 # DELETE eliminar área
 @api_areas.route('/areas/<area_id>', methods=['DELETE'])
 def delete_area_endpoint(area_id):
@@ -82,6 +87,7 @@ def delete_area_endpoint(area_id):
     except ValueError as ve:
         return {"error": str(ve)}, 400
 
+# --------------------------------------------------
 # PATCH agregar un concepto a un área
 @api_areas.route('/areas/<area_id>/agregar_concepto', methods=['PATCH'])
 def agregar_concepto_endpoint(area_id):
@@ -97,6 +103,7 @@ def agregar_concepto_endpoint(area_id):
     except Exception as e:
         return {"error": str(e)}, 500
 
+# --------------------------------------------------
 # PATCH agregar una fuente a un área
 @api_areas.route('/areas/<area_id>/agregar_fuente', methods=['PATCH'])
 def agregar_fuente_endpoint(area_id):

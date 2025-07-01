@@ -2,6 +2,7 @@ import logging
 from bson import ObjectId
 from .mongo_utils import get_collection
 from ..models.area_impacto import AreaImpacto
+from ..mongo.mongo_areas import get_area_by_id
 
 # --------------------------------------------------
 def get_areas_impacto():
@@ -96,3 +97,28 @@ def update_area_impacto(area: AreaImpacto):
         logging.info("ℹ️ Área de impacto sin cambios.")
     else:
         logging.info(f"✅ Área de impacto actualizada: {area.nombre}")
+
+# --------------------------------------------------
+from app.mongo.mongo_areas import get_area_by_id  # Función que espera un ObjectId
+
+def get_areas_impacto_by_area_trabajo_id(area_trabajo_id: str):
+    # Validar y convertir el ID a ObjectId
+    if not ObjectId.is_valid(area_trabajo_id):
+        raise ValueError("ID de área de trabajo no válido")
+    oid = ObjectId(area_trabajo_id)
+
+    # Validar existencia del área usando la función centralizada
+    if not get_area_by_id(oid):
+        raise ValueError("No existe un área de trabajo con ese ID")
+
+    # Buscar las áreas de impacto relacionadas
+    areas_raw = list(get_collection("areas_impacto").find({"area_id": oid}))
+
+    # Formatear los resultados para que sean serializables
+    for a in areas_raw:
+        a["_id"] = str(a["_id"])
+        if "area_id" in a and isinstance(a["area_id"], ObjectId):
+            a["area_id"] = str(a["area_id"])
+
+    return [AreaImpacto.from_dict(a) for a in areas_raw]
+

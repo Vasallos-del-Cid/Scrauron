@@ -8,4 +8,3 @@ def register_routes(app):
     app.register_blueprint(api_fuentes)
     app.register_blueprint(api_scraping)
     app.register_blueprint(api_keywords)
-    app.register_blueprint(api_areas_impacto)
