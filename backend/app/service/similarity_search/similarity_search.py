@@ -7,6 +7,7 @@ from sentence_transformers import SentenceTransformer
 from app.models.publicacion import Publicacion
 from app.mongo.mongo_conceptos import update_concepto_dict, get_conceptos_dict
 from app.mongo.mongo_keywords import get_keywords 
+from app.service.llm.llm_utils import evaluar_relacion_llm 
 
 # Modelo de embeddings semánticos
 model = SentenceTransformer("intfloat/multilingual-e5-base")
@@ -78,13 +79,22 @@ def buscar_y_enlazar_a_conceptos(publicacion: Publicacion, top_k=30, umbral_simi
         concepto = conceptos[i]
         logging.info(f"🔎 Evaluando '{concepto['nombre']}' (similitud: {similitud:.4f})")
 
-        if similitud >= umbral_similitud:
+        if similitud >= umbral_similitud* 1.02:
             conceptos_enlazados_ids.append(ObjectId(concepto["_id"]))
             logging.info(f" ✅ Relacionada con '{concepto['nombre']}' (similitud: {similitud:.2f})")
+        elif umbral_similitud * 0.98 <= similitud <= umbral_similitud * 1.02:
+            # Umbral dentro del ±2%
+            logging.info(f"🤖 Consultando LLM para decisión con '{concepto['nombre']}' (similitud: {similitud:.2f})...")
+            if evaluar_relacion_llm(publicacion, concepto):
+                conceptos_enlazados_ids.append(ObjectId(concepto["_id"]))
+                logging.info(f" ✅ Relacionada por LLM con '{concepto['nombre']}'")
+            else:
+                logging.info(f"❌ LLM no considera relacionada la publicación con '{concepto['nombre']}'")
         else:
             logging.info(f"📉 Similitud insuficiente con '{concepto['nombre']}': {similitud:.2f}")
 
     return conceptos_enlazados_ids
+
 
 
 def obtener_keywords_relacionadas(publicacion, umbral_keyword=0.83, top_k=10):

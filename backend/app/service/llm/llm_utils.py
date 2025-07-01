@@ -454,3 +454,31 @@ def resumir_parrafos_si_muchos(texto: str, umbral=5) -> str:
     except Exception as e:
         logging.error(f"Error al resumir párrafos para el área: {e}")
         return "\n".join(parrafos[:5])
+    
+
+def evaluar_relacion_llm(publicacion: Publicacion, concepto: dict) -> bool:
+    """
+    Usa un LLM para determinar si una publicación está relacionada con un concepto dado.
+    El concepto debe tener al menos un campo "nombre".
+    """
+    if not concepto or "nombre" not in concepto:
+        raise ValueError("El concepto debe tener un campo 'nombre'")
+
+    prompt = (
+        f"Título: {publicacion.titulo}\n"
+        f"Contenido: {publicacion.contenido[:1000]}...\n\n"
+        f"¿Está esta publicación relacionada con el tema '{concepto['nombre']}'?\n"
+        "Responde únicamente con 'sí' o 'no'. No incluyas explicaciones."
+    )
+
+    messages = [
+        {"role": "system", "content": "Eres un experto en análisis de contenidos y categorización temática."},
+        {"role": "user", "content": prompt}
+    ]
+
+    try:
+        respuesta = get_gpt_response(messages, temperature=0).strip().lower()
+        return respuesta == "sí"
+    except Exception as e:
+        logging.error(f"❌ Error al consultar LLM para relación con concepto '{concepto['nombre']}': {e}")
+        return False
