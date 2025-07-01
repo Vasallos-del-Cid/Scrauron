@@ -12,7 +12,6 @@ import re
 from app.models.publicacion import Publicacion
 from app.models.keyword import Keyword
 from app.mongo.mongo_keywords import create_keyword
-from app.mongo.mongo_area_impacto import get_areas_impacto
 import math
 import json
 from datetime import datetime
@@ -297,7 +296,9 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
     fecha_fin = max(fechas).isoformat() if fechas else None
 
     # Obtener áreas de impacto asociadas
+    from app.mongo.mongo_area_impacto import get_areas_impacto  # importación local
     areas_impacto = [a for a in get_areas_impacto() if str(a.area_id) == str(area_id)]
+
     if not areas_impacto:
         raise ValueError(f"No se encontraron áreas de impacto para el área {area_id}.")
 

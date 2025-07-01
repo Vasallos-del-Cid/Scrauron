@@ -99,7 +99,7 @@ def update_area_impacto(area: AreaImpacto):
         logging.info(f"✅ Área de impacto actualizada: {area.nombre}")
 
 # --------------------------------------------------
-from app.mongo.mongo_areas import get_area_by_id  # Función que espera un ObjectId
+
 
 def get_areas_impacto_by_area_trabajo_id(area_trabajo_id: str):
     # Validar y convertir el ID a ObjectId
