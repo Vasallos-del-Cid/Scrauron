@@ -44,18 +44,10 @@ def get_keyword_endpoint(keyword_id):
 @api_keywords.route('/keywords', methods=['POST'])
 @SerializeJson
 def create_keyword_endpoint():
-    data = request.get_json()
     try:
-        keyword = Keyword.from_dict(data)
-        response, status_code = create_keyword(keyword)
-
-        if status_code == 201:
-            json_data = response.get_json()
-            keyword._id = json_data["_id"]
-            return response
-        else:
-            return response, status_code
-
+        keyword = Keyword.from_dict(request.get_json())
+        body, status = create_keyword(keyword)  
+        return body, status                     
     except Exception as e:
         return {"error": str(e)}, 400
 

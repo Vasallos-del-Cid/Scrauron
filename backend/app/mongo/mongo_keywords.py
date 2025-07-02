@@ -39,20 +39,21 @@ def get_keyword_by_nombre(nombre: str):
 
 # --------------------------------------------------
 # Crea una nueva keyword si no existe una con el mismo nombre
+# mongo_keywords.py
 def create_keyword(keyword):
     data = keyword.to_dict()
-
-    # Verifica si ya existe una keyword con el mismo nombre
     existing = get_collection("keywords").find_one({"nombre": data["nombre"]})
+
     if existing:
         existing["_id"] = str(existing["_id"])
         logging.info(f"Keyword ya existente: {existing['nombre']} — no se crea de nuevo.")
-        return jsonify(existing), 200
+        return existing, 200        # ← Dict + status, SIN jsonify
     else:
-        insert_result = get_collection("keywords").insert_one(data)
+        insert_id = get_collection("keywords").insert_one(data).inserted_id
         logging.info(f"Keyword creada: {data['nombre']}")
-        data["_id"] = str(insert_result.inserted_id)
-        return jsonify(data), 201
+        data["_id"] = str(insert_id)
+        return data, 201            # ← Dict + status
+
 
 
 # --------------------------------------------------
