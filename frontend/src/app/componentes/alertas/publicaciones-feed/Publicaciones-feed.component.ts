@@ -47,7 +47,7 @@ export class PublicacionesFeedComponent implements OnInit {
   public filtroFuenteId: string | null = null;
   public filtroConceptoId: string | null = null;
   public filtroAreaId: string | null = null;
-  public filtroValoracion: number | null = null;
+  public filtroValoracion: string | null = null;
   public fechaDesde?: Date;
   public fechaHasta?: Date;
 
@@ -57,9 +57,13 @@ export class PublicacionesFeedComponent implements OnInit {
   public conceptosOpts: { id: string | null; nombre: string }[] = [];
   public areasTrabajoOpts: { id: string | null; nombre: string }[] = [];
   public valoraciones = [
-    { valor: null, nombre: 'Todos' },
-    ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ valor: n, nombre: n.toString() }))
-  ];
+  { valor: null, nombre: 'Todos' },
+  { valor: 'muy negativo', nombre: 'Muy negativo' },
+  { valor: 'negativo', nombre: 'Negativo' },
+  { valor: 'normal', nombre: 'Normal' },
+  { valor: 'positivo', nombre: 'Positivo' },
+  { valor: 'muy positivo', nombre: 'Muy positivo' }
+];
 
   public loading = false;
   public expandidos = new Set<string>();
@@ -189,6 +193,7 @@ export class PublicacionesFeedComponent implements OnInit {
       busqueda_palabras: this.filtroBusqueda || undefined,
       fuente_id: this.filtroFuenteId || undefined,
       concepto_interes: this.filtroConceptoId || undefined,
+      area_id: this.filtroAreaId || undefined,
       pais: this.filtroPais || undefined,
       page: this.paginaActual,
       pageSize: this.publicacionesPorPagina
@@ -214,6 +219,7 @@ export class PublicacionesFeedComponent implements OnInit {
         if (this.filtroBusqueda) params.busqueda_palabras = this.filtroBusqueda;
         if (this.filtroFuenteId) params.fuente_id = this.filtroFuenteId;
         if (this.filtroConceptoId) params.concepto_interes = this.filtroConceptoId;
+        if (this.filtroAreaId) params.area_id = this.filtroAreaId;
         if (this.filtroPais) params.pais = this.filtroPais;
 
         this.servicio.getPublicacionesPorDia(params).subscribe(d => this.datosPublicacionesDia = d);

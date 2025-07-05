@@ -15,7 +15,7 @@ export class PublicacionesService extends DataService<Publicacion> {
   getFiltradas(filtros: {
     fechaDesde: Date;
     fechaHasta: Date;
-    tono?: number;
+    tono?: string;
     busqueda_palabras?: string;
     fuente_id?: string;
     keywords?: string[];
@@ -31,7 +31,7 @@ export class PublicacionesService extends DataService<Publicacion> {
       .set('fechaInicio', cleanISO(filtros.fechaDesde))
       .set('fechaFin', cleanISO(filtros.fechaHasta));
 
-    if (filtros.tono != null) params = params.set('tono', filtros.tono.toString());
+    if (filtros.tono != null) params = params.set('tono', filtros.tono);
     if (filtros.busqueda_palabras) params = params.set('busqueda_palabras', filtros.busqueda_palabras);
     if (filtros.concepto_interes) params = params.set('concepto_interes', filtros.concepto_interes);
     else if (filtros.area_id) params = params.set('area_id', filtros.area_id);
@@ -49,7 +49,6 @@ export class PublicacionesService extends DataService<Publicacion> {
       `${this.baseUrl}/publicaciones_filtradas`, { params }
     );
   }
-
 
   getConceptosArea(areaId: string): Observable<any[]> {
     const params = new HttpParams().set('area_id', areaId);
@@ -76,10 +75,9 @@ export class PublicacionesService extends DataService<Publicacion> {
   generarInformeImpactoTemporal(filtros: {
     fechaDesde: Date;
     fechaHasta: Date;
-    tono?: number;
+    tono?: string;
     busqueda_palabras?: string;
     fuente_id?: string;
-    keywords?: string[];
     concepto_interes?: string;
     area_id?: string;
     pais?: string;
@@ -90,21 +88,14 @@ export class PublicacionesService extends DataService<Publicacion> {
       .set('fechaInicio', cleanISO(filtros.fechaDesde))
       .set('fechaFin', cleanISO(filtros.fechaHasta));
 
-    if (filtros.tono != null) params = params.set('tono', filtros.tono.toString());
+    if (filtros.tono) params = params.set('tono', filtros.tono);
     if (filtros.busqueda_palabras) params = params.set('busqueda_palabras', filtros.busqueda_palabras);
-    if (filtros.concepto_interes) {
-      params = params.set('concepto_interes', filtros.concepto_interes);
-    } else if (filtros.area_id) {
-      params = params.set('area_id', filtros.area_id);
-    }
-    if (filtros.area_id) params = params.set('area_id', filtros.area_id);
     if (filtros.fuente_id) params = params.set('fuente_id', filtros.fuente_id);
+    if (filtros.concepto_interes) params = params.set('concepto_interes', filtros.concepto_interes);
+    if (filtros.area_id) params = params.set('area_id', filtros.area_id);
     if (filtros.pais) params = params.set('pais', filtros.pais);
-    if (filtros.keywords) {
-      filtros.keywords.forEach(k => params = params.append('keywordsRelacionadas', k));
-    }
 
-    return this.http.get(`${this.baseUrl}/informe_impacto_temporal`, {
+    return this.http.get(`${this.baseUrl}/generar_informe_impacto_temporal`, {
       params,
       responseType: 'blob'
     });

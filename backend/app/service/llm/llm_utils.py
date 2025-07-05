@@ -21,6 +21,7 @@ from io import BytesIO
 from docx import Document
 from app.models.publicacion import Publicacion
 from bson import ObjectId
+from app.mongo.mongo_areas import get_collection as get_areas_coll
 
 from app.mongo.mongo_conceptos import get_collection as get_conceptos_collection
 
@@ -332,6 +333,7 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
     f"{descripciones_impacto}\n\n"
     "Para cada una, resume en 1-2 líneas lo que se puede deducir del conjunto de noticias.\n"
     "Indica evolución, intensidad, y ejemplos concretos si los hay.\n"
+    "En los hechos más relevantes haz mención a las publicaciones y sus fuentes.\n"
     "Evita introducciones, explicaciones o cualquier texto adicional: este análisis será integrado automáticamente a un informe generado por IA.\n"
     "IMPORTANTE: Devuelve exclusivamente un JSON válido con esta estructura exacta:\n"
     '{\n'
@@ -378,7 +380,7 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
             texto_por_area[clave].append(impacto.get(clave, ""))
 
     doc = Document()
-    doc.add_heading('Informe de Impacto Temporal', 0)
+    doc.add_heading('Informe de Impacto', 0)
 
     if filtros:
         fuentes_map = {str(f['_id']): f for f in get_fuentes_dict()}
@@ -390,35 +392,46 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
                 for c in get_conceptos_collection("conceptos_interes").find({"_id": {"$in": [ObjectId(concepto_id)]}})
             }
 
-        doc.add_heading("Filtros aplicados", level=1)
+        doc.add_heading("1. Datos tenidos en cuenta para el informe", level=1)
+     
+
+# Dentro de generar_informe_impacto_temporal, en el bloque de "Filtros aplicados":
+
         etiquetas = {
             "concepto_interes": "Concepto de interés",
             "fuente_id": "Fuente",
+            "area_id": "Área de trabajo",
             "pais": "País",
             "tono": "Tono",
             "busqueda_palabras": "Palabras buscadas",
             "keywordsRelacionadas": "Keywords relacionadas"
         }
 
-        if fecha_inicio and fecha_fin:
-            doc.add_paragraph(f"Período analizado: {fecha_inicio} a {fecha_fin}")
-
         for key, label in etiquetas.items():
             value = filtros.get(key)
-            if value:
-                valor_str = ""
-                if key == "concepto_interes" and value in conceptos_map:
-                    valor_str = conceptos_map[value].get("nombre", str(value))
-                elif key == "fuente_id" and value in fuentes_map:
-                    valor_str = fuentes_map[value].get("nombre", str(value))
-                elif isinstance(value, list):
-                    valor_str = ", ".join(map(str, value))
-                else:
-                    valor_str = str(value)
-                doc.add_paragraph(f"{label}: {valor_str}")
+            if not value:
+                continue
 
+            if key == "concepto_interes":
+                valor_str = conceptos_map.get(value, {}).get("nombre", str(value))
+            elif key == "fuente_id":
+                valor_str = fuentes_map.get(value, {}).get("nombre", str(value))
+            elif key == "area_id":
+                # Consultar MongoDB para obtener el nombre del área
+                area_doc = get_areas_coll("areas_de_trabajo").find_one({"_id": ObjectId(value)})
+                valor_str = area_doc.get("nombre") if area_doc else str(value)
+            elif isinstance(value, list):
+                # Formato de lista (como IDs de conceptos)
+                valor_str = ", ".join(value)
+            else:
+                valor_str = str(value)
+
+            doc.add_paragraph(f"{label}: {valor_str}")
+
+
+    doc.add_heading("2. Impacto por areas", level=1)
     for area in claves_impacto:
-        doc.add_heading(area.capitalize(), level=1)
+        doc.add_heading(area.capitalize(), level=2)
         area_texto = "\n\n".join(texto_por_area[area]).strip()
         area_texto = resumir_parrafos_si_muchos(area_texto)
         doc.add_paragraph(area_texto)

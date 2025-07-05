@@ -177,12 +177,10 @@ def get_publicaciones_con_conceptos():
     return publicaciones_resultado
 
 
-from .mongo_area_impacto import get_areas_impacto
-
 def filtrar_publicaciones(
     fecha_inicio,
     fecha_fin,
-    fuente_id,
+    fuente_id=None,
     concepto_interes=None,
     tono=None,
     keywords_relacionadas=None,
@@ -194,23 +192,22 @@ def filtrar_publicaciones(
         {"fecha": {"$gte": fecha_inicio, "$lte": fecha_fin}}
     ]
 
+
     if tono is not None:
-        condiciones.append({"tono": tono})
+        if isinstance(tono, list):
+            condiciones.append({"tono": {"$in": tono}})
+        else:
+            condiciones.append({"tono": tono})
 
     if fuente_id:
-        condiciones.append({"fuente_id": ObjectId(fuente_id)})
+        condiciones.append({"fuente_id": fuente_id})
 
     if keywords_relacionadas:
         condiciones.append({"keywords_relacionadas_ids": {"$all": keywords_relacionadas}})
 
     if busqueda_palabras:
         regex = re.compile(busqueda_palabras, re.IGNORECASE)
-        condiciones.append({
-            "$or": [
-                {"titulo": {"$regex": regex}},
-                {"contenido": {"$regex": regex}}
-            ]
-        })
+        condiciones.append({"$or": [{"titulo": {"$regex": regex}}, {"contenido": {"$regex": regex}}]})
 
     if pais:
         condiciones.append({"pais": pais})
@@ -218,37 +215,45 @@ def filtrar_publicaciones(
     query = {"$and": condiciones} if len(condiciones) > 1 else condiciones[0]
     publicaciones = list(get_collection("publicaciones").find(query).sort("fecha", DESCENDING))
 
+    # Cruce adicional con publicaciones relacionadas por área o concepto
     publicaciones_rel_ids = set()
 
-    # Filtrado por concepto_interes
     if concepto_interes:
         concepto = get_collection("conceptos_interes").find_one({"_id": ObjectId(concepto_interes)})
         if concepto:
-            publicaciones_rel_ids.update(str(pid) for pid in concepto.get("publicaciones_relacionadas_ids", []))
-        else:
-            logging.warning(f"⚠️ No se encontró el concepto con ID: {concepto_interes}")
+            publicaciones_rel_ids.update(
+                str(pid) for pid in concepto.get("publicaciones_relacionadas_ids", [])
+            )
 
-    # Filtrado por area_id a través de areas_impacto
     if area_id:
-        if isinstance(area_id, str) and ObjectId.is_valid(area_id):
-            area_id = ObjectId(area_id)
-        areas_impacto = [a for a in get_areas_impacto() if a.area_id == area_id]
-        for ai in areas_impacto:
-            publicaciones_ids = getattr(ai, "publicaciones_relacionadas_ids", [])
-            publicaciones_rel_ids.update(str(pid) for pid in publicaciones_ids)
+        try:
+            area_doc = get_collection("areas_de_trabajo").find_one({"_id": area_id})
+            if not area_doc:
+                logging.warning(f"⚠️ No se encontró el área de trabajo con ID: {area_id}")
+            else:
+                conceptos_ids = set(area_doc.get("conceptos_interes_ids", [])) 
+                publicaciones = [
+                    pub for pub in publicaciones
+                    if any(cid in conceptos_ids for cid in pub.get("conceptos_relacionados_ids", []))
+                ]
+        except Exception as e:
+            logging.warning(f"⚠️ Error al procesar area_id '{area_id}': {e}")
 
 
-    # Si se aplicó algún filtro de publicaciones relacionadas, crúzalo
+    # Si hay filtros por IDs relacionadas, aplicarlos
     if publicaciones_rel_ids:
         publicaciones = [pub for pub in publicaciones if str(pub["_id"]) in publicaciones_rel_ids]
 
-    # Formatear campos
+    # Convertir ObjectIds a strings
     for pub in publicaciones:
         pub["_id"] = str(pub["_id"])
         pub["fuente_id"] = str(pub["fuente_id"])
-        pub["keywords_relacionadas_ids"] = [str(kid) for kid in pub.get("keywords_relacionadas_ids", [])]
+        pub["keywords_relacionadas_ids"] = [
+            str(kid) for kid in pub.get("keywords_relacionadas_ids", [])
+        ]
 
     return publicaciones
+
 
 
 

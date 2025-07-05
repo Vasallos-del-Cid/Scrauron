@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, send_file
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson import ObjectId
 import logging
 from collections import defaultdict
@@ -18,9 +18,20 @@ from ..mongo.mongo_publicaciones import (
 )
 from ..mongo.mongo_fuentes import  get_fuentes_dict
 from ..mongo.mongo_conceptos import get_collection as get_conceptos_collection
+from ..mongo.mongo_areas import get_collection as get_areas_coll
 from ..service.llm.llm_utils import generar_informe_impacto_temporal
 
+
 api_publicaciones = Blueprint('api_publicaciones', __name__)
+
+TONO_MAP = {
+    "muy negativo": [1, 2],
+    "negativo": [3, 4],
+    "normal": [5],
+    "positivo": [6, 7],
+    "muy positivo": [8, 9]
+}
+
 
 # GET todas las publicaciones
 @api_publicaciones.route('/publicaciones', methods=['GET'])
@@ -118,20 +129,20 @@ def publicaciones_con_conceptos():
     except Exception as e:
         return {"error": f"Error al obtener publicaciones: {str(e)}"}, 500
 
+
 @api_publicaciones.route('/publicaciones_filtradas', methods=['GET'])
 @SerializeJson
 def publicaciones_filtradas_endpoint():
     try:
-        # Parámetros
         fi = request.args.get("fechaInicio")
         ff = request.args.get("fechaFin")
         ci = request.args.get("concepto_interes")
         ai = request.args.get("area_id")
         fiu = request.args.get("fuente_id")
-        tone = request.args.get("tono")
+        tone_str = request.args.get("tono")
         kws = request.args.getlist("keywordsRelacionadas")
         busq = request.args.get("busqueda_palabras")
-        pais = request.args.get("pais")  
+        pais = request.args.get("pais")
         page = int(request.args.get("page", 1))
         page_size = int(request.args.get("pageSize", 25))
 
@@ -144,32 +155,42 @@ def publicaciones_filtradas_endpoint():
         concepto_oid = ObjectId(ci) if ci else None
         area_id = ObjectId(ai) if ai else None
         fuente_id = ObjectId(fiu) if fiu else None
-        tono = int(tone) if tone else None
+        tonos = TONO_MAP.get(tone_str.lower()) if tone_str else None
         keywords = [ObjectId(k) for k in kws] if kws else None
 
         publicaciones = filtrar_publicaciones(
             fecha_inicio=fecha_inicio,
             fecha_fin=fecha_fin,
-            tono=tono,
+            tono=tonos,
             keywords_relacionadas=keywords,
             busqueda_palabras=busq,
-            area_id=area_id,
             fuente_id=fuente_id,
-            pais=pais  
+            area_id=area_id,
+            pais=pais
         )
 
+        # Si hay concepto_id, filtrar solo por ese
         if concepto_oid:
             publicaciones = [
                 pub for pub in publicaciones
                 if concepto_oid in pub.get("conceptos_relacionados_ids", [])
             ]
+        # Si no hay concepto_id pero sí área_id, obtener conceptos de esa área y filtrar por ellos
+        elif area_id:
+            area_doc = get_areas_coll("areas_trabajo").find_one({"_id": area_id})
+            if area_doc:
+                conceptos_ids = area_doc.get("conceptos_interes_ids", [])
+                publicaciones = [
+                    pub for pub in publicaciones
+                    if any(cid in conceptos_ids for cid in pub.get("conceptos_relacionados_ids", []))
+                ]
 
         total = len(publicaciones)
         inicio = (page - 1) * page_size
         fin = inicio + page_size
         publicaciones = publicaciones[inicio:fin]
 
-        # --- Obtener fuentes y conceptos completos
+        # Obtener fuentes y conceptos completos
         fuentes_map = {str(f["_id"]): f for f in get_fuentes_dict()}
         all_concepts = set()
         for pub in publicaciones:
@@ -181,11 +202,10 @@ def publicaciones_filtradas_endpoint():
             )
         }
 
-        # Enriquecer publicaciones con objetos fuente y conceptos
+        # Enriquecer publicaciones
         for pub in publicaciones:
             f_id = str(pub.get("fuente_id"))
             pub["fuente"] = fuentes_map.get(f_id)
-
             cr_ids = [str(cid) for cid in pub.get("conceptos_relacionados_ids", [])]
             pub["conceptos_relacionados"] = [conceptos_map[cid] for cid in cr_ids if cid in conceptos_map]
             pub.pop("conceptos_relacionados_ids", None)
@@ -196,7 +216,6 @@ def publicaciones_filtradas_endpoint():
         return {"error": f"Parámetro inválido: {ve}"}, 400
     except Exception as e:
         return {"error": f"Error inesperado: {e}"}, 500
-
 
 
 @api_publicaciones.route('/publicaciones/<pub_id>/conceptos/<concepto_id>', methods=['DELETE'])
@@ -213,7 +232,7 @@ def eliminar_concepto_relacionado_endpoint(pub_id, concepto_id):
         return {"error": f"Error al eliminar el concepto: {str(e)}"}, 500
 
 
-@api_publicaciones.route('/informe_impacto_temporal', methods=['GET'])
+@api_publicaciones.route('/generar_informe_impacto_temporal', methods=['GET'])
 def informe_impacto_temporal_endpoint():
     try:
         fi = request.args.get("fechaInicio")
@@ -235,7 +254,7 @@ def informe_impacto_temporal_endpoint():
         concepto_oid = ObjectId(ci) if ci else None
         area_oid = ObjectId(ai) if ai else None
         fuente_oid = ObjectId(fiu) if fiu else None
-        tono = int(tone) if tone else None
+        tono = TONO_MAP.get(tone.lower()) if tone else None
         keywords = [ObjectId(k) for k in kws] if kws else None
 
         publicaciones_dicts = filtrar_publicaciones(
@@ -277,8 +296,6 @@ def informe_impacto_temporal_endpoint():
 
 
 
-
-
 @api_publicaciones.route('/publicaciones_dia', methods=['GET'])
 @SerializeJson
 def publicaciones_por_dia_endpoint():
@@ -302,7 +319,7 @@ def publicaciones_por_dia_endpoint():
         concepto_oid = ObjectId(ci) if ci else None
         area_id = ObjectId(ai) if ai else None
         fuente_id = ObjectId(fiu) if fiu else None
-        tono = int(tone) if tone else None
+        tono = TONO_MAP.get(tone.lower()) if tone else None
         keywords = [ObjectId(k) for k in kws] if kws else None
 
         publicaciones = filtrar_publicaciones(
@@ -329,7 +346,19 @@ def publicaciones_por_dia_endpoint():
                 fecha_str = fecha_pub.date().isoformat()
                 conteo_por_dia[fecha_str] += 1
 
-        datos_publicaciones_dia = [{"datoX": fecha, "datoY": count} for fecha, count in sorted(conteo_por_dia.items())]
+
+        # Crear el rango completo de fechas
+        rango_fechas = [
+            (fecha_inicio + timedelta(days=i)).date().isoformat()
+            for i in range((fecha_fin - fecha_inicio).days + 1)
+        ]
+
+        # Construir la lista con conteos, asegurando días sin publicaciones
+        datos_publicaciones_dia = [
+            {"datoX": fecha, "datoY": conteo_por_dia.get(fecha, 0)}
+            for fecha in rango_fechas
+]
+
 
         return datos_publicaciones_dia, 200
 
@@ -337,6 +366,7 @@ def publicaciones_por_dia_endpoint():
         return {"error": f"Parámetro inválido: {ve}"}, 400
     except Exception as e:
         return {"error": f"Error inesperado: {e}"}, 500
+
 
 
 @api_publicaciones.route('/publicaciones_pais', methods=['GET'])
@@ -362,7 +392,7 @@ def publicaciones_por_pais_endpoint():
         concepto_oid = ObjectId(ci) if ci else None
         area_id = ObjectId(ai) if ai else None
         fuente_id = ObjectId(fiu) if fiu else None
-        tono = int(tone) if tone else None
+        tono = TONO_MAP.get(tone.lower()) if tone else None
         keywords = [ObjectId(k) for k in kws] if kws else None
 
         publicaciones = filtrar_publicaciones(
@@ -395,11 +425,11 @@ def publicaciones_por_pais_endpoint():
 
         return datos_publicaciones_pais, 200
 
-
     except ValueError as ve:
         return {"error": f"Parámetro inválido: {ve}"}, 400
     except Exception as e:
         return {"error": f"Error inesperado: {e}"}, 500
+
 
 
 @api_publicaciones.route('/tono_medio_dia', methods=['GET'])
@@ -425,13 +455,13 @@ def tono_medio_por_dia_endpoint():
         concepto_oid = ObjectId(ci) if ci else None
         area_id = ObjectId(ai) if ai else None
         fuente_id = ObjectId(fiu) if fiu else None
-        tono_filtro = int(tone) if tone else None
+        tono = TONO_MAP.get(tone.lower()) if tone else None
         keywords = [ObjectId(k) for k in kws] if kws else None
 
         publicaciones = filtrar_publicaciones(
             fecha_inicio=fecha_inicio,
             fecha_fin=fecha_fin,
-            tono=tono_filtro,
+            tono=tono,
             keywords_relacionadas=keywords,
             busqueda_palabras=busq,
             area_id=area_id,
@@ -448,15 +478,25 @@ def tono_medio_por_dia_endpoint():
         tonos_por_dia = defaultdict(list)
         for pub in publicaciones:
             fecha_pub = pub.get("fecha")
-            tono = pub.get("tono")
-            if fecha_pub is not None and isinstance(tono, int):
+            tono_val = pub.get("tono")
+            if fecha_pub is not None and isinstance(tono_val, int):
                 fecha_str = fecha_pub.date().isoformat()
-                tonos_por_dia[fecha_str].append(tono)
+                tonos_por_dia[fecha_str].append(tono_val)
 
-        datos_tono_medio_dia = [
-            {"datoX": fecha, "datoY": sum(tonos) / len(tonos)}
-            for fecha, tonos in sorted(tonos_por_dia.items())
+        rango_fechas = [
+            (fecha_inicio + timedelta(days=i)).date().isoformat()
+            for i in range((fecha_fin - fecha_inicio).days + 1)
         ]
+
+        # Asegurar que todos los días estén representados, con promedio o 0
+        datos_tono_medio_dia = [
+            {
+                "datoX": fecha,
+                "datoY": round(sum(tonos_por_dia[fecha]) / len(tonos_por_dia[fecha]), 2)
+                if fecha in tonos_por_dia else 0
+            }
+            for fecha in rango_fechas
+]
 
         return datos_tono_medio_dia, 200
 
@@ -464,6 +504,7 @@ def tono_medio_por_dia_endpoint():
         return {"error": f"Parámetro inválido: {ve}"}, 400
     except Exception as e:
         return {"error": f"Error inesperado: {e}"}, 500
+
 
 
 
@@ -490,13 +531,13 @@ def tono_medio_por_pais_endpoint():
         concepto_oid = ObjectId(ci) if ci else None
         area_id = ObjectId(ai) if ai else None
         fuente_id = ObjectId(fiu) if fiu else None
-        tono_filtro = int(tone) if tone else None
+        tono = TONO_MAP.get(tone.lower()) if tone else None
         keywords = [ObjectId(k) for k in kws] if kws else None
 
         publicaciones = filtrar_publicaciones(
             fecha_inicio=fecha_inicio,
             fecha_fin=fecha_fin,
-            tono=tono_filtro,
+            tono=tono,
             keywords_relacionadas=keywords,
             busqueda_palabras=busq,
             area_id=area_id,
@@ -513,9 +554,9 @@ def tono_medio_por_pais_endpoint():
         tonos_por_pais = defaultdict(list)
         for pub in publicaciones:
             pais_pub = pub.get("pais", "Desconocido")
-            tono = pub.get("tono")
-            if isinstance(tono, int):
-                tonos_por_pais[pais_pub].append(tono)
+            tono_val = pub.get("tono")
+            if isinstance(tono_val, int):
+                tonos_por_pais[pais_pub].append(tono_val)
 
         datos_tono_medio_pais = [
             {"datoX": pais, "datoY": sum(tonos) / len(tonos)}
