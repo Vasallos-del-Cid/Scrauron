@@ -22,8 +22,9 @@ from docx import Document
 from app.models.publicacion import Publicacion
 from bson import ObjectId
 from app.mongo.mongo_areas import get_collection as get_areas_coll
-
 from app.mongo.mongo_conceptos import get_collection as get_conceptos_collection
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
 
 def get_openai_client():
@@ -284,6 +285,8 @@ TOKENS_POR_PUB = 500
 
 #--------------------------------------------------------------
 
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
 def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, filtros: dict = None) -> BytesIO:
     if not publicaciones:
@@ -307,6 +310,8 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
     ])
     claves_impacto = [a.nombre.lower().strip() for a in areas_impacto]
 
+    fuentes_map = {str(f['_id']): f for f in get_fuentes_dict()}
+
     lote_size = MAX_TOKENS_TOTAL // TOKENS_POR_PUB
     total_lotes = math.ceil(len(publicaciones) / lote_size)
     logging.info(f"📚 Dividiendo {len(publicaciones)} publicaciones en {total_lotes} lotes para análisis temporal.")
@@ -324,7 +329,12 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
             pais = pub.get("pais", "??")
             titulo = pub.get("titulo", "").strip()
             contenido = pub.get("contenido", "").strip()
-            entradas.append(f"- ({tono}/10) [{pais}] {titulo}\n{contenido}")
+            fecha = pub.get("fecha")
+            fecha_str = fecha.strftime("%d/%m/%Y") if fecha else "??/??/????"
+            fuente_id = str(pub.get("fuente_id", ""))
+            fuente_nombre = fuentes_map.get(fuente_id, {}).get("nombre", "Fuente desconocida")
+
+            entradas.append(f"- ({tono}/10) [{pais}] {titulo} (publicado el {fecha_str} por {fuente_nombre})\n{contenido}")
 
         prompt = (
             "A partir de los siguientes titulares y contenidos de noticias ordenadas en el tiempo, redacta un análisis de cómo evoluciona la situación y su impacto.\n"
@@ -332,7 +342,7 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
             f"{descripciones_impacto}\n\n"
             "Para cada una, resume en 1-2 líneas lo que se puede deducir del conjunto de noticias.\n"
             "Indica evolución, intensidad, y ejemplos concretos si los hay.\n"
-            "En los hechos más relevantes haz mención a las publicaciones y sus fuentes.\n"
+            "Haz mención a las publicaciones más relevantes indicando fecha_str (DD/MM/YYYY) y fuente_nombre. Ejemplo, (06/07/2025, ElPais)\n"
             "Evita introducciones, explicaciones o cualquier texto adicional: este análisis será integrado automáticamente a un informe generado por IA.\n"
             "IMPORTANTE: Devuelve exclusivamente un JSON válido con esta estructura exacta:\n"
             '{\n'
@@ -382,7 +392,6 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
     doc.add_heading('Informe de Impacto', 0)
 
     if filtros:
-        fuentes_map = {str(f['_id']): f for f in get_fuentes_dict()}
         concepto_id = filtros.get("concepto_interes")
         conceptos_map = {}
         if concepto_id:
@@ -428,7 +437,39 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
         area_texto = resumir_parrafos_si_muchos(area_texto)
         doc.add_paragraph(area_texto)
 
-    # 🧠 Generar predicción con el modelo
+    # Referencias destacadas
+    doc.add_heading("Referencias destacadas", level=2)
+    for pub in publicaciones[:10]:
+        titulo = pub.get("titulo", "Sin título")
+        url = pub.get("url", "")
+        fecha = pub.get("fecha")
+        fecha_str = fecha.strftime("%d/%m/%Y") if fecha else "??/??/????"
+        fuente_id = str(pub.get("fuente_id", ""))
+        fuente_nombre = fuentes_map.get(fuente_id, {}).get("nombre", "Fuente desconocida")
+
+        p = doc.add_paragraph(style='List Bullet')
+        run_prefix = p.add_run(f"{fecha_str}, {fuente_nombre}: ")
+
+        if url:
+            hyperlink = OxmlElement('w:hyperlink')
+            r_id = doc.part.relate_to(url, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink", is_external=True)
+            hyperlink.set(qn('r:id'), r_id)
+
+            new_run = OxmlElement('w:r')
+            rPr = OxmlElement('w:rPr')
+            rStyle = OxmlElement('w:rStyle')
+            rStyle.set(qn('w:val'), 'Hyperlink')
+            rPr.append(rStyle)
+            new_run.append(rPr)
+
+            t = OxmlElement('w:t')
+            t.text = titulo
+            new_run.append(t)
+            hyperlink.append(new_run)
+            p._p.append(hyperlink)
+        else:
+            p.add_run(titulo)
+
     resumen_titulares = "\n".join([
         f"- [{pub.get('pais', '??')}] {pub.get('titulo', '')}"
         for pub in publicaciones[:50]
@@ -458,7 +499,6 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
     doc.save(buffer)
     buffer.seek(0)
     return buffer
-
 
 
 
