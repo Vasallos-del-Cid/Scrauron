@@ -287,6 +287,7 @@ TOKENS_POR_PUB = 500
 
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 
 def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, filtros: dict = None) -> BytesIO:
     if not publicaciones:
@@ -410,6 +411,9 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
             "busqueda_palabras": "Palabras buscadas",
             "keywordsRelacionadas": "Keywords relacionadas"
         }
+        if fecha_inicio and fecha_fin:
+            doc.add_paragraph(f"Fecha de inicio: {datetime.fromisoformat(fecha_inicio).strftime('%d/%m/%Y')}")
+            doc.add_paragraph(f"Fecha de fin: {datetime.fromisoformat(fecha_fin).strftime('%d/%m/%Y')}")
 
         for key, label in etiquetas.items():
             value = filtros.get(key)
@@ -451,8 +455,8 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
         run_prefix = p.add_run(f"{fecha_str}, {fuente_nombre}: ")
 
         if url:
+            r_id = doc.part.relate_to(url, RT.HYPERLINK, is_external=True)
             hyperlink = OxmlElement('w:hyperlink')
-            r_id = doc.part.relate_to(url, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink", is_external=True)
             hyperlink.set(qn('r:id'), r_id)
 
             new_run = OxmlElement('w:r')
