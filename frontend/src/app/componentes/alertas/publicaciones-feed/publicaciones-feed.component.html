@@ -86,7 +86,7 @@
       <div class="fila-datos-publicacion">
         <div class="fecha">
           <span *ngIf="alerta.pais">País: {{ nombrePais(alerta) }}</span> •
-          <span>Fecha/hora: {{ alerta.fecha | date: "short" }}</span>
+          <span>Fecha/hora: {{ alerta.fecha | date: 'dd/MM/yyyy HH:mm' }}</span>
         </div>
       </div>
 

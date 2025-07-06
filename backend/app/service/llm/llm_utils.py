@@ -296,8 +296,7 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
     fecha_inicio = min(fechas).isoformat() if fechas else None
     fecha_fin = max(fechas).isoformat() if fechas else None
 
-    # Obtener áreas de impacto asociadas
-    from app.mongo.mongo_area_impacto import get_areas_impacto  # importación local
+    from app.mongo.mongo_area_impacto import get_areas_impacto
     areas_impacto = [a for a in get_areas_impacto() if str(a.area_id) == str(area_id)]
 
     if not areas_impacto:
@@ -328,24 +327,23 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
             entradas.append(f"- ({tono}/10) [{pais}] {titulo}\n{contenido}")
 
         prompt = (
-    "A partir de los siguientes titulares y contenidos de noticias ordenadas en el tiempo, redacta un análisis de cómo evoluciona la situación y su impacto.\n"
-    "Analiza el impacto en base a estas dimensiones definidas por el usuario:\n"
-    f"{descripciones_impacto}\n\n"
-    "Para cada una, resume en 1-2 líneas lo que se puede deducir del conjunto de noticias.\n"
-    "Indica evolución, intensidad, y ejemplos concretos si los hay.\n"
-    "En los hechos más relevantes haz mención a las publicaciones y sus fuentes.\n"
-    "Evita introducciones, explicaciones o cualquier texto adicional: este análisis será integrado automáticamente a un informe generado por IA.\n"
-    "IMPORTANTE: Devuelve exclusivamente un JSON válido con esta estructura exacta:\n"
-    '{\n'
-    '  "impactos": {\n' +
-    "".join([f'    "{clave}": "...",\n' for clave in claves_impacto]).rstrip(',\n') + '\n'
-    '  }\n'
-    '}\n'
-    "No incluyas ningún comentario, encabezado, ni código markdown como ```json.\n"
-    "Solo responde con el JSON limpio.\n"
-    "Noticias:\n" + "\n\n".join(entradas[:150])
-)
-
+            "A partir de los siguientes titulares y contenidos de noticias ordenadas en el tiempo, redacta un análisis de cómo evoluciona la situación y su impacto.\n"
+            "Analiza el impacto en base a estas dimensiones definidas por el usuario:\n"
+            f"{descripciones_impacto}\n\n"
+            "Para cada una, resume en 1-2 líneas lo que se puede deducir del conjunto de noticias.\n"
+            "Indica evolución, intensidad, y ejemplos concretos si los hay.\n"
+            "En los hechos más relevantes haz mención a las publicaciones y sus fuentes.\n"
+            "Evita introducciones, explicaciones o cualquier texto adicional: este análisis será integrado automáticamente a un informe generado por IA.\n"
+            "IMPORTANTE: Devuelve exclusivamente un JSON válido con esta estructura exacta:\n"
+            '{\n'
+            '  "impactos": {\n' +
+            "".join([f'    "{clave}": "...",\n' for clave in claves_impacto]).rstrip(',\n') + '\n'
+            '  }\n'
+            '}\n'
+            "No incluyas ningún comentario, encabezado, ni código markdown como ```json.\n"
+            "Solo responde con el JSON limpio.\n"
+            "Noticias:\n" + "\n\n".join(entradas[:150])
+        )
 
         messages = [
             {"role": "system", "content": "Eres un experto en análisis de impacto con base en noticias."},
@@ -367,7 +365,8 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
                     logging.warning(f"🚧 Respuesta vacía en intento {attempt+1}")
 
             if not data:
-                raise ValueError("No se obtuvo JSON válido del modelo")
+                logging.error(f"❌ No se obtuvo JSON válido del modelo para el lote {i+1}")
+                continue
 
             impactos_lotes.append(data["impactos"])
             logging.info(f"✅ Lote {i+1}/{total_lotes} procesado correctamente.")
@@ -393,10 +392,6 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
             }
 
         doc.add_heading("1. Datos tenidos en cuenta para el informe", level=1)
-     
-
-# Dentro de generar_informe_impacto_temporal, en el bloque de "Filtros aplicados":
-
         etiquetas = {
             "concepto_interes": "Concepto de interés",
             "fuente_id": "Fuente",
@@ -417,29 +412,54 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
             elif key == "fuente_id":
                 valor_str = fuentes_map.get(value, {}).get("nombre", str(value))
             elif key == "area_id":
-                # Consultar MongoDB para obtener el nombre del área
                 area_doc = get_areas_coll("areas_de_trabajo").find_one({"_id": ObjectId(value)})
                 valor_str = area_doc.get("nombre") if area_doc else str(value)
             elif isinstance(value, list):
-                # Formato de lista (como IDs de conceptos)
                 valor_str = ", ".join(value)
             else:
                 valor_str = str(value)
 
             doc.add_paragraph(f"{label}: {valor_str}")
 
-
-    doc.add_heading("2. Impacto por areas", level=1)
+    doc.add_heading("2. Impacto por áreas", level=1)
     for area in claves_impacto:
         doc.add_heading(area.capitalize(), level=2)
         area_texto = "\n\n".join(texto_por_area[area]).strip()
         area_texto = resumir_parrafos_si_muchos(area_texto)
         doc.add_paragraph(area_texto)
 
+    # 🧠 Generar predicción con el modelo
+    resumen_titulares = "\n".join([
+        f"- [{pub.get('pais', '??')}] {pub.get('titulo', '')}"
+        for pub in publicaciones[:50]
+    ])
+    prompt_pred = (
+        "Dado este conjunto de titulares y publicaciones recientes:\n"
+        f"{resumen_titulares}\n\n"
+        "Redacta dos párrafos predictivos.\n"
+        "1. ¿Qué podría suceder a corto plazo en base a esta situación?\n"
+        "2. ¿Qué consecuencias o escenarios podrían desarrollarse a medio o largo plazo?\n"
+        "Evita cualquier introducción o explicación, simplemente escribe los dos párrafos seguidos."
+    )
+    messages_pred = [
+        {"role": "system", "content": "Eres un analista experto en inteligencia y predicciones políticas, económicas y sociales."},
+        {"role": "user", "content": prompt_pred}
+    ]
+    try:
+        prediccion_texto = get_gpt_response(messages_pred, temperature=0.7).strip()
+    except Exception as e:
+        logging.error(f"❌ Error generando predicción: {e}")
+        prediccion_texto = "No se pudo generar predicción."
+
+    doc.add_heading("3. Predicción", level=1)
+    doc.add_paragraph(prediccion_texto)
+
     buffer = BytesIO()
     doc.save(buffer)
     buffer.seek(0)
     return buffer
+
+
 
 
 #-------------------------------------------
