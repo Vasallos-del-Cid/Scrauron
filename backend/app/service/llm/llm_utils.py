@@ -288,6 +288,7 @@ TOKENS_POR_PUB = 500
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.opc.constants import RELATIONSHIP_TYPE as RT
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, filtros: dict = None) -> BytesIO:
     if not publicaciones:
@@ -374,7 +375,6 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
                         logging.warning(f"🚧 JSON inválido en intento {attempt+1}")
                 else:
                     logging.warning(f"🚧 Respuesta vacía en intento {attempt+1}")
-
             if not data:
                 logging.error(f"❌ No se obtuvo JSON válido del modelo para el lote {i+1}")
                 continue
@@ -435,37 +435,37 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
             doc.add_paragraph(f"{label}: {valor_str}")
 
     doc.add_heading("2. Impacto por áreas", level=1)
+    referencias_usadas = set()
     for area in claves_impacto:
         doc.add_heading(area.capitalize(), level=2)
         area_texto = "\n\n".join(texto_por_area[area]).strip()
         area_texto = resumir_parrafos_si_muchos(area_texto)
-        doc.add_paragraph(area_texto)
+        p = doc.add_paragraph(area_texto)
+        p.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
-    # Referencias destacadas
+        for pub in publicaciones:
+            fecha = pub.get("fecha")
+            fecha_str = fecha.strftime("%d/%m/%Y") if fecha else None
+            fuente_id = str(pub.get("fuente_id", ""))
+            fuente_nombre = fuentes_map.get(fuente_id, {}).get("nombre", "").lower()
+            if fecha_str and fuente_nombre:
+                if f"({fecha_str}, {fuente_nombre}" in area_texto.lower():
+                    referencias_usadas.add((pub.get("url", ""), pub.get("titulo", "Sin título"), fecha_str, fuente_nombre.capitalize()))
+
     doc.add_heading("Referencias destacadas", level=2)
-    for pub in publicaciones[:10]:
-        titulo = pub.get("titulo", "Sin título")
-        url = pub.get("url", "")
-        fecha = pub.get("fecha")
-        fecha_str = fecha.strftime("%d/%m/%Y") if fecha else "??/??/????"
-        fuente_id = str(pub.get("fuente_id", ""))
-        fuente_nombre = fuentes_map.get(fuente_id, {}).get("nombre", "Fuente desconocida")
-
+    for url, titulo, fecha_str, fuente in referencias_usadas:
         p = doc.add_paragraph(style='List Bullet')
-        run_prefix = p.add_run(f"{fecha_str}, {fuente_nombre}: ")
-
+        run_prefix = p.add_run(f"{fecha_str}, {fuente}: ")
         if url:
             r_id = doc.part.relate_to(url, RT.HYPERLINK, is_external=True)
             hyperlink = OxmlElement('w:hyperlink')
             hyperlink.set(qn('r:id'), r_id)
-
             new_run = OxmlElement('w:r')
             rPr = OxmlElement('w:rPr')
             rStyle = OxmlElement('w:rStyle')
             rStyle.set(qn('w:val'), 'Hyperlink')
             rPr.append(rStyle)
             new_run.append(rPr)
-
             t = OxmlElement('w:t')
             t.text = titulo
             new_run.append(t)
@@ -475,8 +475,7 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
             p.add_run(titulo)
 
     resumen_titulares = "\n".join([
-        f"- [{pub.get('pais', '??')}] {pub.get('titulo', '')}"
-        for pub in publicaciones[:50]
+        f"- [{pub.get('pais', '??')}] {pub.get('titulo', '')}" for pub in publicaciones[:50]
     ])
     prompt_pred = (
         "Dado este conjunto de titulares y publicaciones recientes:\n"
@@ -497,12 +496,14 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
         prediccion_texto = "No se pudo generar predicción."
 
     doc.add_heading("3. Predicción", level=1)
-    doc.add_paragraph(prediccion_texto)
+    p_pred = doc.add_paragraph(prediccion_texto)
+    p_pred.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
     buffer = BytesIO()
     doc.save(buffer)
     buffer.seek(0)
     return buffer
+
 
 
 
