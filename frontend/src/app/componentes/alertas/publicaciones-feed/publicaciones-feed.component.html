@@ -77,10 +77,11 @@
       </div>
     </div>
     <div class="card-texto">
-      <div class="fila-header">
-        <div class="titulo">{{ alerta.titulo }}</div>
-      </div>
-
+      <a [href]="alerta.url" target="_blank" style="text-decoration: none;">
+        <div class="fila-header">
+          <div class="titulo">{{ alerta.titulo }}</div>
+        </div>
+      </a>
       <br>
 
       <div class="fila-datos-publicacion">
@@ -91,9 +92,9 @@
       </div>
 
       <br>
-
-      <div class="resumen contenido">{{ alerta.contenido }}</div>
-
+      <a [href]="alerta.url" target="_blank" style="text-decoration: none;">
+        <div class="resumen contenido">{{ alerta.contenido }}</div>
+      </a>
       <div class="fila-footer">
         <div class="tono">Tono: {{ alerta.tono || "Sin calificar" }}</div>
         <div class="tags">
