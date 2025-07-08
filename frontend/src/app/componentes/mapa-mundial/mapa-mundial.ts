@@ -57,68 +57,82 @@ export class MapaMundialComponent implements OnInit, OnChanges {
     }
 
     public dibujarMapa(): void {
-        const tooltip = d3.select("#mapa-d3")
-            .append("div")
-            .style("position", "absolute")
-            .style("background", "#fff")
-            .style("padding", "2px 10px")
-            .style("border", "1px solid #ccc")
-            .style("border-radius", "5px")
-            .style("pointer-events", "none")
-            .style("display", "none")
-            .style("font-size", "14px")
-            .style("z-index", "10");
+    const tooltip = d3.select("#mapa-d3")
+        .append("div")
+        .style("position", "absolute")
+        .style("background", "#fff")
+        .style("padding", "2px 10px")
+        .style("border", "1px solid #ccc")
+        .style("border-radius", "5px")
+        .style("pointer-events", "none")
+        .style("display", "none")
+        .style("font-size", "14px")
+        .style("z-index", "10");
 
-        d3.select("#mapa-d3 svg").remove();
+    d3.select("#mapa-d3 svg").remove();
 
-        const svg = d3.select("#mapa-d3").append("svg")
-            .attr("viewBox", "0 0 960 500")
-            .attr("preserveAspectRatio", "xMidYMid meet")
-            .style("width", "100%")
-            .style("height", "100%")
-            .style("margin-top", "12%");
+    const svg = d3.select("#mapa-d3").append("svg")
+        .attr("viewBox", "0 0 960 500")
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .style("width", "100%")
+        .style("height", "100%")
+        .style("margin-top", "12%");
 
-        const projection = d3.geoNaturalEarth1()
-            .scale(210)
-            .translate([460, 260]);
+    // Grupo donde aplicamos el zoom
+    const g = svg.append("g");
 
-        const path = d3.geoPath(projection);
+    const projection = d3.geoNaturalEarth1()
+        .scale(210)
+        .translate([460, 260]);
 
-        const maxValor = Math.max(...Object.values(this.dataPorPais), 1);
-        const color = d3.scaleLinear<string>()
-            .domain([1, maxValor])
-            .range(["#cce5ff", "#003366"]);
+    const path = d3.geoPath(projection);
 
-        d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then((worldData) => {
-            const world = worldData as Topology;
-            const featureCollection = topojson.feature(
-                world,
-                world.objects['countries']
-            ) as unknown as FeatureCollection<Geometry, GeoJsonProperties>;
-            svg.selectAll("path")
-                .data(featureCollection.features)
-                .join("path")
-                .attr("d", path)
-                .attr("fill", (d: any) => {
-                    const nombre = d.properties.name;
-                    const iso3 = this.nombreInglesAIso3[nombre];
-                    const val = iso3 ? this.dataPorPais[iso3] : undefined;
-                    return val != null ? color(val) : "#ccc";
-                })
-                .on("mouseover", (event, d: any) => {
-                    const nombre = d.properties.name;
-                    const iso3 = this.nombreInglesAIso3[nombre];
-                    const nombreMostrado = iso3 ? this.iso3ANombre[iso3] : 'Desconocido';
-                    const valor = iso3 ? this.dataPorPais[iso3] ?? "Sin datos" : "Sin datos";
-                    tooltip.style("display", "block").html(`${nombreMostrado}: ${valor}`);
-                })
-                .on("mousemove", (event) => {
-                    tooltip.style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY - 180) + "px");
-                })
-                .on("mouseout", () => {
-                    tooltip.style("display", "none");
-                });
+    const maxValor = Math.max(...Object.values(this.dataPorPais), 1);
+    const color = d3.scaleLinear<string>()
+        .domain([1, maxValor])
+        .range(["#cce5ff", "#003366"]);
+
+    d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then((worldData) => {
+        const world = worldData as Topology;
+        const featureCollection = topojson.feature(
+            world,
+            world.objects['countries']
+        ) as unknown as FeatureCollection<Geometry, GeoJsonProperties>;
+
+        g.selectAll("path")
+            .data(featureCollection.features)
+            .join("path")
+            .attr("d", path)
+            .attr("fill", (d: any) => {
+                const nombre = d.properties.name;
+                const iso3 = this.nombreInglesAIso3[nombre];
+                const val = iso3 ? this.dataPorPais[iso3] : undefined;
+                return val != null ? color(val) : "#ccc";
+            })
+            .on("mouseover", (event, d: any) => {
+                const nombre = d.properties.name;
+                const iso3 = this.nombreInglesAIso3[nombre];
+                const nombreMostrado = iso3 ? this.iso3ANombre[iso3] : 'Desconocido';
+                const valor = iso3 ? this.dataPorPais[iso3] ?? "Sin datos" : "Sin datos";
+                tooltip.style("display", "block").html(`${nombreMostrado}: ${valor}`);
+            })
+            .on("mousemove", (event) => {
+                tooltip.style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 180) + "px");
+            })
+            .on("mouseout", () => {
+                tooltip.style("display", "none");
+            });
+    });
+
+    // Configurar el zoom
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+        .scaleExtent([1, 8]) // niveles de zoom
+        .on("zoom", (event) => {
+            g.attr("transform", event.transform);
         });
-    }
+
+    svg.call(zoom);
+}
+
 }
