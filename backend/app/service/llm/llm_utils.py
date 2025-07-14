@@ -357,6 +357,7 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
             "Noticias:\n" + "\n\n".join(entradas[:150])
         )
 
+
         messages = [
             {"role": "system", "content": "Eres un experto en análisis de impacto con base en noticias."},
             {"role": "user", "content": prompt}
@@ -443,17 +444,25 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
         p = doc.add_paragraph(area_texto)
         p.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
+        texto_normalizado = area_texto.lower().replace("(", "").replace(")", "").replace(",", "")
         for pub in publicaciones:
-            fecha = pub.get("fecha")
-            fecha_str = fecha.strftime("%d/%m/%Y") if fecha else None
-            fuente_id = str(pub.get("fuente_id", ""))
-            fuente_nombre = fuentes_map.get(fuente_id, {}).get("nombre", "").lower()
-            if fecha_str and fuente_nombre:
-                if f"({fecha_str}, {fuente_nombre}" in area_texto.lower():
-                    referencias_usadas.add((pub.get("url", ""), pub.get("titulo", "Sin título"), fecha_str, fuente_nombre.capitalize()))
+            if not pub.get("fecha") or not pub.get("fuente_id"):
+                continue
+            fecha_str = pub["fecha"].strftime("%d/%m/%Y")
+            fuente_id = str(pub["fuente_id"])
+            fuente_nombre = fuentes_map.get(fuente_id, {}).get("nombre", "Fuente desconocida")
+            fuente_nombre_l = fuente_nombre.lower()
+            ref_match = f"{fecha_str} {fuente_nombre_l}".replace(",", "").replace("(", "").replace(")", "")
+            if ref_match in texto_normalizado:
+                referencias_usadas.add((pub.get("url", ""), pub.get("titulo", "Sin título"), fecha_str, fuente_nombre))
 
     doc.add_heading("Referencias destacadas", level=2)
-    for url, titulo, fecha_str, fuente in referencias_usadas:
+    referencias_ordenadas = sorted(
+    list(referencias_usadas),
+    key=lambda x: extraer_fecha_orden(x[2])
+)
+
+    for url, titulo, fecha_str, fuente in referencias_ordenadas:
         p = doc.add_paragraph(style='List Bullet')
         run_prefix = p.add_run(f"{fecha_str}, {fuente}: ")
         if url:
@@ -475,12 +484,12 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
             p.add_run(titulo)
 
     resumen_titulares = "\n".join([
-        f"- [{pub.get('pais', '??')}] {pub.get('titulo', '')}" for pub in publicaciones[:50]
+        f"- [{pub.get('pais', '??')}] {pub.get('titulo', '')} {pub.get('fecha', '')}" for pub in publicaciones[:50]
     ])
     prompt_pred = (
-        "Dado este conjunto de titulares y publicaciones recientes:\n"
+        "Dado este conjunto de publicaciones recientes con pais donde ocurren, titulo y fecha:\n"
         f"{resumen_titulares}\n\n"
-        "Redacta dos párrafos predictivos.\n"
+        "Redacta dos párrafos predictivos, haz un análisis de los hechos tenindo en cuenta cuando y donde ocurren.\n"
         "1. ¿Qué podría suceder a corto plazo en base a esta situación?\n"
         "2. ¿Qué consecuencias o escenarios podrían desarrollarse a medio o largo plazo?\n"
         "Evita cualquier introducción o explicación, simplemente escribe los dos párrafos seguidos."
@@ -505,8 +514,6 @@ def generar_informe_impacto_temporal(publicaciones: List[dict], area_id: str, fi
     return buffer
 
 
-
-
 #-------------------------------------------
 
 def resumir_parrafos_si_muchos(texto: str, umbral=5) -> str:
@@ -516,7 +523,8 @@ def resumir_parrafos_si_muchos(texto: str, umbral=5) -> str:
 
     prompt = (
         "A continuación tienes un conjunto de párrafos que resumen noticias en un área específica (económica, social o seguridad). "
-        "Por favor, genera un resumen consolidado en forma de 5 párrafos como máximo, conservando los puntos clave, evolución e intensidad."
+        "Por favor, genera un resumen consolidado en forma de 5 párrafos como máximo, conservando los puntos clave, evolución e intensidad y las referencias."
+        "Las referencias tienen este formato (06/07/2025, ElPais), si salen en los parrafos que recibes debes conservarlas en el texto que generes."
         "Evita repeticiones y enfócate en los aspectos más relevantes.\n\n"
         "Texto original:\n" + "\n".join(parrafos)
     )
@@ -528,6 +536,7 @@ def resumir_parrafos_si_muchos(texto: str, umbral=5) -> str:
 
     try:
         respuesta = get_gpt_response(messages, temperature=0.5).strip()
+        logging.info(f"✅ Resumiendo texto final en {umbral} parrafos")
         return respuesta
     except Exception as e:
         logging.error(f"Error al resumir párrafos para el área: {e}")
@@ -560,3 +569,17 @@ def evaluar_relacion_llm(publicacion: Publicacion, concepto: dict) -> bool:
     except Exception as e:
         logging.error(f"❌ Error al consultar LLM para relación con concepto '{concepto['nombre']}': {e}")
         return False
+
+def extraer_fecha_orden(fecha_str):
+    try:
+        partes = fecha_str.split("/")
+        if len(partes) == 3:
+            dia = int(partes[0])
+            mes = int(partes[1])
+            anio = int(partes[2])
+            return (anio, mes, dia)
+    except Exception:
+        pass
+    return (9999, 12, 31)  # fecha muy futura si falla el parseo
+
+
